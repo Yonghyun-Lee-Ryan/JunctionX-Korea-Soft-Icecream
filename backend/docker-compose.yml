@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: solar-for-bid-backend:local
+    container_name: sfb-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # 🔴 DB는 볼륨 안에. 컨테이너를 지워도 데이터가 남는다
+      DATABASE_FILE: /app/data/solar-for-bid.sqlite
+      # 🔴 비어 있어도 부팅한다 — 없으면 캐시 응답으로 동작
+      UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
+      STUDIO_AGENT_ID: ${STUDIO_AGENT_ID:-}
+      STUDIO_CONFIG_VERSION: ${STUDIO_CONFIG_VERSION:-}
+      DATA_GO_KR_SERVICE_KEY: ${DATA_GO_KR_SERVICE_KEY:-}
+      LIVE_FALLBACK_MS: ${LIVE_FALLBACK_MS:-20000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - sfb-data:/app/data
+
+volumes:
+  sfb-data:

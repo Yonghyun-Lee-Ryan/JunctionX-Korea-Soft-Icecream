@@ -1,0 +1,129 @@
+{
+  "_주의": "🔴 손으로 채운 가짜 1건. 프론트가 백엔드 없이 화면②(추천 목록)까지 완주하라고 두는 것이다. 회사는 가상(㈜다온피엠씨). 추천 1건은 실제 전면 공개 공고(R25BK00645031). 제외 표본의 공고번호는 DEMO-로 시작하는 자리표시자다 — 실제 공고번호를 지어내지 않는다.",
+  "companyId": "co_daon_demo",
+  "status": "done",
+  "summary": {
+    "scanned": 127,
+    "excludedCheap": 98,
+    "parsed": 29,
+    "excluded": 124,
+    "shortlisted": 3,
+    "window": "2026-08-01 ~ 08-22 공고분 · 용역"
+  },
+  "shortlist": [
+    {
+      "caseId": "R25BK00645031-000",
+      "title": "체육진흥투표권사업 온라인발매 결제서비스(PG) 대행 용역",
+      "org": "공공기관 B",
+      "budget": "공고에서 추출",
+      "deadline": "2026-09-02 18:00",
+      "daysLeft": 8,
+      "matched": 5,
+      "unverified": 1,
+      "reasons": [
+        {
+          "text": "개인정보 영향평가기관 지정 — 보유 (지정 2024-06)",
+          "page": 14,
+          "docId": "2",
+          "confidence": "high"
+        },
+        {
+          "text": "중소기업 제한 — 충족 (확인서 2027-03-31)",
+          "page": 14,
+          "docId": "2",
+          "confidence": "high"
+        },
+        {
+          "text": "🔴 설명회 참가 의무 여부를 공고문에서 읽지 못했습니다 — 미확인. 이것 때문에 빼지는 않습니다",
+          "page": 0,
+          "docId": "1",
+          "confidence": "unknown"
+        }
+      ],
+      "decision": "pending",
+      "factsheetUrl": "/api/cases/R25BK00645031-000"
+    },
+    {
+      "caseId": "DEMO-SHORT-02",
+      "title": "(데모) 공공기관 정보화 PMO 용역",
+      "org": "(데모) 공공기관",
+      "budget": "(데모)",
+      "deadline": "2026-09-10 18:00",
+      "daysLeft": 14,
+      "matched": 4,
+      "unverified": 0,
+      "reasons": [
+        {
+          "text": "공공 정보화 PMO 실적 3년 내 8건 — 충족",
+          "page": 11,
+          "docId": "2",
+          "confidence": "high"
+        }
+      ],
+      "decision": "pending",
+      "factsheetUrl": ""
+    },
+    {
+      "caseId": "DEMO-SHORT-03",
+      "title": "(데모) 정보화 ISP 수립 용역",
+      "org": "(데모) 지자체",
+      "budget": "(데모)",
+      "deadline": "2026-09-05 17:00",
+      "daysLeft": 10,
+      "matched": 3,
+      "unverified": 2,
+      "reasons": [
+        {
+          "text": "소프트웨어사업자 등록 — 충족",
+          "page": 9,
+          "docId": "1",
+          "confidence": "high"
+        },
+        {
+          "text": "지역 제한 조항을 읽지 못했습니다 — 미확인",
+          "page": 0,
+          "docId": "1",
+          "confidence": "unknown"
+        }
+      ],
+      "decision": "pending",
+      "factsheetUrl": ""
+    }
+  ],
+  "excludedSamples": [
+    {
+      "caseId": "DEMO-EXCL-01",
+      "title": "(데모) 금융권 차세대 PMO",
+      "stage": "parsed",
+      "reason": "최근 3년 금융권 PMO 실적 2건 이상 필요 — 회사 카드 0건",
+      "page": 12
+    },
+    {
+      "caseId": "DEMO-EXCL-02",
+      "title": "(데모) 대형 통합 SI 감리",
+      "stage": "parsed",
+      "reason": "단일계약 10억 이상 실적 필요 — 회사 최대 6.12억",
+      "page": 10
+    },
+    {
+      "caseId": "DEMO-EXCL-03",
+      "title": "(데모) 지역 정보화 용역",
+      "stage": "cheap",
+      "reason": "지역제한 — 본점 소재지 경북 한정. 회사 소재 서울(지사 없음)",
+      "page": 0
+    },
+    {
+      "caseId": "DEMO-EXCL-04",
+      "title": "(데모) 네트워크 장비 구매",
+      "stage": "cheap",
+      "reason": "물품 구매 — 용역 아님 (메타데이터 업무구분)",
+      "page": 0
+    }
+  ],
+  "meta": {
+    "cached": true,
+    "listSource": "cached",
+    "elapsedMs": 0,
+    "costUsd": 0.0
+  }
+}
