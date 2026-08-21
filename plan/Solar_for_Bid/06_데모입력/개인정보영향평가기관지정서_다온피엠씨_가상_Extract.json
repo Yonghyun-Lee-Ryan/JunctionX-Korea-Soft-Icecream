@@ -1,0 +1,44 @@
+{
+  "document_title": "개 인 정 보 영 향 평 가 기 관 지 정 서",
+  "designation_number": "제 2024-00 호",
+  "designated_organization_name": "주식회사 다온피엠씨",
+  "business_registration_number": "120-86-01230",
+  "representative_name": "강민서",
+  "corporate_registration_number": "110111-0000000",
+  "designated_organization_address": "서울특별시 강남구 테헤란로 501, 11층 (삼성동)",
+  "designation_field": "개인정보 영향평가",
+  "designation_date": "2024-06-14",
+  "issuing_authority_name": "개 인 정 보 보 호 위 원 회 위 원 장",
+  "issue_date": "2024-06-14",
+  "legal_basis_statement": "「개인정보 보호법」에 따라 위와 같이 개인정보 영향평가기관으로 지정합니다.",
+  "staffing_reference_note": "※ 전문인력 현황은 2024년 지정 신청 당시 제출한 인력 명부 기준입니다. 현재 현황은 「기술인력 보유현황」(기준일 2026.08.21)을 따릅니다 - 두 문서의 인원 수는 시점이 달라 일치하지 않습니다.",
+  "official_seal_present": true,
+  "attachment_label": "[첨부 4] 개인정보 영향평가기관 지정 사실 증빙",
+  "professional_staff_status_at_designation": [
+    {
+      "qualification_name": "정보관리기술사",
+      "personnel_count": 5,
+      "remark": "전원 정규직"
+    },
+    {
+      "qualification_name": "개인정보관리전문가 (CPPG)",
+      "personnel_count": 6,
+      "remark": "-"
+    },
+    {
+      "qualification_name": "정보시스템감리사",
+      "personnel_count": 4,
+      "remark": "-"
+    },
+    {
+      "qualification_name": "CISA",
+      "personnel_count": 3,
+      "remark": "-"
+    },
+    {
+      "qualification_name": "ISO 27001 심사원",
+      "personnel_count": 2,
+      "remark": "-"
+    }
+  ]
+}
