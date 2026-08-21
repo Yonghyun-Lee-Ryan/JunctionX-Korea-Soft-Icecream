@@ -1,0 +1,78 @@
+{
+  "_주의": "🔴 스크리닝 응답 스키마 — S2·S4의 결과인 「추천 공고 목록」. 팩트시트(공고 1건 상세)와 별개다 → factsheet.envelope.json. 진입점이 「공고번호 입력」에서 「회사 서류 업로드」로 바뀌면서 새로 필요해졌다.",
+  "_왜_분모를_담나": "🔴 화면에 추천 3건만 뜨면 우리가 무엇을 했는지 안 보인다. 「127건을 훑어 3건」이 이 제품의 문장이다. 그래서 scanned·excluded를 반드시 담고, 제외 사유 표본도 같이 담는다 — 심사위원이 '나머지는 왜 뺐냐'고 물을 자리가 데모의 가장 강한 지점이다.",
+  "_판정은_둘이다": "🔴 제외 / 추천. 「조건부」는 만들지 않는다(해커톤 범위에서 뺐다). 그리고 제외는 근거가 있을 때만 한다 — 자격 항목의 미충족을 쪽 번호와 함께 확인했을 때만. 못 읽은 것([확인필요])은 제외가 아니라 추천 + 미확인 표시다.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["companyId", "status", "summary", "shortlist"],
+  "properties": {
+    "companyId": { "type": "string", "description": "S1에서 만든 회사 카드의 id" },
+    "status": { "type": "string", "enum": ["scanning", "screening", "done", "failed"] },
+
+    "summary": {
+      "type": "object",
+      "description": "🔴 화면①의 헤드라인. 분모가 여기 있다",
+      "required": ["scanned", "excluded", "shortlisted"],
+      "properties": {
+        "scanned":      { "type": "integer", "description": "OpenAPI 목록에서 받아 본 공고 수" },
+        "excludedCheap":{ "type": "integer", "description": "메타데이터만으로 제외 (Parse 안 돌림)" },
+        "parsed":       { "type": "integer", "description": "첨부를 실제로 Parse한 공고 수 — 비용이 여기서 난다" },
+        "excluded":     { "type": "integer", "description": "총 제외 수" },
+        "shortlisted":  { "type": "integer", "description": "추천 수 = shortlist 길이" },
+        "window":       { "type": "string", "description": "예: '2026-08-01 ~ 08-22 공고분'" }
+      }
+    },
+
+    "shortlist": {
+      "type": "array",
+      "description": "🔴 추천만 담는다. 제외된 건은 여기 없다 — 사람은 이 목록에만 게이트를 건다",
+      "items": {
+        "type": "object",
+        "required": ["caseId", "title", "org", "deadline"],
+        "properties": {
+          "caseId":     { "type": "string", "description": "공고번호-차수" },
+          "title":      { "type": "string" },
+          "org":        { "type": "string", "description": "수요기관" },
+          "budget":     { "type": "string", "description": "추정가격/배정예산. 문자열 그대로 — 표기를 바꾸지 않는다" },
+          "deadline":   { "type": "string", "description": "입찰마감일시" },
+          "daysLeft":   { "type": "integer", "description": "🔴 남은 영업일. 제안 준비가 물리적으로 가능한지가 여기서 갈린다" },
+          "matched":    { "type": "integer", "description": "충족을 확인한 자격 항목 수" },
+          "unverified": { "type": "integer", "description": "🔴 못 읽어서 판정 못 한 항목 수. 0이 아니면 카드에 「미확인 N건」" },
+          "reasons":    { "type": "array", "description": "왜 추천인가 — 근거 몇 줄",
+            "items": { "type": "object", "properties": {
+              "text":       { "type": "string" },
+              "page":       { "type": "integer", "description": "근거 쪽. 모르면 0" },
+              "docId":      { "type": "string", "description": "어느 첨부에서 나왔나 (fileSeq)" },
+              "confidence": { "type": "string", "enum": ["high", "low", "unknown"] } } } },
+          "decision":   { "type": "string", "enum": ["pending", "go", "skip"], "default": "pending",
+                          "description": "🚪 사람 게이트. 「이건 하겠다(응찰)=go / 이건 안 하겠다=skip」. go를 찍은 건만 S5 이후가 돈다 — 안 고른 건은 여기서 끝이다" },
+          "factsheetUrl": { "type": "string", "description": "이 건의 팩트시트 상세 (factsheet.envelope.json 모양)" }
+        }
+      }
+    },
+
+    "excludedSamples": {
+      "type": "array",
+      "description": "🔴 화면에는 접어 둔다. 펼치면 '왜 뺐는지'가 근거와 함께 나온다 — 심사에서 물으면 여기를 연다. 전수가 아니라 표본이어도 된다",
+      "items": { "type": "object", "required": ["caseId", "reason"], "properties": {
+        "caseId": { "type": "string" },
+        "title":  { "type": "string" },
+        "stage":  { "type": "string", "enum": ["cheap", "parsed"], "description": "cheap=메타데이터만 보고 뺌 · parsed=첨부를 읽고 뺌" },
+        "reason": { "type": "string", "description": "🔴 근거 있는 미충족 한 줄. 예: '업종코드 6525 필요 — 회사 미보유'" },
+        "page":   { "type": "integer", "description": "parsed 단계 제외면 쪽 번호. cheap이면 0" } } }
+    },
+
+    "meta": {
+      "type": "object", "properties": {
+        "cached":     { "type": "boolean", "description": "🔴 사전 실행 결과면 true. 화면 구석에 표시한다 — 들키는 것보다 먼저 말하는 쪽이 싸다" },
+        "listSource": { "type": "string", "enum": ["openapi", "cached"], "description": "🔴 조달청 OpenAPI 실호출인지 미리 받아 둔 캐시인지. 인증키가 없으면 cached다" },
+        "elapsedMs":  { "type": "integer" },
+        "costUsd":    { "type": "number", "description": "이번 스크리닝의 Parse+Extract 비용 추정" }
+      }
+    },
+
+    "error": { "type": "object", "properties": {
+      "code":    { "type": "string" },
+      "message": { "type": "string", "description": "사람이 읽는 문장. 무엇이 잘못됐고 어떻게 고치나" } } }
+  }
+}
