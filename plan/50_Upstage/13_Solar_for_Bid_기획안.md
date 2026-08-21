@@ -9,6 +9,7 @@ status: review
 > [!warning] 공개 레포 사본 — 발주처·제안사 실명은 익명화했다
 > 원본은 팀 기획자 볼트 `30_projects/JUNCTION/50_Upstage/`에 있고 **권위는 볼트다**.
 > 실제 조달 문서의 발주처명·기밀 조항은 이 사본에 넣지 않는다. 수치의 모양만 남겼다.
+> 🟢 단, **나라장터 전면 공개 공고번호(`R25BK00645031` 등)는 공개 정보라 그대로 둔다.**
 
 
 # Solar for Bid — 기획안 v1.0 (2026-08-22 02:00)
@@ -82,7 +83,7 @@ Parse  (document-parse-260128 · mode=auto · ocrMode=force · coordinates=true
 | **Challenge Statement** — *one **repetitive task**, **recurring mistake**, or everyday hassle* | 셋 중 **recurring mistake**를 고른다 (11_평범한답 B-4: 세 명사 중 아무도 안 고르는 것). 실물 사고 넷: `※` 단서 136개 중 24개가 뜻을 뒤집는데 놓쳐 요구를 반대로 읽음 · 배점표 표기 (10) vs 항목합 11 · 「가능하다」 금지표현 · 실적 요건이 가점인 줄 알았는데 **참가자격** |
 | *goes beyond "understanding" to actually **"getting the work done"*** | 끝이 요약이 아니다 — **조견표 xlsx · WBS · 임계경로 · 원가표** 파일 네 개 + **「미대응 요구사항 0건」** |
 | *Any domain is welcome — problems students genuinely relate to are especially encouraged* | ⚠️ **정직하게: 앞 문장으로 들어가고 뒤 문장은 못 채운다.** 대신 **당사자성**으로 갚는다 → 9절 |
-| **Use of Technology** — *Parse · Classify · Extract · Instruct … REST APIs & webhooks. **Studio must power the core*** | 문서 처리 전 구간이 Studio다. Classify 6갈래 + Extract 6스키마 + **Instruct 4단 체인** + Split ON. 🔴 깊이는 **개수가 아니다** → 5절 |
+| **Use of Technology** — *Parse · Classify · Extract · Instruct … REST APIs & webhooks. **Studio must power the core*** | 문서 처리 전 구간이 Studio다. Classify **7갈래** + Extract **7스키마** + **Instruct 4단 체인** + Split ON + 🔴 **나라장터 첨부 자동 수집**. 🔴 깊이는 **개수가 아니다** → 5절 |
 | **Deliverables** — *A working document-workflow automation service* | 화면 3장 + 파일 4종 + 배포 URL |
 | **Upstage Technology Implementation (30)** | 5절 |
 | **Service Completeness (20)** | 7·8절 |
@@ -158,6 +159,69 @@ Parse  (document-parse-260128 · mode=auto · ocrMode=force · coordinates=true
 
 ---
 
+## 4-5. 🔴 나라장터 아키텍처 — 입력 파이프 (2026-08-22 02:20~02:30 실호출로 전부 확인)
+
+> [!success] 🟢 아키텍처의 두 최대 미지수가 닫혔다 — 추측이 아니라 실호출 결과다
+> ① **첨부 HWP가 인증·세션 없이 직접 받아진다** ② **OpenAPI 경로가 확정됐다(구 경로는 폐기)**
+> 그래서 **공공데이터포털 키 승인이 v1의 선행조건이 아니다.** 키가 늦어도 데모는 돈다.
+
+### 4-5-1. 나라장터를 「추천 엔진」이 아니라 「입력 파이프」로 쓴다
+
+🔴 이 구분이 즉사를 가른다. 공고를 **찾아 추천하면** Home Sweet Home(Upstage 수상작)과 겹치고 무료 서비스와도 겹친다.
+**공고는 사람이 고른다.** 우리는 고른 공고의 **문서 묶음을 자동으로 끌어와 읽는다.** 그리고 이 자동 수집이 배점 30점 문구의 `external integrations` 실물이 된다 — 🔴 **Federal RFPs에는 외부 연동이 하나도 없다. 사람이 파일을 올려야 시작한다.**
+
+```
+[사용자] 나라장터 공고번호 붙여넣기 (예: R25BK00645031)
+    │        ※ 추천 안 함. 검색 안 함. 사람이 고른 것을 받는다
+    ▼
+[Node] 첨부 열거·수집 — 키 불필요
+    GET https://www.g2b.go.kr/pn/pnp/pnpe/UntyAtchFile/downloadFile.do
+        ?bidPbancNo={공고번호}&bidPbancOrd={차수}&fileType=&fileSeq={1,2,3…}
+    · fileSeq를 1부터 올린다 → HTTP 200이면 파일, **422면 끝**
+    · 파일명은 `content-disposition`에 percent-encoding으로 온다 → 디코딩해서 원본명 보존
+    · 🔴 **User-Agent를 반드시 붙인다** — 비우면 500이 떨어진다 (실측)
+    ▼
+[Node] (선택) 공고 메타 보강 — 키 필요, 없으면 건너뛴다
+    GET https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoServcPPSSrch
+    · 없으면 메타를 공고문 HWP에서 Extract로 뽑는다 → **키가 없어도 파이프라인이 완결된다**
+    ▼
+[Studio] 파일 N개 업로드 → Job 생성 → 폴링 (webhook 없음)
+    ▼
+[Node] 팩트시트 JSON → 파일 4종 생성 → [Flutter] 화면 ③
+```
+
+### 4-5-2. 실호출로 확정한 것
+
+| 항목 | 실측 결과 |
+|---|---|
+| 첨부 다운로드 | 🟢 `GET .../UntyAtchFile/downloadFile.do?bidPbancNo=&bidPbancOrd=&fileType=&fileSeq=` → **HTTP 200, 인증 없음** |
+| 파일 실물 | 🟢 `file` 판정 **Hangul (Korean) Word Processor File 5.x** — 진짜 HWP. `.hwpx`도 섞여 온다 |
+| 파일명 | `content-disposition: attachment;filename=%EB%B6%99...hwp` — **percent-encoded UTF-8** |
+| 열거 종료 | 🟢 **HTTP 422** + `{"ErrorMsg":"파일이 존재하지 않습니다.","ErrorCode":-1}` — 깨끗한 종료 신호 |
+| 🔴 함정 | **User-Agent 없으면 HTTP 500.** 반드시 붙인다 |
+| OpenAPI 경로 | 🟢 `https://apis.data.go.kr/1230000/**ad**/BidPublicInfoService/getBidPblancListInfoServcPPSSrch` → 403 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(코드 30) = **경로 정상, 키만 필요** |
+| 🔴 구 경로 | `/1230000/BidPublicInfoService/...` → 400 **`NO_OPENAPI_SERVICE_ERROR`(코드 12) — 폐기됐다.** 차세대 전환으로 `/ad/`가 붙었다 |
+| 그 외 서비스 | 낙찰·계약·사전규격의 서비스명은 내 추측이 전부 코드 12였다 → `[확인필요]`. **v1 범위 밖이라 막지 않는다** |
+
+### 4-5-3. 🎯 데모 문서 — 확정
+
+**`R25BK00645031` — 「체육진흥투표권사업 온라인발매 결제서비스(PG) 대행 용역」** (나라장터 전면 공개)
+
+| seq | 파일 | 크기 | Classify 갈래 |
+|---|---|---|---|
+| 1 | 입찰공고문.hwp | 72KB | `ntce_notice` |
+| 2 | 제안요청서.hwp | 346KB | `rfp_main` (안에 요구사항·배점·서식이 함께 있다 → Split) |
+| 3 | 계약이행특수조건.hwp | 136KB | 🔴 `contract_terms` — **7번째 클래스를 추가한다** |
+| 4 | 개인정보처리위탁특수조건.hwp | 73KB | `contract_terms` |
+| 5 | [별첨 1] 공동수급표준협정서.hwpx | 13KB | `form_annex` — 🟢 **hwpx 실물** |
+| 6 | — | 422 | 끝 |
+
+**이 한 건이 우리 설계를 통째로 시연한다** — HWP·HWPX 혼재 · 문서 종류 4갈래 실제 발생 · 용역 · 금융/공공 도메인 · 전면 공개(기밀 0). 예비 문서는 `R25BK00644726`(기술보증기금 PG사 선정, 공고+제안요청서 2종).
+
+🔴 **`contract_terms` 클래스를 추가하는 이유** — 계약 특수조건은 효력·손해배상·산출물 권리귀속·개인정보 위탁이 사는 자리다. Federal RFPs도 `clauses` 배열로 이 층을 따로 뽑는다. `others`로 버리면 리스크 조항을 통째로 잃는다.
+
+---
+
 ## 5. Studio 파이프라인 설계 — `studio.upstage.ai/agents`에서 지금 만들 것
 
 ### 5-1. 캔버스 그래프 (14노드)
@@ -171,13 +235,14 @@ Parse ─ mode=auto · ocrMode=force · coordinates=true · outputFormats=[html,
  │       base64Encoding=[figure] · mergeMultipageTables=TRUE   ← Federal RFPs와 다른 유일한 칸
  │       (한국 RFP는 요구사항 표가 수십 쪽에 걸쳐 이어진다)
  │
- └─ Classify-doc-kind ─ Split 활성화 ON ─ 6갈래 + others
+ └─ Classify-doc-kind ─ Split 활성화 ON ─ 7갈래 + others
       ├─ ntce_notice   → Extract-공고문     → ┐
       ├─ rfp_main      → Extract-제안요청서  → │
       ├─ sow_task      → Extract-과업내용서  → ├→ Instruct-1  자격판정
       ├─ req_spec      → Extract-요구사항    → │   (회사 프로필 ↔ 참가자격, 충족/미충족/[확인필요])
       ├─ eval_sheet    → Extract-배점표      → │        ↓
-      ├─ form_annex    → Extract-제출서식    → ┘   Instruct-2  조견표행 생성 (※ 단서 보존·합계 검산)
+      ├─ form_annex    → Extract-제출서식    → │   Instruct-2  조견표행 생성 (※ 단서 보존·합계 검산)
+      ├─ contract_terms→ Extract-계약조건    → ┘        ↓   🔴 실물 공고에 2건 있었다
       └─ others        → 「분석 대상 아님」            ↓
                                               Instruct-3  WBS 전개 (작업패키지·선후행·산출물·요구사항ID 역참조)
                                                    ↓
@@ -252,7 +317,7 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 
 | Must (34h) | 🔴 Won't — 왜 |
 |---|---|
-| 공고 1건 업로드(HWP·PDF) → Studio 14노드 → 결과 저장 | **공고 추천·검색** — Home Sweet Home과 거리 0, 나라장터·지투비플러스가 무료로 이미 함 |
+| 🔴 **나라장터 공고번호 붙여넣기 → 첨부 자동 수집(키 불필요) → Studio → 결과 저장** | **공고 추천·검색** — Home Sweet Home과 거리 0, 나라장터·지투비플러스가 무료로 이미 함 |
 | **자격 판정** — 충족/미충족/[확인필요] + 근거 페이지 | **추천 투찰가** — 6곳이 ML로 이미 팜, 문서 처리 아님, 30점 기여 0 |
 | **조견표 xlsx** — ※ 보존 + 행수 검산 + 미대응 0건 | **제안서 초안 집필** — 클라이원트 Contrl·MyBidWise가 이미 함. 34시간짜리 열등한 복제가 된다 |
 | **WBS + 임계경로** — 마감 역산(영업일·공휴일) | **채팅창·요약 탭·번역 버튼** — 첫 화면에 있으면 그 자리에서 죽는다 |
@@ -279,8 +344,8 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 
 | 초 | 화면 | 말 |
 |---|---|---|
-| 0–10 | 나라장터 공고 화면 + HWP 6개 | *"정부 공고 하나입니다. 첨부가 한글 파일 여섯 개, 200쪽이에요."* |
-| 10–25 | ② 단계 표시 | *"Parse가 HWP를 그대로 받습니다. 변환 단계가 없어요. Classify가 여섯 종류로 가릅니다."* |
+| 0–10 | 공고번호 `R25BK00645031` 붙여넣기 → 첨부 5개가 스스로 딸려 들어온다 | *"나라장터 공고번호만 넣었습니다. 첨부 한글 파일 다섯 개를 저희가 끌어옵니다 — 공고문·제안요청서·계약특수조건 둘·공동수급협정서."* |
+| 10–25 | ② 단계 표시 | *"Parse가 HWP를 그대로 받습니다. 변환 단계가 없어요. Classify가 일곱 종류로 가르고, 제안요청서 한 파일 안에서 요구사항·배점표·서식을 다시 쪼갭니다."* |
 | 25–45 | ③ 판정 배지 **조건부** | 🔴 **주인공.** *"참가자격 여섯 개 중 다섯 충족, 하나 미충족입니다 — 12쪽에 「최근 3년 저축은행권 PMO 실적」이라고 적혀 있고, 이건 가점이 아니라 자격이에요. 여기서 멈추면 나머지 5일을 아낍니다."* |
 | 45–65 | 조견표 탭 → 내려받기 | *"요구사항 151건입니다. ※ 단서까지 열로 살아 있어요 — 이 중 24개는 뜻을 뒤집습니다. 이 파일은 분석 결과가 아니라 발주처에 20부 출력해 내는 제출물입니다."* |
 | 65–80 | WBS·임계경로 탭 | *"과업내용서가 WBS로 펴집니다. 각 작업이 요구사항 ID로 역추적돼요. 그리고 제안 준비 임계경로 — 달력으론 9일인데 실질 5영업일이고, 임계경로는 벤더 확약서입니다."* |
@@ -294,7 +359,7 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 
 | 칸 | 채우는 것 | 🔴 약한 곳 |
 |---|---|---|
-| **Upstage Tech (30)** | **Split ON**(공개 29개 사용 0) · `merge_multipage_tables` · **Instruct 4단 체인**(Federal RFPs는 2단) · 🔴 **문서군 두 개 대조**(공고 ↔ 회사 프로필 — 29개도 Federal RFPs도 한 종류만 본다) · Classify 6갈래 · Extract 6스키마 · HWP 직접 · confidence 게이팅 · 정확도 표 | webhook 없음 → external integration은 **파일 생성(xlsx/docx)**으로 보인다 |
+| **Upstage Tech (30)** | 🔴 **`external integrations` 실물 — 나라장터 첨부 자동 수집(Federal RFPs는 외부 연동 0, 사람이 올려야 시작)** · **Split ON**(공개 29개 사용 0) · `merge_multipage_tables` · **Instruct 4단 체인**(Federal RFPs는 2단) · 🔴 **문서군 두 개 대조**(공고 ↔ 회사 프로필 — 29개도 Federal RFPs도 한 종류만 본다) · Classify 7갈래 · Extract 7스키마 · HWP/HWPX 직접 · confidence 게이팅 · 정확도 표 | webhook 없음 → external integration은 **파일 생성(xlsx/docx)**으로 보인다 |
 | **Completeness (20)** | 화면 3 · 캐시 데모 · others 처리 · 실패 상태 · 배포 URL | 🔴 **배포 경험 없음**(팀 제약 C1). 04:00까지 스캐폴드 배포부터 |
 | **Idea Creativity (25)** | **WBS·임계경로를 내는 서비스가 0곳** · 평범한 답 다섯과 사용자가 안 겹침 · Federal RFPs가 멈춘 세 자리 | 🔴 클라이원트가 「추천+분석+요구사항표」를 이미 판다 → **그 셋을 자랑하지 않는다** |
 | **Product Planning (25)** | 당사자가 팀 안 · Won't 표 · 화면 3장 · 6절 「기능 하나로 잘랐다」 | 🔴 **외부 당사자 인터뷰 0건** |
@@ -306,12 +371,13 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 | # | 무엇이 확인되면 죽는가 | 언제 | 대응 |
 |---|---|---|---|
 | R1 | **Parse가 HWP 요구사항 표의 행을 못 살린다** | 8/22 04:00 프리플라이트 | 조견표 빼고 WBS·임계경로로 |
-| R2 | Split이 HWP 합본을 못 가른다 (p22·p23 실물은 둘 다 Split 꺼짐 — 켠 사례 못 봄) | 04:00 | 파일별 수동 분류로 후퇴 |
+| R2 | Split이 **제안요청서 한 파일 안의 섹션**을 못 가른다 (p22·p23 실물은 둘 다 Split 꺼짐 — 켠 사례 못 봄) | 04:00 | 파일 단위 분류만으로 후퇴 — 첨부가 이미 5개로 나뉘어 오므로 **최소한의 갈래는 확보된다** |
 | R3 | **외부 당사자 0건** | 8/22 낮 | 발표에서 먼저 밝힌다 |
 | R4 | Upstage 담당자가 *"Federal RFPs로 이미 됩니다"* | 8/22 09:00~18:00 | 세 자리(한국·회사·끝)를 답으로 준비 → 1절 |
 | R5 | Upstage 담당자가 *"학생 문제가 아니다"* | 09:00~18:00 | 당사자성으로 갚는다. 대안: **대학 산학협력단 연구과제 공고** — 문서 구조 동일, 당사자가 캠퍼스에 `[확인필요]` |
 | R6 | 200쪽 처리가 5분을 넘는다 | 04:00 | 캐시 + 라이브는 공고문 1건 |
-| R7 | 🔴 **기밀 RFP 유출** | 상시 | **나라장터 전면 공개 공고만.** 회사 프로필은 **가상 회사**. 볼트 원본자료 커밋 금지 |
+| R7 | 🔴 **기밀 RFP 유출** | 상시 | **나라장터 전면 공개 공고만**(데모 확정: `R25BK00645031`). 회사 프로필은 **가상 회사 ㈜다온피엠씨**. 볼트 원본자료 커밋 금지 |
+| R9 | 🆕 나라장터가 `downloadFile.do` 경로를 바꾸거나 봇 차단을 건다 | 상시 | 데모 전 파일을 **미리 받아 캐시**해 둔다. 라이브 수집은 1건만 |
 | R8 | 단가 테이블 출처 없음 | 원가 작성 시 | 「단가 미입력 — 공수만 표시」 |
 
 ---
@@ -334,8 +400,8 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 
 | 시각 | 기획 정운 | 개발 A (Node) | 개발 B (Flutter) | 디자인 |
 |---|---|---|---|---|
-| **02:00–04:00** | 🔴 **Studio에서 에이전트 생성** — Parse 설정 + Classify 6갈래 스키마(5-2 붙여넣기) | Agents API 실호출 · **API 스키마 초안 → 04:00 동결** | 프로젝트 셋업 · **배포부터** | 화면 3장 와이어 |
-| **04:00–08:00** | 🔴 **프리플라이트: 나라장터 공개 공고 HWP 1건으로 R1·R2 확인** · Extract 스키마 6벌 | 폴러 · Postgres | 화면① ② | 컴포넌트 5 |
+| **02:00–04:00** | 🔴 **Studio에서 에이전트 생성** — Parse 설정 + Classify **7갈래** 스키마(5-2 붙여넣기) | 🔴 **나라장터 수집기부터**(§4-5, 키 불필요·30분이면 된다) → Agents API 실호출 · **스키마 04:00 동결** | 프로젝트 셋업 · **배포부터** | 화면 3장 와이어 |
+| **04:00–08:00** | 🔴 **프리플라이트: `R25BK00645031` 첨부 5건으로 R1·R2 확인** · Extract 스키마 7벌 | 폴러 · Postgres | 화면① ② | 컴포넌트 5 |
 | 08:00–12:00 | Instruct 4단 프롬프트 | xlsx·docx 생성 | 화면③ 탭 | 화면③ |
 | 12:00–18:00 | **10:00 되돌림 판정** · 피드백 창구 3회 | E2E | 연결 | 발표 덱 |
 | 18:00–24:00 | 정확도 표 · 발표 스크립트 | 안정화 | 안정화 | 덱 |
