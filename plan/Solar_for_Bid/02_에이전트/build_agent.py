@@ -49,8 +49,25 @@ CLASSES = [
   "🔴 우리가 작성한 제안서·제안요약서 — 발주 문서가 아니라 **우리 산출물**이다. 식별 특징: 표지에 우리 회사명과 「제안서」·「제안요약서」 표기, 발주처가 지정한 목차(Ⅰ 제안개요 / Ⅱ 제안사 일반 / Ⅲ 사업 수행 부문 / Ⅳ 사업관리부문)를 따르는 장·절 구성, 페이지 하단 일련번호, 개조식 문체, 회사 CI. "
   "KEY NEGATIVE: 발주기관이 낸 문서는 전부 다른 클래스다 — 발신자가 누구인지로 먼저 가른다. "
   "KEY DISTINCTION: 이 갈래만 **검사 대상**이다. 다른 갈래는 「무엇을 요구하나」를 읽지만 이 갈래는 「우리가 그 요구를 지켰나」를 재는 입력이다."),
+ # ── 🆕 S1 회사 서류 — 발주 문서가 아니라 「우리 회사가 가진 것」. 진입점이 회사라서 생겼다 ──
+ ("co_biz_reg",
+  "🏢 회사 서류 — 사업자등록증·법인등기부등본·중소기업확인서·소프트웨어사업자 신고확인서·각종 지정서(감리법인·영향평가기관). 식별 특징: 발급기관 직인, 「등록번호」·「법인등록번호」·「유효기간」, 상호·대표자·소재지·업태/종목 칸, 1~2쪽 증명서 형식. "
+  "KEY NEGATIVE: 발주기관이 낸 공고·제안요청서는 다른 클래스다. 빈 서식(채워지지 않은 칸)은 form_annex다. "
+  "KEY DISTINCTION: 이 갈래에서 「등록·지정·규모」 자격값이 나온다 — 업종코드, 중소기업 여부와 유효기간, 지정 여부와 지정일."),
+ ("co_perf_cert",
+  "🏢 회사 서류 — 실적증명서·계약실적 확인서·용역수행 실적 목록. 식별 특징: 발주기관명 · 사업명 · 계약금액 · 계약기간 · 역할(주관/공동/분담) 열이 있는 표, 발주기관 직인 또는 조달청 실적증명 양식, 「최근 3년」 표기. "
+  "KEY NEGATIVE: 공고가 요구하는 실적 조건을 서술하면 rfp_main이고, 빈 실적증명 양식은 form_annex다. "
+  "KEY DISTINCTION: 이 갈래에서 「실적」 자격값이 나온다 — 분야별 건수·최대 단일계약·합계. 참가자격의 실적 조항과 맞대는 원재료다."),
+ ("co_financial",
+  "🏢 회사 서류 — 재무제표·표준재무제표증명·신용평가등급확인서·국세/지방세 완납증명. 식별 특징: 매출액·자본금·부채비율·유동비율 칸, 평가기관명과 등급(AAA~D) 및 유효기간, 세무서·신용평가사 직인. "
+  "KEY NEGATIVE: 공고의 가격평가 산식은 eval_sheet다. "
+  "KEY DISTINCTION: 이 갈래에서 「재무」 자격값이 나온다 — 직전연도 매출, 자본금, 신용등급과 유효기간, 완납 여부."),
+ ("co_staff",
+  "🏢 회사 서류 — 기술인력 보유현황·인력투입 가능 명단·경력증명·자격증 사본. 식별 특징: 성명 · 등급(기술사/특급/고급/중급/초급) · 자격증 · 경력연수 · 정규직 여부 열이 있는 표, 4대보험 가입자 명부. "
+  "KEY NEGATIVE: 공고가 요구하는 인력 등급·인원은 rfp_main/sow_task다. 빈 인력투입계획표는 form_annex다. "
+  "KEY DISTINCTION: 이 갈래에서 「인력」 자격값이 나온다 — 등급별 인원, 기술사 수, 정규직 비율. 🔴 개인 성명·주민번호는 값으로 뽑지 않는다 — 집계만."),
  ("others",
-  "위 여덟에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. "
+  "위 열둘에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. "
   "KEY DISTINCTION: 지원 범위 밖으로 두고 「자동 분석 대상 아님 — 사람이 확인」으로 라우팅한다. 억지로 다른 클래스에 넣지 않는다."),
 ]
 
@@ -126,9 +143,12 @@ ie_rfp = sch("ie_rfp_main", {
  "작성양식_지정": S("다음 중 정확히 하나: 지정|자유|불명. '당사가 제시한 제안서 작성양식에 의거' 같은 문장이 있으면 지정"),
  "문서형태": S("예: 'MS 파워포인트'. " + NONE),
  "금지표현": {"type": "array", "description": "🔴 RFP가 명시적으로 금지한 부정확 표현을 인용부호 안 문자열 그대로 (예: '가능하다', '고려할 수 있다'). 이런 표현은 평가에서 불가능한 것으로 간주된다. 없으면 빈 배열", "items": {"type": "string"}},
- "제안발표": {"type": "object", "properties": {
-   "일시": S(NONE), "발표자_요건": S(NONE), "발표시간_분": S("숫자만. " + NONE),
-   "참석인원_제한": S(NONE), "page": PAGE}},
+ # 🔴 1레벨은 string|integer|number|array만 된다 (Upstage IE 제약) — object를 평탄화했다
+ "제안발표_일시":        S(NONE),
+ "제안발표_발표자요건":  S(NONE),
+ "제안발표_시간_분":     S("숫자만. " + NONE),
+ "제안발표_참석인원제한": S(NONE),
+ "제안발표_page":        PAGE,
  "효력조항": A("제안서 효력·허위기재·산출물 권리귀속·사업취소 등 리스크 조항", {
    "조항_원문": S("그대로"), "page": PAGE}),
  "page": PAGE,
@@ -226,44 +246,79 @@ ie_ours = sch("ie_our_proposal", {
                    "및 그 변형이 쓰인 문장을 **하나도 빠뜨리지 않고** 그대로. 평가에서 불가능한 것으로 간주되는 표현이다. "
                    "🔴 문장을 고쳐 주지 않는다 — 걸린 자리만 찍는다", {
    "문장": S("원문 그대로"), "걸린표현": S("그 문장 안의 금지 표현"), "page": PAGE}),
- "형식": {"type": "object", "description": "형식 준수 확인용", "properties": {
-   "일련번호_있음": S("다음 중 정확히 하나: 있음|없음|불명"),
-   "장별번호_있음": S("다음 중 정확히 하나: 있음|없음|불명"),
-   "표지_발주처명": S("표지에 적힌 발주처명. " + NONE),
-   "표지_사업명": S("표지에 적힌 사업명. " + NONE)}},
+ # 🔴 1레벨 평탄화 (위와 같은 이유)
+ "형식_일련번호_있음": S("형식 준수 확인. 다음 중 정확히 하나: 있음|없음|불명"),
+ "형식_장별번호_있음": S("형식 준수 확인. 다음 중 정확히 하나: 있음|없음|불명"),
+ "형식_표지_발주처명": S("표지에 적힌 발주처명. " + NONE),
+ "형식_표지_사업명":   S("표지에 적힌 사업명. " + NONE),
  "미기재_의심": A("「해당사항 없음」을 적어야 하는데 빈칸으로 남은 자리로 보이는 곳. 확신이 없으면 넣지 않는다", {
    "위치": S(""), "page": PAGE}),
  "page": PAGE,
 })
 
-SCHEMAS = [ie_notice, ie_rfp, ie_sow, ie_req, ie_eval, ie_terms, ie_form, ie_ours]
+# 🆕 S1 회사 카드 — 회사 서류 4갈래가 같은 스키마를 쓴다. 어느 서류에서 왔든 「자격값」으로 모인다.
+#    🔴 개인 식별 정보(성명·주민번호·연락처)는 필드에 두지 않는다 — 집계값만.
+ie_company = sch("ie_company_card", {
+ "상호":              S("회사명. " + NONE),
+ "사업자등록번호":    S("하이픈 포함 원문 그대로. " + NONE),
+ "설립연도":          S(NONE),
+ "소재지_시도":       S("본점 소재지의 시·도만. 지역제한 대조용. " + NONE),
+ "기업규모":          S("중소기업 / 중견기업 / 대기업 / 소기업 중 서류에 적힌 그대로. " + NONE),
+ "중소기업확인서_유효기간": S("YYYY-MM-DD. " + NONE),
+ "등록_지정": A("서류에서 확인되는 등록·지정·신고 사항", {
+     "명칭": S("예: 소프트웨어사업자, 정보시스템 감리법인, 개인정보 영향평가기관, 업종코드 6525"),
+     "상태": S("등록/지정/신고 중 서류 표기 그대로"),
+     "일자": S("등록·지정일 또는 유효기간. " + NONE),
+     "page": PAGE}, ["명칭"]),
+ "신용평가등급":      S("예: A0, BBB+. " + NONE),
+ "신용평가_유효기간": S(NONE),
+ "직전연도_매출_원":  S("숫자만, 원 단위. " + NONE),
+ "자본금_원":         S("숫자만. " + NONE),
+ "부채비율":          S("%. " + NONE),
+ "실적": A("최근 3년 계약 실적. 실적증명서의 행 단위", {
+     "발주기관": S(""), "사업명": S(""), "계약금액_원": S("숫자만"),
+     "기간": S("YYYY.MM~YYYY.MM"), "역할": S("주관/공동/분담/단독"),
+     "분야": S("PMO/감리/ISP/영향평가/구축 등 서류 표기 또는 사업명에서 자명한 것만. 아니면 빈 문자열"),
+     "page": PAGE}, ["사업명"]),
+ "인력": A("등급별 보유 인원 — 집계만. 성명은 뽑지 않는다", {
+     "등급": S("기술사/특급/고급/중급/초급"), "인원": I("명"), "page": PAGE}, ["등급", "인원"]),
+ "정규직비율":        S("%. 서류에 명시된 값만. " + NONE),
+ "부정당제재":        S("해당 없음 / 제재 중 / 서류에 없음"),
+ "page": PAGE,
+})
+
+SCHEMAS = [ie_notice, ie_rfp, ie_sow, ie_req, ie_eval, ie_terms, ie_form, ie_ours, ie_company]
 
 # ─────────────────────────────────────────── Instruct ×4
 P_JUDGE = """You are a MATCHER, not a consultant. 당신은 판단하지 않는다 — 공고가 요구한 것과 회사가 가진 것을 맞대 놓기만 한다.
 
-## 회사 프로필 — 대조 기준 (데모 고정값, 가상 회사)
-🔴 실존 기업이 아니다. 이 블록 밖의 회사 정보를 쓰지 않는다.
+## 회사 카드 — 대조 기준
+🔴 입력에 **회사 카드**(build_company_card 출력)가 있으면 그것이 기준이다. 카드의 「빈 칸(미확인)」 항목은 대조에서 [확인필요]로 두고 제외 사유로 쓰지 않는다.
+입력에 회사 카드가 없을 때만(데모 폴백) 아래 고정값을 쓴다 — 가상 회사다. 🔴 실존 기업이 아니다. 이 블록 밖의 회사 정보를 쓰지 않는다.
 - 상호 ㈜다온피엠씨 · 설립 2009 · 인원 68 · **중소기업**(확인서 2027-03-31)
-- 등록: 소프트웨어사업자 ✅ · 정보시스템 감리법인 ✅ · **개인정보 영향평가기관 ❌** · **업종코드 6525 ❌**
+- 등록: 소프트웨어사업자 ✅ · 정보시스템 감리법인 ✅ · **개인정보 영향평가기관 ✅**(지정 2024-06) · **업종코드 6525 ✅**
 - 신용평가등급 A0 (나라장터 등록 ✅) · 부정당업자 해당 없음 · 직전연도 매출 8,420,000,000원
 - 정규직 비율 74% · 기술사 6 · 특급 24 · 고급 19 · 중급 15 · 초급 4
-- 최근 3년 실적: **공공 정보화 PMO 8건** · 감리 3 · ISP 2 · **금융권 PMO 0건** · **개인정보 영향평가 0건**
+- 최근 3년 실적: **공공 정보화 PMO 8건** · 감리 3 · ISP 2 · **금융권 PMO 0건** · 개인정보 영향평가 2건
 - 최대 단일계약 612,000,000원 · 공동수급 허용(주관 선호, 최소지분 40%)
 - 소재 서울 (지사 없음)
 
 판정 어휘는 셋뿐이다: 충족 / 미충족 / [확인필요].
 규칙:
 - 모든 판정에 근거를 붙인다 — 회사 프로필의 항목명과 공고의 쪽 번호.
-- 회사 프로필에 없는 실적·자격·등록을 만들지 않는다. 없으면 [확인필요]다.
+- 회사 카드에 없는 실적·자격·등록을 만들지 않는다. 없으면 [확인필요]다.
 - 법령을 해석하지 않는다. 조문 이름은 문서에 적힌 그대로 옮긴다.
-- 「자격인가_가점인가」가 '자격'인 항목이 하나라도 미충족이면 판정은 No-Go다. '가점'만 미충족이면 조건부다. 공동수급이 허용이면 조건부에 그 경로를 한 줄 적는다.
-- 🔴 「설명회_참가의무」가 '참가자에한함'이면 이것을 **참가자격 항목으로 취급**한다. 설명회가 이미 지났으면 그 자리에서 No-Go다.
+- 🔴 **판정은 둘뿐이다 — 제외 / 추천.** 「조건부」는 만들지 않는다.
+- 🔴 **제외는 근거가 있을 때만 한다.** 「자격인가_가점인가」가 '자격'인 항목에서 **미충족을 쪽 번호와 함께 확인했을 때만** 제외다. 그 외에는 전부 추천이다.
+- 🔴 **[확인필요]는 제외 사유가 아니다.** 문서에서 못 읽었다는 뜻이지 자격이 없다는 뜻이 아니다 — 추천에 넣고 「미확인」으로 표시한다. **못 읽어서 기회를 지우는 쪽이 잘못 보여 주는 쪽보다 나쁘다.**
+- 🔴 **'가점' 미충족은 제외 사유가 아니다.** 점수만 깎일 뿐 참가는 된다. 대조표에는 남기되 판정에는 쓰지 않는다.
+- 🔴 「설명회_참가의무」가 '참가자에한함'이면 이것을 **참가자격 항목으로 취급**한다. 설명회가 이미 지났으면 제외이고, 그 날짜를 근거로 적는다.
 - 🔴 「전자제출_제한」에 제출 순서·용량·형식 규정이 있으면 판정 아래 「제출 제약」 항목으로 그대로 옮긴다.
 
 Return this output verbatim with the bracketed sections filled in:
 
-## 판정: [Go / No-Go / 조건부]
-[한 문장 이유]
+## 판정: [추천 / 제외]
+[한 문장 이유. 제외면 반드시 「무엇이 · 몇 쪽」이 들어간다]
 
 ### 자격 대조
 | 요건 | 자격/가점 | 판정 | 근거 |
@@ -273,21 +328,22 @@ Return this output verbatim with the bracketed sections filled in:
 ### 미충족 항목
 [없으면 "없음". 있으면 항목마다 한 줄: 무엇이 부족하고 공고 몇 쪽에 그렇게 적혀 있는지]
 
-### 우회 경로
-[공동수급 허용 여부와 그 경로. 없으면 "없음"]
+### 공동수급
+[공동수급 허용 여부와 최소지분. 🔴 이것으로 판정을 바꾸지 않는다 — 사람이 보라고 적는 정보다]
 
 ### 제출 제약
 [전자제출 용량·형식·순서 규정. 없으면 "공고에 명시 없음"]
 
 ### [확인필요]
-[회사 프로필에 정보가 없어 판정하지 못한 항목. 없으면 "없음"]"""
+[문서에서 읽지 못했거나 회사 프로필에 정보가 없어 판정하지 못한 항목. 없으면 "없음"]
+🔴 여기에 항목이 있어도 판정은 「추천」이다. 사람이 게이트에서 보고 정한다."""
 
-P_MATRIX = """You build a SUBMITTABLE compliance matrix. 이것은 분석 결과가 아니라 발주처에 제출하는 문서다.
+P_MATRIX = """You build a compliance matrix that becomes an ON-SCREEN CHECKLIST. 🔴 이것은 xlsx가 아니라 웹 서비스 안의 체크리스트로 보인다 — 사람이 한 행씩 체크한다. 그래서 한 항목도 빠뜨리면 안 된다.
 
 규칙:
 - 앞 단계가 뽑은 요구사항을 한 항목도 빠뜨리지 않는다.
 - 「단서_주석」(※ · 단, · 다만)을 별도 열로 살린다. 이 열을 잃으면 요구를 반대로 읽는다.
-- 「수용 여부」는 비워 둔다 — 사람이 채운다. 지어내지 않는다.
+- 「수용 여부」는 비워 둔다 — 화면의 체크박스가 그 칸이다. 지어내지 않는다.
 - 「대응 제안서 목차」는 RFP가 지정한 목차 중에서만 고른다. 목차에 없는 절을 만들지 않는다. 모르면 빈칸.
 - 마지막에 반드시 검산 블록을 낸다. 총괄표의 분류별 개수와 실제 추출 개수를 분류 단위로 대조한다.
 
@@ -314,6 +370,7 @@ P_WBS = """You are a PROJECT PLANNER. 앞 단계의 요구사항과 과업 구�
 - 기간은 문서에 적힌 것만. 적혀 있지 않으면 "문서에 없음"으로 두고 숫자를 만들지 않는다.
 - WBS ID는 계층을 반영한 점 표기(1 / 1.1 / 1.1.1)로 만든다.
 - 선행 작업은 문서가 순서를 말한 경우에만 적는다. 추측한 선후행에는 "(추정)"을 붙인다.
+- 🔴 **M/M 예상 원가를 추천한다 — 맨먼스까지만.** 작업 패키지마다 등급별 투입 M/M(특급·고급·중급·초급)을 추천값으로 낸다. 근거는 과업 범위·산출물 수·기간이다. 🔴 이것은 문서에서 읽은 값이 아니라 추천이다 — 반드시 "(추천)"을 붙인다. 단가·금액·투찰가는 만들지 않는다.
 
 Return this output verbatim with the bracketed sections filled in:
 
@@ -321,6 +378,13 @@ Return this output verbatim with the bracketed sections filled in:
 | WBS ID | 작업 패키지 | 상위 | 산출물 | 선행 작업 | 기간 | 투입 등급 | 근거 요구사항ID | 근거 p |
 |---|---|---|---|---|---|---|---|---|
 [한 행씩]
+
+## M/M 예상 원가 (추천)
+| WBS ID | 특급 | 고급 | 중급 | 초급 | 합계 M/M | 추천 근거 |
+|---|---|---|---|---|---|---|
+[한 행씩 — 값마다 "(추천)"]
+- 총 M/M: [N] (추천) · 등급별 소계: 특급 [a] / 고급 [b] / 중급 [c] / 초급 [d]
+- 🔴 금액 환산은 하지 않는다. 등급별 단가는 회사 카드에 있을 때만 화면이 곱한다.
 
 ## 집계
 - 작업 패키지: [N]개
@@ -417,13 +481,14 @@ Return this output verbatim with the bracketed sections filled in:
 ## 개인정보 위탁
 [있음/없음. 있으면 재위탁 제한·파기 의무 조항 인용]"""
 
-P_CHECKLIST = """You build a SUBMISSION CHECKLIST. 제출 직전에 사람이 화면 옆에 놓고 하나씩 지우는 종이다.
+P_CHECKLIST = """You build a SUBMISSION CHECKLIST that runs INSIDE the web service. 제출 직전에 웹 안에서 검사하고, 부족한 것은 보완요청으로 낸다. 🔴 고쳐 주지 않는다 — 사람이 보완요청을 검토한 뒤 보완 자료를 수정한다.
 
 규칙:
 - 서식과 제출물 목록을 합친다. 서식의 ※ 주석에 든 인정 범위 규칙을 반드시 옮긴다 (예: '공공기관 유지관리 사업에 한함', '확인이 불가능한 실적은 인정하지 않음') — 🔴 이 괄호 하나가 실적 인정 범위를 좌우한다.
 - 부수·분량 상한·유효기간·날인 필요 여부를 각 행에 붙인다.
 - 제3자 발급 서류(실적증명서·신용평가등급확인서·법인등기부등본·제조사 확약서)는 **리드타임 열**에 「[확인필요 — 발급 소요]」로 표시한다. 날짜를 지어내지 않는다.
 - 전자제출 제한(용량·형식·제출 순서)이 있으면 맨 위에 경고로 올린다.
+- 🔴 각 행에 「상태」를 낸다 — 준비됨 / 보완필요 / 미확인. 「보완필요」면 「보완요청」 칸에 무엇이 부족하고 어디를 고쳐야 하는지 한 줄. 회사 카드·앞 단계 산출물에서 확인되는 것만 준비됨으로 한다. 모르면 미확인이다.
 
 Return this output verbatim with the bracketed sections filled in:
 
@@ -431,9 +496,12 @@ Return this output verbatim with the bracketed sections filled in:
 [용량 상한·파일 형식·제출 순서. 없으면 "공고에 명시 없음"]
 
 ## 제출물
-| 서류 | 서식번호 | 부수 | 분량상한 | 유효기간 | 날인 | 리드타임 | 근거 p |
-|---|---|---|---|---|---|---|---|
+| 서류 | 서식번호 | 부수 | 분량상한 | 유효기간 | 날인 | 리드타임 | 상태 | 보완요청 | 근거 p |
+|---|---|---|---|---|---|---|---|---|---|
 [한 행씩]
+
+## 보완요청 [K]건
+[보완필요 행만 다시 모아 한 줄씩. 사람이 검토한 뒤 보완 자료를 수정한다. 없으면 "없음"]
 
 ## ※ 인정 범위 규칙
 [서식 주석에서 뽑은 규칙. 한 줄씩. 없으면 "없음"]
@@ -517,8 +585,40 @@ Return this output verbatim with the bracketed sections filled in:
 ## 한쪽에만 있는 것
 [not-in-document 항목. 없으면 "없음"]"""
 
+P_COMPANY = """You MERGE company documents into ONE company card. 회사 서류 여러 장에서 뽑힌 값을 회사 카드 하나로 합친다. 🔴 판정하지 않는다 — 합치고, 빈 칸을 드러낸다.
+
+규칙:
+- 같은 항목이 여러 서류에 있으면 **발급일이 최신인 것**을 쓰고 출처 쪽을 붙인다. 값이 서로 다르면 둘 다 적고 「[확인필요 — 서류 간 불일치]」.
+- 서류에 없는 값은 빈 칸으로 둔다. 🔴 **추론하거나 업계 평균으로 채우지 않는다.** 빈 칸은 자격 대조에서 「미확인」이 되고, 그것은 제외 사유가 아니다.
+- 실적은 분야별 건수와 최대 단일계약을 **집계**한다. 분야가 서류에 없으면 「분야 미상」으로 센다.
+- 개인 식별 정보(성명·주민번호·연락처)는 카드에 넣지 않는다 — 인력은 등급별 인원만.
+- 조달업체 등록·부정당제재는 API 교차 확인 결과가 입력에 있으면 그 값을 우선한다.
+
+Return this output verbatim with the bracketed sections filled in:
+
+## 회사 카드
+| 항목 | 값 | 출처 서류 · p |
+|---|---|---|
+| 상호 | [] | [] |
+| 소재지(시도) | [] | [] |
+| 기업규모 / 확인서 유효 | [] | [] |
+| 등록·지정 | [명칭=상태(일자) 를 · 로 나열] | [] |
+| 신용평가등급 / 유효 | [] | [] |
+| 직전연도 매출 | [] | [] |
+| 실적(최근 3년) | [분야별 건수 · 최대 단일계약 · 합계] | [] |
+| 인력 | [등급별 인원 · 기술사 수 · 정규직 비율] | [] |
+| 부정당제재 | [] | [] |
+
+## 🔴 빈 칸 (미확인)
+[서류에서 읽지 못한 항목. 한 줄씩. 이 항목들은 자격 대조에서 「미확인」으로 표시되며 제외 사유가 되지 않는다. 없으면 "없음"]
+
+## 서류 간 불일치
+[없으면 "없음"]"""
+
 instruct = {
   "nodes": [
+    # ── Must — S1 회사 카드 ──
+    {"name": "build_company_card",        "modelName": "default", "prompt": P_COMPANY},
     # ── Must — 데모 경로 ──
     {"name": "cross_check_notice_vs_rfp", "modelName": "default", "prompt": P_MISMATCH},
     {"name": "judge_eligibility",         "modelName": "default", "prompt": P_JUDGE},
@@ -537,6 +637,7 @@ instruct = {
   #    실제로 필요한 입력은 _inputs에 적었다 — 04:00 프리플라이트에서 캔버스가 다중 입력을 허용하면
   #    _inputs대로 선을 잇고, 아니면 우리 Node 층이 합쳐 Solar Pro 4로 보낸다.
   "connectionMapping": {
+    "build_company_card":         {"targetType": "extract",  "schemaName": "ie_company_card"},
     "cross_check_notice_vs_rfp":  {"targetType": "extract",  "schemaName": "ie_ntce_notice"},
     "judge_eligibility":          {"targetType": "instruct", "instructNodeName": "cross_check_notice_vs_rfp"},
     "compliance_matrix":          {"targetType": "extract",  "schemaName": "ie_req_spec"},
@@ -549,8 +650,9 @@ instruct = {
     "check_proposal_coverage":    {"targetType": "extract",  "schemaName": "ie_our_proposal"},
   },
   "_inputs": {
+    "build_company_card":         ["ie_company_card"],
     "cross_check_notice_vs_rfp":  ["ie_ntce_notice", "ie_rfp_main"],
-    "judge_eligibility":          ["cross_check_notice_vs_rfp", "ie_rfp_main", "회사프로필(고정)"],
+    "judge_eligibility":          ["cross_check_notice_vs_rfp", "ie_rfp_main", "build_company_card"],
     "compliance_matrix":          ["ie_req_spec", "ie_rfp_main"],
     "build_wbs":                  ["compliance_matrix", "ie_sow_task"],
     "critical_path":              ["build_wbs", "ie_ntce_notice", "build_submission_checklist(선택)"],
@@ -561,7 +663,7 @@ instruct = {
     "check_proposal_coverage":    ["ie_our_proposal", "compliance_matrix", "ie_rfp_main"],
   },
   "_mvp": {
-    "Must":   ["cross_check_notice_vs_rfp", "judge_eligibility", "compliance_matrix", "build_wbs", "critical_path"],
+    "Must":   ["build_company_card", "cross_check_notice_vs_rfp", "judge_eligibility", "compliance_matrix", "build_wbs", "critical_path"],
     "Should": ["analyze_scoring", "triage_contract_risk", "build_submission_checklist", "draft_questions", "check_proposal_coverage"],
   },
 }
@@ -569,7 +671,7 @@ instruct = {
 agent = {
   "_주의": "Solar for Bid 에이전트 설정 초안 (2026-08-22). Upstage 자체 제작 Federal RFPs(agt_TQ573pyaUjGWP7xxPtGKZH) 공개 설정과 같은 구조로 작성. Studio UI에 손으로 옮겨 넣는 것이 기준이고, 이 JSON은 그 원본이다.",
   "name": "Solar for Bid — 조달 공고 분해기",
-  "description": "한국 공공조달 공고 묶음을 8종으로 가려 읽고 참가자격 판정·요구사항 조견표·WBS·임계경로·배점해부·계약리스크·제출체크리스트·질의서를 만들고, 우리가 쓴 제안서를 되태워 커버리지와 금지표현을 검사한다",
+  "description": "회사 서류 4종을 읽어 회사 카드를 만들고, 한국 공공조달 공고 묶음을 8종으로 가려 읽고 참여 추천(제외/추천)·요구사항 체크리스트·WBS·임계경로·M/M 예상 원가 추천·배점해부·계약리스크·제출 체크리스트 검사와 보완요청·질의서를 만들고, 우리가 쓴 제안서를 되태워 커버리지와 금지표현을 검사한다",
   "category": "Others",
   "language": "ko",
   "documentParseConfiguration": {
@@ -592,7 +694,9 @@ agent = {
       "ntce_notice": "ie_ntce_notice", "rfp_main": "ie_rfp_main", "sow_task": "ie_sow_task",
       "req_spec": "ie_req_spec", "eval_sheet": "ie_eval_sheet",
       "contract_terms": "ie_contract_terms", "form_annex": "ie_form_annex",
-      "our_proposal": "ie_our_proposal"
+      "our_proposal": "ie_our_proposal",
+      "co_biz_reg": "ie_company_card", "co_perf_cert": "ie_company_card",
+      "co_financial": "ie_company_card", "co_staff": "ie_company_card"
     },
     "location": True
   },
@@ -616,6 +720,14 @@ print(f"  Instruct 노드    : {len(instruct['nodes'])}  (Must {len(instruct['_m
 for n in instruct["nodes"]:
     tag = "Must  " if n["name"] in instruct["_mvp"]["Must"] else "Should"
     print(f"    [{tag}] {n['name']:28s} ← " + " + ".join(instruct["_inputs"][n["name"]]))
+# 🔴 Upstage IE 제약 — 1레벨 property는 string|integer|number|array만 된다
+OK1 = {"string", "integer", "number", "array"}
+bad1 = [(sc["json_schema"]["name"], k, v.get("type"))
+        for sc in SCHEMAS
+        for k, v in sc["json_schema"]["schema"]["properties"].items()
+        if v.get("type") not in OK1]
+print(f"  1레벨 타입        : " + ("없음 ✅" if not bad1 else f"🔴 위반 {bad1}"))
+
 consumed = set()
 for v in instruct["_inputs"].values():
     consumed |= set(v)
@@ -627,7 +739,7 @@ for n in instruct["_mvp"]["Must"]:
     for src in instruct["_inputs"][n]:
         if src in should: broken.append(f"{n} ← {src}")
 print(f"  Must 폐쇄성       : " + ("✅ Must만으로 닫힌다" if not broken else f"🔴 Should 의존 {broken}"))
-print("  체인 A          : cross_check → judge_eligibility (2단)")
+print("  체인 A          : cross_check → judge_eligibility (2단)  +  build_company_card → judge_eligibility")
 print("  체인 B          : compliance_matrix → build_wbs → critical_path (3단)")
 json.loads(out.read_text(encoding="utf-8"))
 print("  JSON 유효성      : OK")
