@@ -11,6 +11,7 @@ related: "[[13_Solar_for_Bid_기획안]]"
 > [!warning] 공개 레포 사본 — 발주처·제안사 실명은 익명화했다
 > 원본은 팀 기획자 볼트 `30_projects/JUNCTION/50_Upstage/`에 있고 **권위는 볼트다**.
 > 실제 조달 문서의 발주처명·기밀 조항은 이 사본에 넣지 않는다. 수치의 모양만 남겼다.
+> 🟢 단, **나라장터 전면 공개 공고번호(`R25BK00645031` 등)는 공개 정보라 그대로 둔다.**
 
 
 # Solar for Bid — Studio 파이프라인 명세
@@ -26,13 +27,63 @@ related: "[[13_Solar_for_Bid_기획안]]"
 1. `studio.upstage.ai` 로그인 → **에이전트 만들기**
 2. 이름: `Solar for Bid — 조달 공고 분해기` · 설명: `한국 공공조달 공고 묶음을 6종으로 가려 읽고 자격판정·요구사항 조견표·WBS·임계경로를 만든다`
 3. **Parse**는 기본으로 켜져 있다 → 우측 패널에서 §1 값으로 맞춘다
-4. 툴바 `■ Classify +` → §2의 6갈래 + others 붙여넣기 → **Split 활성화 ON**
-5. 툴바 `■ Extract +` × 6 → 갈래별로 §3 스키마 붙여넣기 → 노드 이름 지정
+4. 툴바 `■ Classify +` → §2의 **7갈래** + others 붙여넣기 → **Split 활성화 ON**
+5. 툴바 `■ Extract +` × 7 → 갈래별로 §3 스키마 붙여넣기 → 노드 이름 지정
 6. 툴바 `■ Instruct +` × 4 → §4 프롬프트 붙여넣기 → 노드 이름 지정
 7. `Config` 버전 확인 → **데모 전날 밤 버전 고정, 그 뒤 캔버스 금지**
 8. 우상단 `</> Code` → API 스니펫 복사 → 백엔드로
 
 > 🔴 **노드 이름을 반드시 짓는다.** 안 지으면 `instruct-6` 같은 기본 이름이 남는다 (Upstage 자체 데모 p23이 실제로 그렇다). 캔버스를 화면에 띄울 거면 이름이 곧 설명이다.
+
+---
+
+## 0-5. 🔴 나라장터 수집기 — Studio 앞단 (키 불필요, 30분이면 된다)
+
+2026-08-22 02:20~02:30 실호출로 전부 확인했다. 추측 없음.
+
+```js
+// backend/g2b.js  — 의존성 없음(fetch만)
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+           '(KHTML, like Gecko) Chrome/128.0 Safari/537.36';   // 🔴 비우면 500이다
+
+async function fetchAttachments(bidPbancNo, bidPbancOrd = '000') {
+  const out = [];
+  for (let seq = 1; seq <= 20; seq++) {
+    const url = 'https://www.g2b.go.kr/pn/pnp/pnpe/UntyAtchFile/downloadFile.do'
+      + `?bidPbancNo=${bidPbancNo}&bidPbancOrd=${bidPbancOrd}&fileType=&fileSeq=${seq}`;
+    const r = await fetch(url, { headers: { 'User-Agent': UA } });
+    if (r.status === 422) break;              // 🔴 종료 신호 — {"ErrorMsg":"파일이 존재하지 않습니다."}
+    if (!r.ok) throw new Error(`seq ${seq}: HTTP ${r.status}`);
+    const cd = r.headers.get('content-disposition') || '';
+    const m = /filename=([^;]+)/.exec(cd);
+    const filename = m ? decodeURIComponent(m[1].trim()) : `file_${seq}.bin`;  // percent-encoded UTF-8
+    out.push({ seq, filename, buf: Buffer.from(await r.arrayBuffer()) });
+  }
+  return out;   // → 그대로 Studio 업로드로
+}
+```
+
+| 확인한 것 | 값 |
+|---|---|
+| 인증 | 🟢 **없다.** 쿠키·로그인·API 키 전부 불필요 |
+| 종료 판정 | 🟢 **HTTP 422** + `{"ErrorMsg":"파일이 존재하지 않습니다.","reason":"Unprocessable Entity","ErrorCode":-1}` |
+| 파일명 | `content-disposition: attachment;filename=%EB%B6%99...` — **percent-encoded UTF-8**, 디코딩 필수 |
+| 🔴 함정 | **User-Agent 없으면 HTTP 500** |
+| 재현성 | 서로 다른 공고 2건에서 동일 동작 확인 |
+| 파일 실물 | `Hangul (Korean) Word Processor File 5.x` · `.hwpx`도 섞여 온다 |
+
+**공고 메타(선택, 키 필요)** — `GET https://apis.data.go.kr/1230000/ad/BidPublicInfoService/getBidPblancListInfoServcPPSSrch`
+→ 403 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(코드 30) = 경로 정상, 키만 발급받으면 된다.
+🔴 **구 경로 `/1230000/BidPublicInfoService/`는 폐기(코드 12).** `/ad/`를 반드시 넣는다.
+🔴 **키가 없어도 v1은 완결된다** — 메타를 공고문 HWP에서 Extract로 뽑으면 된다. 키 승인 대기가 데모를 막지 않는다.
+
+### 데모 문서 (확정)
+
+`R25BK00645031` — 「체육진흥투표권사업 온라인발매 결제서비스(PG) 대행 용역」, 나라장터 전면 공개, 첨부 5건:
+`입찰공고문.hwp(72KB)` · `제안요청서.hwp(346KB)` · `계약이행특수조건.hwp(136KB)` · `개인정보처리위탁특수조건.hwp(73KB)` · `[별첨 1] 공동수급표준협정서.hwpx(13KB)`
+예비: `R25BK00644726`(기술보증기금 PG사 선정 — 공고 + 제안요청서 2건)
+
+🔴 **데모 전에 이 파일들을 미리 받아 캐시해 둔다.** 라이브 수집은 1건만 보여준다.
 
 ---
 
@@ -53,7 +104,7 @@ Upstage 자신이 `Federal RFPs`에 쓴 설정을 기준선으로, **한 칸만 
 
 ---
 
-## 2. Classify — 노드 이름 `classify-doc-kind`
+## 2. Classify — 노드 이름 `classify-doc-kind` (🔴 **7갈래 + others**)
 
 **Split 활성화: ON** 🔴 (Federal RFPs는 OFF다. 한국은 한 건에 문서 여섯이 딸려 오거나 합본 스캔으로 온다)
 
@@ -89,18 +140,23 @@ Upstage 자신이 `Federal RFPs`에 쓴 설정을 기준선으로, **한 칸만 
 제출 서식·별첨 양식. 식별 특징: 빈 칸과 서명·날인란이 있는 서식 — 입찰참가신청서, 제안서 표지, 청렴계약이행서약서, 가격제안서 양식, 실적증명서 양식(서식 제N호), 산출내역서, 인력투입계획표. 「서식 제N호」 표기, 채워지지 않은 밑줄과 표 칸, 「(인)」 표기. 이것이 아님: 내용이 채워진 문서는 다른 클래스다. 경계: 이 갈래는 값을 뽑는 것이 아니라 「무엇을 몇 부 내야 하는가」의 목록을 만드는 것이 목적이다.
 ```
 
+### `contract_terms`
+```
+계약 조건 문서 — 계약이행 특수조건·일반조건·개인정보 처리위탁 특수조건·청렴계약 조건. 식별 특징: 「특수조건」·「일반조건」·「이행조건」 표제, 제N조 형태의 조문 번호가 이어지는 구조, 계약보증금·지체상금·손해배상·하자담보·산출물 권리귀속·비밀유지·개인정보 위탁 처리·재위탁 제한 같은 의무 조항. 이것이 아님: 제안 작성 방법·평가·제출을 다루면 rfp_main, 수행할 과업을 서술하면 sow_task. 경계: 이 갈래는 「낙찰 후에 우리가 지는 의무」다 — 요구사항이 아니라 리스크다. 여기서 뽑은 조항은 요구사항 조견표가 아니라 리스크 목록으로 간다. 실물 공고 한 건에 이 종류가 둘 이상 딸려 오는 일이 흔하다.
+```
+
 ### `others`
 ```
-위 여섯에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고. 경계: 지원 범위 밖으로 두고 「이 문서는 자동 분석 대상이 아닙니다 — 사람이 확인하세요」로 라우팅한다. 억지로 다른 클래스에 넣지 않는다.
+위 일곱에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고. 경계: 지원 범위 밖으로 두고 「이 문서는 자동 분석 대상이 아닙니다 — 사람이 확인하세요」로 라우팅한다. 억지로 다른 클래스에 넣지 않는다.
 ```
 
 > 🔴 모델 선택: Classify 패널 원문 — *"Solar 모델은 confidence score 기능을 아직 제공하지 않습니다."* 선택지는 `Auto` / `solar-pro2`. **`Auto`로 둔다** (confidence가 필요하다).
 
 ---
 
-## 3. Extract — 갈래별 스키마 6벌
+## 3. Extract — 갈래별 스키마 7벌
 
-노드 이름: `ex-notice` · `ex-rfp` · `ex-sow` · `ex-req` · `ex-eval` · `ex-form`
+노드 이름: `ex-notice` · `ex-rfp` · `ex-sow` · `ex-req` · `ex-eval` · `ex-form` · `ex-terms`
 
 **공통 작법 (Federal RFPs 규칙 그대로)**
 - 열거형은 `"다음 중 정확히 하나: A|B|C"` 로 강제
@@ -273,6 +329,28 @@ Upstage 자신이 `Federal RFPs`에 쓴 설정을 기준선으로, **한 칸만 
 }
 ```
 
+### 3-7. `ex-terms` (계약 특수조건) — 🔴 실물 공고에 2건 딸려 왔다
+```json
+{
+  "type": "object",
+  "properties": {
+    "문서명": {"type": "string", "description": "표제 그대로 (예: '계약이행 특수조건')"},
+    "조항": {"type": "array", "description": "제N조 단위로 한 행씩. 의무·제재·권리귀속이 걸린 조항만 뽑는다",
+      "items": {"type": "object", "properties": {
+        "조번호": {"type": "string", "description": "예: '제12조'. 없으면 빈칸"},
+        "제목": {"type": "string"},
+        "원문": {"type": "string", "description": "조문을 그대로. 요약하지 않는다"},
+        "유형": {"type": "string", "description": "다음 중 정확히 하나: 계약보증|지체상금|손해배상|하자담보|산출물권리귀속|비밀유지|개인정보위탁|재위탁제한|인력교체|검수|해지|기타"},
+        "우리부담인가": {"type": "string", "description": "다음 중 정확히 하나: 수급인부담|발주처부담|양측|불명. 문서에 명시된 것만. 추론하지 않는다"},
+        "page": {"type": "integer"}}}},
+    "지체상금률": {"type": "string", "description": "숫자만 (예: '0.00125'). 없으면 빈칸"},
+    "계약보증금률": {"type": "string", "description": "퍼센트 숫자만. 없으면 빈칸"},
+    "산출물_권리귀속": {"type": "string", "description": "원문 그대로. 없으면 빈칸"},
+    "개인정보_위탁여부": {"type": "string", "description": "다음 중 정확히 하나: 있음|없음|불명"}
+  }
+}
+```
+
 ---
 
 ## 4. Instruct — 4단 체인
@@ -439,7 +517,7 @@ Return this output verbatim with the bracketed sections filled in:
 
 | # | 실물 사실 | 설계에 주는 변화 |
 |---|---|---|
-| 1 | 🔴 **요구사항정의서·배점표·서식철이 전부 제안요청서 「한 파일」 안에 있다.** 별도 파일이 아니다 — hwpx 1.5MB / 181쪽 + 서식 18종 | **Split의 뜻이 바뀐다.** 「파일 여러 개를 가른다」가 아니라 **「한 파일을 섹션으로 가른다」**다. §2의 6갈래는 그대로 유효하되, 입력이 파일 1개여도 Classify가 6갈래를 내야 한다 |
+| 1 | 🔴 **요구사항정의서·배점표·서식철이 전부 제안요청서 「한 파일」 안에 있다.** 별도 파일이 아니다 — hwpx 1.5MB / 181쪽 + 서식 18종 | **Split의 뜻이 바뀐다.** 「파일 여러 개를 가른다」가 아니라 **「한 파일을 섹션으로 가른다」**다. §2의 7갈래는 그대로 유효하되, 입력이 파일 1개여도 Classify가 여러 갈래를 내야 한다. 🔴 실물 데모 공고(`R25BK00645031`)는 첨부가 이미 5개로 나뉘어 와서 **파일 단위만으로도 4갈래가 확보된다** — Split은 그 위의 보너스다 |
 | 2 | 🔴 **요구사항 표가 평평한 표가 아니다.** 「요구사항 고유번호 / 분류 / 명칭 / 정의 / 세부내용」이 **세로 5행 라벨 표**로 되어 있고, 그게 요구사항 개수만큼 반복된다 | `ex-req` 스키마는 유지하되, **한 요구사항 = 표 하나**라는 것을 프롬프트에 명시한다. 「행을 뽑아라」가 아니라 「반복되는 라벨 표 하나하나를 한 객체로」 |
 | 3 | 🔴 **같은 발주처 같은 달 문서인데 열 수가 다르다** — 구축 3열 / PMO 4열. **열 위치로 파싱하면 깨진다** | 열 인덱스에 의존하지 않는다. **라벨 텍스트로 값을 찾는다** — Extract 스키마가 이걸 자연히 해준다(이게 정규식 파서 대신 Extract를 쓰는 이유다) |
 | 4 | 🔴 **배점표도 병합셀 때문에 배점 열 위치가 행마다 다르다** (1행 5열, 2~3행 3열). 실측 경고 원문: *"열 인덱스로 읽는 파서는 13개 항목 중 3개만 맞힌다"* | 같음. 그리고 **§4-2 검산이 여기서 값을 한다** |
