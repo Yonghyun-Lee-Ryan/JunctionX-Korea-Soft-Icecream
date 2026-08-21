@@ -82,7 +82,7 @@ Parse  (document-parse-260128 · mode=auto · ocrMode=force · coordinates=true
 | **Challenge Statement** — *one **repetitive task**, **recurring mistake**, or everyday hassle* | 셋 중 **recurring mistake**를 고른다 (11_평범한답 B-4: 세 명사 중 아무도 안 고르는 것). 실물 사고 넷: `※` 단서 136개 중 24개가 뜻을 뒤집는데 놓쳐 요구를 반대로 읽음 · 배점표 표기 (10) vs 항목합 11 · 「가능하다」 금지표현 · 실적 요건이 가점인 줄 알았는데 **참가자격** |
 | *goes beyond "understanding" to actually **"getting the work done"*** | 끝이 요약이 아니다 — **조견표 xlsx · WBS · 임계경로 · 원가표** 파일 네 개 + **「미대응 요구사항 0건」** |
 | *Any domain is welcome — problems students genuinely relate to are especially encouraged* | ⚠️ **정직하게: 앞 문장으로 들어가고 뒤 문장은 못 채운다.** 대신 **당사자성**으로 갚는다 → 9절 |
-| **Use of Technology** — *Parse · Classify · Extract · Instruct … REST APIs & webhooks. **Studio must power the core*** | 문서 처리 전 구간이 Studio다. Classify 6갈래 + Extract 6스키마 + Instruct 4단 체인 = **라이브러리 최대 깊이(4노드)를 넘는다** → 5절 |
+| **Use of Technology** — *Parse · Classify · Extract · Instruct … REST APIs & webhooks. **Studio must power the core*** | 문서 처리 전 구간이 Studio다. Classify 6갈래 + Extract 6스키마 + **Instruct 4단 체인** + Split ON. 🔴 깊이는 **개수가 아니다** → 5절 |
 | **Deliverables** — *A working document-workflow automation service* | 화면 3장 + 파일 4종 + 배포 URL |
 | **Upstage Technology Implementation (30)** | 5절 |
 | **Service Completeness (20)** | 7·8절 |
@@ -93,10 +93,10 @@ Parse  (document-parse-260128 · mode=auto · ocrMode=force · coordinates=true
 
 ## 3. 문제와 당사자
 
-**당사자** — 중소 IT 컨설팅·SI 기업의 **제안 담당자**. (팀 기획자 정운이 제안사(팀 기획자 소속)에서 실제로 하는 일이다. 지금 5건을 손으로 처리 중이다.)
+**당사자** — 중소 IT 컨설팅·SI 기업의 **제안 담당자**. (팀 기획자 팀 기획자가 실제로 하는 일이다. 지금 5건을 손으로 처리 중이다.)
 
 **사고 장면 [관찰]** — 나라장터에 공고가 뜬다. 첨부는 HWP 여섯 개, 합쳐 200쪽. 마감까지 달력으로 9일인데 광복절·대체공휴일이 껴서 **실질 5영업일**이다. 그 5일 동안 사람이 하는 일:
-1. 참가자격 여섯 줄을 읽고 우리가 되는지 판단한다 — 🔴 **여기서 틀리면 나머지 5일이 통째로 무의미하다.** 실물 사고: 「최근 3년 저축은행·은행업권 대형구축 PMO 실적」이 가점인 줄 알았는데 **참가자격**이었다
+1. 참가자격 여섯 줄을 읽고 우리가 되는지 판단한다 — 🔴 **여기서 틀리면 나머지 5일이 통째로 무의미하다.** 실물 사고: 금융권 RFP에서 「최근 3년 동일 업권 대형구축 PMO 실적」이 가점인 줄 알았는데 **참가자격**이었다
 2. 요구사항 151건을 엑셀로 옮겨 조견표를 만든다 — **발주처가 요구하는 실제 제출물이다. 20부를 출력해서 낸다**
 3. 과업내용서를 읽고 일정과 투입인력을 짠다
 4. 원가를 세운다
@@ -160,7 +160,11 @@ Parse  (document-parse-260128 · mode=auto · ocrMode=force · coordinates=true
 
 ## 5. Studio 파이프라인 설계 — `studio.upstage.ai/agents`에서 지금 만들 것
 
-### 5-1. 캔버스 그래프 (14노드 · 라이브러리 최대 4노드 대비 3.5배)
+### 5-1. 캔버스 그래프 (14노드)
+
+> [!error] 🔴 노드 **개수**로 자랑하지 않는다 — 그 자리에서 반증된다
+> 공개 API의 `documentParseEnabled` 류 플래그는 노드 **종류**(최대 4종)를 세는 것이지 노드 개수가 아니다. **실물 캔버스는 이미 더 깊다** — PDF p23 「식약처 의약품 허가 여부 진단」이 **16노드 · 7갈래**다(p22는 6노드·2갈래). **우리 14노드는 그보다 적다.**
+> 깊이는 이렇게 말한다 — ① **Split ON**(공개 29개 중 사용 0) ② **`merge_multipage_tables: true`**(Federal RFPs는 false) ③ **Instruct 4단 체인**(Federal RFPs는 2단) ④ 🔴 **문서군 두 개를 맞댄다** — 공개 29개도 Federal RFPs도 전부 *한 종류 문서*만 본다. 우리는 **공고 문서 ↔ 회사 프로필**을 대조한다 ⑤ Extract confidence low/high 게이팅
 
 ```
 Parse ─ mode=auto · ocrMode=force · coordinates=true · outputFormats=[html,text]
@@ -290,7 +294,7 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 
 | 칸 | 채우는 것 | 🔴 약한 곳 |
 |---|---|---|
-| **Upstage Tech (30)** | **14노드**(라이브러리 최대 4) · Split ON(라이브러리 사용 0) · Classify 6갈래 · Extract 6스키마 · **Instruct 4단 체인** · HWP 직접 · 좌표 인용 · 정확도 표(요구사항 151건 중 N건 정확) | webhook 없음 → external integration은 **파일 생성(xlsx/docx)**으로 보인다 |
+| **Upstage Tech (30)** | **Split ON**(공개 29개 사용 0) · `merge_multipage_tables` · **Instruct 4단 체인**(Federal RFPs는 2단) · 🔴 **문서군 두 개 대조**(공고 ↔ 회사 프로필 — 29개도 Federal RFPs도 한 종류만 본다) · Classify 6갈래 · Extract 6스키마 · HWP 직접 · confidence 게이팅 · 정확도 표 | webhook 없음 → external integration은 **파일 생성(xlsx/docx)**으로 보인다 |
 | **Completeness (20)** | 화면 3 · 캐시 데모 · others 처리 · 실패 상태 · 배포 URL | 🔴 **배포 경험 없음**(팀 제약 C1). 04:00까지 스캐폴드 배포부터 |
 | **Idea Creativity (25)** | **WBS·임계경로를 내는 서비스가 0곳** · 평범한 답 다섯과 사용자가 안 겹침 · Federal RFPs가 멈춘 세 자리 | 🔴 클라이원트가 「추천+분석+요구사항표」를 이미 판다 → **그 셋을 자랑하지 않는다** |
 | **Product Planning (25)** | 당사자가 팀 안 · Won't 표 · 화면 3장 · 6절 「기능 하나로 잘랐다」 | 🔴 **외부 당사자 인터뷰 0건** |
@@ -321,7 +325,8 @@ Instruct-4 임계경로   입력: Instruct-3 + Extract(공고문 일정·제출�
 | *"Parse가 HWP를 그대로 받습니다. 공공 공고는 전부 HWP예요."* | *"RFP를 요약해 드립니다"* / *"무엇이든 물어보세요"* |
 | *"끝이 요약이 아닙니다. 파일 네 개가 나오고 미대응 0건이면 끝난 겁니다."* | *"실제 금융권 RFP로 돌려봤습니다"* / *"기밀 문서도 처리합니다"* |
 | *"150쪽을 한 번에 안 넣습니다. Extract가 장문에서 F1 41~63으로 떨어지는 표를 보고 목차로 쪼갰습니다."* | *"업스테이지도 조달 입찰하시니까 쓰시면 됩니다"* |
-| *"라이브러리 29개가 전부 심사하는 쪽입니다. 서류를 내는 쪽은 0개예요."* | *"회사에서 쓰려던 걸 가져왔습니다"* |
+| *"서류를 내는 쪽 에이전트는 라이브러리에 Federal RFPs 하나뿐입니다 — 미국 연방·영어·복사 1회요."* | 🔴 *"저희가 14노드로 제일 깊습니다"* — **p23이 16노드다. 개수 자랑은 그 자리에서 반증된다** |
+| *"깊이를 개수로 안 봤습니다. 공개 29개가 아무도 안 켠 Split을 켰고, 문서군 두 개를 맞댑니다."* | *"회사에서 쓰려던 걸 가져왔습니다"* |
 
 ---
 
