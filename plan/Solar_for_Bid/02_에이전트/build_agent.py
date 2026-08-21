@@ -45,8 +45,12 @@ CLASSES = [
   "제출 서식·별첨 양식. 식별 특징: 빈 칸과 서명·날인란이 있는 서식 — 입찰참가신청서, 제안서 표지, 청렴계약이행서약서, 가격제안서 양식, 실적증명서 양식(서식 제N호), 산출내역서, 인력투입계획표, 공동수급표준협정서. 「서식 제N호」 표기, 채워지지 않은 밑줄과 표 칸, 「(인)」 표기. "
   "KEY NEGATIVE: 내용이 채워진 문서는 다른 클래스다. "
   "KEY DISTINCTION: 값을 뽑는 것이 아니라 「무엇을 몇 부 내야 하는가」와 ※ 주석의 인정 범위 규칙을 잡는 것이 목적이다."),
+ ("our_proposal",
+  "🔴 우리가 작성한 제안서·제안요약서 — 발주 문서가 아니라 **우리 산출물**이다. 식별 특징: 표지에 우리 회사명과 「제안서」·「제안요약서」 표기, 발주처가 지정한 목차(Ⅰ 제안개요 / Ⅱ 제안사 일반 / Ⅲ 사업 수행 부문 / Ⅳ 사업관리부문)를 따르는 장·절 구성, 페이지 하단 일련번호, 개조식 문체, 회사 CI. "
+  "KEY NEGATIVE: 발주기관이 낸 문서는 전부 다른 클래스다 — 발신자가 누구인지로 먼저 가른다. "
+  "KEY DISTINCTION: 이 갈래만 **검사 대상**이다. 다른 갈래는 「무엇을 요구하나」를 읽지만 이 갈래는 「우리가 그 요구를 지켰나」를 재는 입력이다."),
  ("others",
-  "위 일곱에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. "
+  "위 여덟에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. "
   "KEY DISTINCTION: 지원 범위 밖으로 두고 「자동 분석 대상 아님 — 사람이 확인」으로 라우팅한다. 억지로 다른 클래스에 넣지 않는다."),
 ]
 
@@ -208,10 +212,44 @@ ie_form = sch("ie_form_annex", {
  "page": PAGE,
 })
 
-SCHEMAS = [ie_notice, ie_rfp, ie_sow, ie_req, ie_eval, ie_terms, ie_form]
+ie_ours = sch("ie_our_proposal", {
+ "문서종류": S("다음 중 정확히 하나: 제안서|제안요약서|요구사항조견표|가격제안서|기타"),
+ "총쪽수": S("숫자만. " + NONE),
+ "목차": A("제안서의 실제 장·절 구성. 순서대로", {
+   "장": S(""), "절": S(""), "시작쪽": I("숫자"), "끝쪽": I("숫자")}),
+ "요구사항_언급": A("🔴 본문에서 요구사항 ID를 언급한 곳. 조견표 커버리지 대조의 재료다. "
+                  "ID 표기가 없더라도 요구사항의 핵심어와 일치하는 서술이 있으면 추정 ID를 적고 근거 문장을 함께 남긴다", {
+   "요구사항ID": S("예: 'CSR-017'. 명시가 없고 추정이면 뒤에 '(추정)'을 붙인다"),
+   "언급_문장": S("그 요구를 다룬 문장을 그대로. 요약하지 않는다"),
+   "장절": S("어느 절에서"), "page": PAGE}),
+ "금지표현_후보": A("🔴 「가능하다」·「동의한다」·「가능하다고 본다」·「할 수도 있다」·「고려할 수 있다」·「고려하고 있다」 "
+                   "및 그 변형이 쓰인 문장을 **하나도 빠뜨리지 않고** 그대로. 평가에서 불가능한 것으로 간주되는 표현이다. "
+                   "🔴 문장을 고쳐 주지 않는다 — 걸린 자리만 찍는다", {
+   "문장": S("원문 그대로"), "걸린표현": S("그 문장 안의 금지 표현"), "page": PAGE}),
+ "형식": {"type": "object", "description": "형식 준수 확인용", "properties": {
+   "일련번호_있음": S("다음 중 정확히 하나: 있음|없음|불명"),
+   "장별번호_있음": S("다음 중 정확히 하나: 있음|없음|불명"),
+   "표지_발주처명": S("표지에 적힌 발주처명. " + NONE),
+   "표지_사업명": S("표지에 적힌 사업명. " + NONE)}},
+ "미기재_의심": A("「해당사항 없음」을 적어야 하는데 빈칸으로 남은 자리로 보이는 곳. 확신이 없으면 넣지 않는다", {
+   "위치": S(""), "page": PAGE}),
+ "page": PAGE,
+})
+
+SCHEMAS = [ie_notice, ie_rfp, ie_sow, ie_req, ie_eval, ie_terms, ie_form, ie_ours]
 
 # ─────────────────────────────────────────── Instruct ×4
 P_JUDGE = """You are a MATCHER, not a consultant. 당신은 판단하지 않는다 — 공고가 요구한 것과 회사가 가진 것을 맞대 놓기만 한다.
+
+## 회사 프로필 — 대조 기준 (데모 고정값, 가상 회사)
+🔴 실존 기업이 아니다. 이 블록 밖의 회사 정보를 쓰지 않는다.
+- 상호 ㈜다온피엠씨 · 설립 2009 · 인원 68 · **중소기업**(확인서 2027-03-31)
+- 등록: 소프트웨어사업자 ✅ · 정보시스템 감리법인 ✅ · **개인정보 영향평가기관 ❌** · **업종코드 6525 ❌**
+- 신용평가등급 A0 (나라장터 등록 ✅) · 부정당업자 해당 없음 · 직전연도 매출 8,420,000,000원
+- 정규직 비율 74% · 기술사 6 · 특급 24 · 고급 19 · 중급 15 · 초급 4
+- 최근 3년 실적: **공공 정보화 PMO 8건** · 감리 3 · ISP 2 · **금융권 PMO 0건** · **개인정보 영향평가 0건**
+- 최대 단일계약 612,000,000원 · 공동수급 허용(주관 선호, 최소지분 40%)
+- 소재 서울 (지사 없음)
 
 판정 어휘는 셋뿐이다: 충족 / 미충족 / [확인필요].
 규칙:
@@ -325,6 +363,138 @@ Return this output verbatim with the bracketed sections filled in:
 ## 금지 표현 검사 대상
 [RFP가 금지한 표현 목록. 제출 직전 원고 전수 검색할 것. 없으면 "명시된 금지 표현 없음"]"""
 
+
+P_SCORING = """You are a BID SCORING analyst. 배점표에서 득점 전략의 뼈대를 뽑는다. 🔴 점수를 예측하지 않는다 — 구조와 산술만 낸다.
+
+규칙:
+- 배점은 문서에 적힌 것만. 없는 항목을 만들지 않는다.
+- 🔴 **검산이 이 노드의 절반이다.** 부문 괄호 소계와 그 부문 항목합을 대조한다. 실물에서 표기 (10) vs 항목합 11, 표기 (10) vs 9가 상쇄돼 총합만 맞은 사례가 있다 — 총합만 보면 못 잡는다.
+- 커트라인은 문서에 적힌 하한 비율로만 계산한다. 하한이 없으면 "문서에 명시 없음".
+- 분량 배분은 배점 비율에 비례한 산술일 뿐임을 명시한다. 전략적 판단이 아니다.
+
+Return this output verbatim with the bracketed sections filled in:
+
+## 배점 구조
+- 기술 [N] : 가격 [M] · 기술평가 하한 [X]% → **커트라인 [계산값]점**
+- 평가 방식 [정성/정량 구성] · 동점 처리 [원문]
+
+## 부문별
+| 평가부문 | 표기 소계 | 항목합 | 일치 | 비중 |
+|---|---|---|---|---|
+[부문마다 한 행. 🔴 불일치면 「불일치」라고 적고 아래 경고에 옮긴다]
+
+## 항목별
+| 대항목 | 소항목 | 배점 | 정성/정량 | 1점당 분량(쪽) |
+|---|---|---|---|---|
+[한 행씩. 분량은 전체 허용 쪽수를 총 배점으로 나눈 산술값]
+
+## 🔴 경고
+[소계 불일치·등급환산 누락·하한 미명시 등. 없으면 "없음"]"""
+
+P_RISK = """You are a CONTRACT RISK analyst. 계약 특수조건에서 **낙찰 후 우리가 지는 의무**만 뽑는다. 요구사항이 아니라 리스크다.
+
+규칙:
+- 문서에 있는 조항만. 일반적인 계약 상식을 끌어와 채우지 않는다.
+- 조항마다 **누가 부담하는지**를 문서에 적힌 대로만. 안 적혔으면 '불명'.
+- 금액·비율이 걸린 조항(지체상금·계약보증금·손해배상 한도)을 먼저 올린다.
+- 🔴 법적 자문을 하지 않는다. 「이 조항은 불리하다」고 판단하지 말고, **무엇을 부담하게 되는지 사실만** 적는다.
+
+Return this output verbatim with the bracketed sections filled in:
+
+## 금액이 걸린 조항
+| 조번호 | 제목 | 요율/금액 | 부담 주체 | 근거 p |
+|---|---|---|---|---|
+[한 행씩. 없으면 "문서에 없음"]
+
+## 그 외 의무 조항
+| 조번호 | 유형 | 무엇을 부담하나 | 근거 p |
+|---|---|---|---|
+[한 행씩]
+
+## 상위 3~5건
+[사업 규모 대비 영향이 큰 순으로. 각 한 줄 + 어느 팀이 봐야 하는지]
+
+## 개인정보 위탁
+[있음/없음. 있으면 재위탁 제한·파기 의무 조항 인용]"""
+
+P_CHECKLIST = """You build a SUBMISSION CHECKLIST. 제출 직전에 사람이 화면 옆에 놓고 하나씩 지우는 종이다.
+
+규칙:
+- 서식과 제출물 목록을 합친다. 서식의 ※ 주석에 든 인정 범위 규칙을 반드시 옮긴다 (예: '공공기관 유지관리 사업에 한함', '확인이 불가능한 실적은 인정하지 않음') — 🔴 이 괄호 하나가 실적 인정 범위를 좌우한다.
+- 부수·분량 상한·유효기간·날인 필요 여부를 각 행에 붙인다.
+- 제3자 발급 서류(실적증명서·신용평가등급확인서·법인등기부등본·제조사 확약서)는 **리드타임 열**에 「[확인필요 — 발급 소요]」로 표시한다. 날짜를 지어내지 않는다.
+- 전자제출 제한(용량·형식·제출 순서)이 있으면 맨 위에 경고로 올린다.
+
+Return this output verbatim with the bracketed sections filled in:
+
+## 🔴 제출 제약
+[용량 상한·파일 형식·제출 순서. 없으면 "공고에 명시 없음"]
+
+## 제출물
+| 서류 | 서식번호 | 부수 | 분량상한 | 유효기간 | 날인 | 리드타임 | 근거 p |
+|---|---|---|---|---|---|---|---|
+[한 행씩]
+
+## ※ 인정 범위 규칙
+[서식 주석에서 뽑은 규칙. 한 줄씩. 없으면 "없음"]
+
+## 집계
+- 총 출력 부수 [N]부 · 제3자 발급 서류 [K]건 · 작성양식 [지정/자유/불명]"""
+
+P_QUESTIONS = """You draft OFFICIAL QUESTIONS to the buyer. 🔴 **질의 답변은 통상 전 제안사에 공유된다** — 그래서 「무엇을 묻지 않을지」가 질의서 설계의 절반이다.
+
+규칙:
+- 앞 단계가 찾은 불일치(mismatch)와 [확인필요]에서만 질의를 만든다. 새로 궁금한 것을 지어내지 않는다.
+- 질의마다 **조문·쪽 번호를 인용**한다.
+- 🔴 **묻지 않을 것을 반드시 함께 낸다.** 우리 약점을 드러내거나 경쟁사에 힌트를 주는 질의가 여기 간다. 이유를 한 줄로 적는다.
+- 문의처가 과업/입찰 두 갈래면 각 질의에 어느 쪽인지 표시한다.
+- 구두 답변은 근거가 안 된다는 것을 머리말에 넣는다.
+
+Return this output verbatim with the bracketed sections filled in:
+
+## 질의 (발송 대상)
+| # | 질의 | 근거 조항·쪽 | 왜 물어야 하나 | 문의처 |
+|---|---|---|---|---|
+[한 행씩]
+
+## 🔴 묻지 않을 것
+| 궁금한 것 | 왜 묻지 않나 | 대신 어떻게 가정하나 |
+|---|---|---|
+[한 행씩. 없으면 "없음"]
+
+## 주의
+- 회신은 서면으로 받는다. 구두 답변은 계약 근거가 되지 않는다.
+- 질의로 규격이 바뀌면 정정공고가 나가고 마감이 밀릴 수 있다."""
+
+P_COVERAGE = """You audit OUR OWN PROPOSAL against the buyer's requirements. 🔴 입력이 발주 문서가 아니라 **우리가 쓴 제안서**다 — 세 번째 문서군이다.
+
+규칙:
+- 요구사항 조견표의 각 ID가 제안서 본문에서 다뤄졌는지 대조한다. 다뤄졌으면 어느 쪽인지 적는다.
+- 🔴 **금지 표현을 전수 검색한다.** RFP가 열거한 표현(「가능하다」·「고려할 수 있다」 류)이 제안서에 남아 있으면 그 문장과 쪽을 그대로 뽑는다 — 평가에서 불가능한 것으로 간주된다.
+- 분량 상한·부수·지정 양식 준수를 확인한다.
+- 🔴 문장을 고쳐 주지 않는다. **어디가 걸리는지만 짚는다.** 고치는 것은 사람이다.
+
+Return this output verbatim with the bracketed sections filled in:
+
+## 요구사항 커버리지
+- 전체 [N]건 중 대응 [K]건 · **미대응 [N-K]건**
+| 미대응 요구사항ID | 요구 원문 | 대응했어야 할 목차 |
+|---|---|---|
+[미대응만 한 행씩. 없으면 "미대응 0건"]
+
+## 🔴 금지 표현
+| 쪽 | 걸린 문장 | 금지 표현 |
+|---|---|---|
+[한 행씩. 없으면 "발견 없음"]
+
+## 형식 준수
+| 항목 | 기준 | 우리 값 | 통과 |
+|---|---|---|---|
+[분량·부수·양식·일련번호 등]
+
+## 판정
+[제출 가능 / 수정 필요 — 수정 필요면 무엇부터]"""
+
 P_MISMATCH = """You detect MISMATCH between two documents. 🔴 조달 실무의 기본 규칙: **공고서와 제안요청서(규격서)의 내용이 다르면 공고서가 우선한다.** 사람은 200쪽을 두 번 읽지 못해 이걸 놓친다.
 
 판정 어휘는 셋뿐이다 — grounded / not-in-document / mismatch.
@@ -349,26 +519,57 @@ Return this output verbatim with the bracketed sections filled in:
 
 instruct = {
   "nodes": [
+    # ── Must — 데모 경로 ──
     {"name": "cross_check_notice_vs_rfp", "modelName": "default", "prompt": P_MISMATCH},
-    {"name": "judge_eligibility",  "modelName": "default", "prompt": P_JUDGE},
-    {"name": "compliance_matrix",  "modelName": "default", "prompt": P_MATRIX},
-    {"name": "build_wbs",          "modelName": "default", "prompt": P_WBS},
-    {"name": "critical_path",      "modelName": "default", "prompt": P_CP},
+    {"name": "judge_eligibility",         "modelName": "default", "prompt": P_JUDGE},
+    {"name": "compliance_matrix",         "modelName": "default", "prompt": P_MATRIX},
+    {"name": "build_wbs",                 "modelName": "default", "prompt": P_WBS},
+    {"name": "critical_path",             "modelName": "default", "prompt": P_CP},
+    # ── Should — 고아 스키마를 소비한다 ──
+    {"name": "analyze_scoring",           "modelName": "default", "prompt": P_SCORING},
+    {"name": "triage_contract_risk",      "modelName": "default", "prompt": P_RISK},
+    {"name": "build_submission_checklist","modelName": "default", "prompt": P_CHECKLIST},
+    {"name": "draft_questions",           "modelName": "default", "prompt": P_QUESTIONS},
+    # ── Should — S7. 입력이 우리 제안서다 ──
+    {"name": "check_proposal_coverage",   "modelName": "default", "prompt": P_COVERAGE},
   ],
-  # Federal RFPs 관찰: {노드: 그 노드가 읽는 곳}. targetType은 "extract" 또는 "instruct".
+  # 🔴 Federal RFPs 관찰상 노드 하나가 소스 하나를 받는다. 아래 connectionMapping은 그 형태(주 소스)다.
+  #    실제로 필요한 입력은 _inputs에 적었다 — 04:00 프리플라이트에서 캔버스가 다중 입력을 허용하면
+  #    _inputs대로 선을 잇고, 아니면 우리 Node 층이 합쳐 Solar Pro 4로 보낸다.
   "connectionMapping": {
-    "cross_check_notice_vs_rfp": {"targetType": "extract", "schemaName": "ie_ntce_notice"},
-    "judge_eligibility": {"targetType": "instruct", "instructNodeName": "cross_check_notice_vs_rfp"},
-    "compliance_matrix": {"targetType": "extract",  "schemaName": "ie_req_spec"},
-    "build_wbs":         {"targetType": "instruct", "instructNodeName": "compliance_matrix"},
-    "critical_path":     {"targetType": "instruct", "instructNodeName": "build_wbs"},
-  }
+    "cross_check_notice_vs_rfp":  {"targetType": "extract",  "schemaName": "ie_ntce_notice"},
+    "judge_eligibility":          {"targetType": "instruct", "instructNodeName": "cross_check_notice_vs_rfp"},
+    "compliance_matrix":          {"targetType": "extract",  "schemaName": "ie_req_spec"},
+    "build_wbs":                  {"targetType": "instruct", "instructNodeName": "compliance_matrix"},
+    "critical_path":              {"targetType": "instruct", "instructNodeName": "build_wbs"},
+    "analyze_scoring":            {"targetType": "extract",  "schemaName": "ie_eval_sheet"},
+    "triage_contract_risk":       {"targetType": "extract",  "schemaName": "ie_contract_terms"},
+    "build_submission_checklist": {"targetType": "extract",  "schemaName": "ie_form_annex"},
+    "draft_questions":            {"targetType": "instruct", "instructNodeName": "cross_check_notice_vs_rfp"},
+    "check_proposal_coverage":    {"targetType": "extract",  "schemaName": "ie_our_proposal"},
+  },
+  "_inputs": {
+    "cross_check_notice_vs_rfp":  ["ie_ntce_notice", "ie_rfp_main"],
+    "judge_eligibility":          ["cross_check_notice_vs_rfp", "ie_rfp_main", "회사프로필(고정)"],
+    "compliance_matrix":          ["ie_req_spec", "ie_rfp_main"],
+    "build_wbs":                  ["compliance_matrix", "ie_sow_task"],
+    "critical_path":              ["build_wbs", "ie_ntce_notice", "build_submission_checklist(선택)"],
+    "analyze_scoring":            ["ie_eval_sheet", "ie_rfp_main"],
+    "triage_contract_risk":       ["ie_contract_terms"],
+    "build_submission_checklist": ["ie_form_annex", "ie_rfp_main"],
+    "draft_questions":            ["cross_check_notice_vs_rfp", "compliance_matrix", "judge_eligibility"],
+    "check_proposal_coverage":    ["ie_our_proposal", "compliance_matrix", "ie_rfp_main"],
+  },
+  "_mvp": {
+    "Must":   ["cross_check_notice_vs_rfp", "judge_eligibility", "compliance_matrix", "build_wbs", "critical_path"],
+    "Should": ["analyze_scoring", "triage_contract_risk", "build_submission_checklist", "draft_questions", "check_proposal_coverage"],
+  },
 }
 
 agent = {
   "_주의": "Solar for Bid 에이전트 설정 초안 (2026-08-22). Upstage 자체 제작 Federal RFPs(agt_TQ573pyaUjGWP7xxPtGKZH) 공개 설정과 같은 구조로 작성. Studio UI에 손으로 옮겨 넣는 것이 기준이고, 이 JSON은 그 원본이다.",
   "name": "Solar for Bid — 조달 공고 분해기",
-  "description": "한국 공공조달 공고 묶음을 7종으로 가려 읽고 참가자격 판정·요구사항 조견표·WBS·임계경로를 만든다",
+  "description": "한국 공공조달 공고 묶음을 8종으로 가려 읽고 참가자격 판정·요구사항 조견표·WBS·임계경로·배점해부·계약리스크·제출체크리스트·질의서를 만들고, 우리가 쓴 제안서를 되태워 커버리지와 금지표현을 검사한다",
   "category": "Others",
   "language": "ko",
   "documentParseConfiguration": {
@@ -390,7 +591,8 @@ agent = {
     "categorySchemaMapping": {
       "ntce_notice": "ie_ntce_notice", "rfp_main": "ie_rfp_main", "sow_task": "ie_sow_task",
       "req_spec": "ie_req_spec", "eval_sheet": "ie_eval_sheet",
-      "contract_terms": "ie_contract_terms", "form_annex": "ie_form_annex"
+      "contract_terms": "ie_contract_terms", "form_annex": "ie_form_annex",
+      "our_proposal": "ie_our_proposal"
     },
     "location": True
   },
@@ -410,7 +612,21 @@ for s in SCHEMAS:
     nm = s["json_schema"]["name"]; pr = s["json_schema"]["schema"]["properties"]
     arr = [k for k, v in pr.items() if v.get("type") == "array"]
     print(f"  Extract {nm:22s} 필드 {len(pr):2d}  배열 {arr}")
-print(f"  Instruct 노드    : {len(instruct['nodes'])} — " + " · ".join(n["name"] for n in instruct["nodes"]))
+print(f"  Instruct 노드    : {len(instruct['nodes'])}  (Must {len(instruct['_mvp']['Must'])} / Should {len(instruct['_mvp']['Should'])})")
+for n in instruct["nodes"]:
+    tag = "Must  " if n["name"] in instruct["_mvp"]["Must"] else "Should"
+    print(f"    [{tag}] {n['name']:28s} ← " + " + ".join(instruct["_inputs"][n["name"]]))
+consumed = set()
+for v in instruct["_inputs"].values():
+    consumed |= set(v)
+orphan = [s["json_schema"]["name"] for s in SCHEMAS if s["json_schema"]["name"] not in consumed]
+print(f"  고아 스키마       : {orphan if orphan else '없음 ✅'}")
+must = set(instruct["_mvp"]["Must"]); should = set(instruct["_mvp"]["Should"])
+broken = []
+for n in instruct["_mvp"]["Must"]:
+    for src in instruct["_inputs"][n]:
+        if src in should: broken.append(f"{n} ← {src}")
+print(f"  Must 폐쇄성       : " + ("✅ Must만으로 닫힌다" if not broken else f"🔴 Should 의존 {broken}"))
 print("  체인 A          : cross_check → judge_eligibility (2단)")
 print("  체인 B          : compliance_matrix → build_wbs → critical_path (3단)")
 json.loads(out.read_text(encoding="utf-8"))

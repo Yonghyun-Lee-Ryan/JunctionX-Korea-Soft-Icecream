@@ -1,7 +1,7 @@
 {
   "_주의": "Solar for Bid 에이전트 설정 초안 (2026-08-22). Upstage 자체 제작 Federal RFPs(agt_TQ573pyaUjGWP7xxPtGKZH) 공개 설정과 같은 구조로 작성. Studio UI에 손으로 옮겨 넣는 것이 기준이고, 이 JSON은 그 원본이다.",
   "name": "Solar for Bid — 조달 공고 분해기",
-  "description": "한국 공공조달 공고 묶음을 7종으로 가려 읽고 참가자격 판정·요구사항 조견표·WBS·임계경로를 만든다",
+  "description": "한국 공공조달 공고 묶음을 8종으로 가려 읽고 참가자격 판정·요구사항 조견표·WBS·임계경로·배점해부·계약리스크·제출체크리스트·질의서를 만들고, 우리가 쓴 제안서를 되태워 커버리지와 금지표현을 검사한다",
   "category": "Others",
   "language": "ko",
   "documentParseConfiguration": {
@@ -58,8 +58,12 @@
               "description": "제출 서식·별첨 양식. 식별 특징: 빈 칸과 서명·날인란이 있는 서식 — 입찰참가신청서, 제안서 표지, 청렴계약이행서약서, 가격제안서 양식, 실적증명서 양식(서식 제N호), 산출내역서, 인력투입계획표, 공동수급표준협정서. 「서식 제N호」 표기, 채워지지 않은 밑줄과 표 칸, 「(인)」 표기. KEY NEGATIVE: 내용이 채워진 문서는 다른 클래스다. KEY DISTINCTION: 값을 뽑는 것이 아니라 「무엇을 몇 부 내야 하는가」와 ※ 주석의 인정 범위 규칙을 잡는 것이 목적이다."
             },
             {
+              "const": "our_proposal",
+              "description": "🔴 우리가 작성한 제안서·제안요약서 — 발주 문서가 아니라 **우리 산출물**이다. 식별 특징: 표지에 우리 회사명과 「제안서」·「제안요약서」 표기, 발주처가 지정한 목차(Ⅰ 제안개요 / Ⅱ 제안사 일반 / Ⅲ 사업 수행 부문 / Ⅳ 사업관리부문)를 따르는 장·절 구성, 페이지 하단 일련번호, 개조식 문체, 회사 CI. KEY NEGATIVE: 발주기관이 낸 문서는 전부 다른 클래스다 — 발신자가 누구인지로 먼저 가른다. KEY DISTINCTION: 이 갈래만 **검사 대상**이다. 다른 갈래는 「무엇을 요구하나」를 읽지만 이 갈래는 「우리가 그 요구를 지켰나」를 재는 입력이다."
+            },
+            {
               "const": "others",
-              "description": "위 일곱에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. KEY DISTINCTION: 지원 범위 밖으로 두고 「자동 분석 대상 아님 — 사람이 확인」으로 라우팅한다. 억지로 다른 클래스에 넣지 않는다."
+              "description": "위 여덟에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. KEY DISTINCTION: 지원 범위 밖으로 두고 「자동 분석 대상 아님 — 사람이 확인」으로 라우팅한다. 억지로 다른 클래스에 넣지 않는다."
             }
           ]
         }
@@ -106,8 +110,12 @@
                 "description": "제출 서식·별첨 양식. 식별 특징: 빈 칸과 서명·날인란이 있는 서식 — 입찰참가신청서, 제안서 표지, 청렴계약이행서약서, 가격제안서 양식, 실적증명서 양식(서식 제N호), 산출내역서, 인력투입계획표, 공동수급표준협정서. 「서식 제N호」 표기, 채워지지 않은 밑줄과 표 칸, 「(인)」 표기. KEY NEGATIVE: 내용이 채워진 문서는 다른 클래스다. KEY DISTINCTION: 값을 뽑는 것이 아니라 「무엇을 몇 부 내야 하는가」와 ※ 주석의 인정 범위 규칙을 잡는 것이 목적이다."
               },
               {
+                "const": "our_proposal",
+                "description": "🔴 우리가 작성한 제안서·제안요약서 — 발주 문서가 아니라 **우리 산출물**이다. 식별 특징: 표지에 우리 회사명과 「제안서」·「제안요약서」 표기, 발주처가 지정한 목차(Ⅰ 제안개요 / Ⅱ 제안사 일반 / Ⅲ 사업 수행 부문 / Ⅳ 사업관리부문)를 따르는 장·절 구성, 페이지 하단 일련번호, 개조식 문체, 회사 CI. KEY NEGATIVE: 발주기관이 낸 문서는 전부 다른 클래스다 — 발신자가 누구인지로 먼저 가른다. KEY DISTINCTION: 이 갈래만 **검사 대상**이다. 다른 갈래는 「무엇을 요구하나」를 읽지만 이 갈래는 「우리가 그 요구를 지켰나」를 재는 입력이다."
+              },
+              {
                 "const": "others",
-                "description": "위 일곱에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. KEY DISTINCTION: 지원 범위 밖으로 두고 「자동 분석 대상 아님 — 사람이 확인」으로 라우팅한다. 억지로 다른 클래스에 넣지 않는다."
+                "description": "위 여덟에 속하지 않는 문서 — 사업 참고자료, 현황 자료, 도면, 기존 시스템 설명서, 회의록, 정정공고, 추진일정 간트. KEY DISTINCTION: 지원 범위 밖으로 두고 「자동 분석 대상 아님 — 사람이 확인」으로 라우팅한다. 억지로 다른 클래스에 넣지 않는다."
               }
             ]
           }
@@ -888,6 +896,141 @@
             }
           }
         }
+      },
+      {
+        "type": "json_schema",
+        "mode": "standard",
+        "modelName": "",
+        "json_schema": {
+          "name": "ie_our_proposal",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "문서종류": {
+                "type": "string",
+                "description": "다음 중 정확히 하나: 제안서|제안요약서|요구사항조견표|가격제안서|기타"
+              },
+              "총쪽수": {
+                "type": "string",
+                "description": "숫자만. 문서에 없으면 빈 문자열. 추론하거나 지어내지 않는다."
+              },
+              "목차": {
+                "type": "array",
+                "description": "제안서의 실제 장·절 구성. 순서대로",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "장": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "절": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "시작쪽": {
+                      "type": "integer",
+                      "description": "숫자"
+                    },
+                    "끝쪽": {
+                      "type": "integer",
+                      "description": "숫자"
+                    }
+                  }
+                }
+              },
+              "요구사항_언급": {
+                "type": "array",
+                "description": "🔴 본문에서 요구사항 ID를 언급한 곳. 조견표 커버리지 대조의 재료다. ID 표기가 없더라도 요구사항의 핵심어와 일치하는 서술이 있으면 추정 ID를 적고 근거 문장을 함께 남긴다",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "요구사항ID": {
+                      "type": "string",
+                      "description": "예: 'CSR-017'. 명시가 없고 추정이면 뒤에 '(추정)'을 붙인다"
+                    },
+                    "언급_문장": {
+                      "type": "string",
+                      "description": "그 요구를 다룬 문장을 그대로. 요약하지 않는다"
+                    },
+                    "장절": {
+                      "type": "string",
+                      "description": "어느 절에서"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "이 값이 나온 쪽 번호. 모르면 0"
+                    }
+                  }
+                }
+              },
+              "금지표현_후보": {
+                "type": "array",
+                "description": "🔴 「가능하다」·「동의한다」·「가능하다고 본다」·「할 수도 있다」·「고려할 수 있다」·「고려하고 있다」 및 그 변형이 쓰인 문장을 **하나도 빠뜨리지 않고** 그대로. 평가에서 불가능한 것으로 간주되는 표현이다. 🔴 문장을 고쳐 주지 않는다 — 걸린 자리만 찍는다",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "문장": {
+                      "type": "string",
+                      "description": "원문 그대로"
+                    },
+                    "걸린표현": {
+                      "type": "string",
+                      "description": "그 문장 안의 금지 표현"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "이 값이 나온 쪽 번호. 모르면 0"
+                    }
+                  }
+                }
+              },
+              "형식": {
+                "type": "object",
+                "description": "형식 준수 확인용",
+                "properties": {
+                  "일련번호_있음": {
+                    "type": "string",
+                    "description": "다음 중 정확히 하나: 있음|없음|불명"
+                  },
+                  "장별번호_있음": {
+                    "type": "string",
+                    "description": "다음 중 정확히 하나: 있음|없음|불명"
+                  },
+                  "표지_발주처명": {
+                    "type": "string",
+                    "description": "표지에 적힌 발주처명. 문서에 없으면 빈 문자열. 추론하거나 지어내지 않는다."
+                  },
+                  "표지_사업명": {
+                    "type": "string",
+                    "description": "표지에 적힌 사업명. 문서에 없으면 빈 문자열. 추론하거나 지어내지 않는다."
+                  }
+                }
+              },
+              "미기재_의심": {
+                "type": "array",
+                "description": "「해당사항 없음」을 적어야 하는데 빈칸으로 남은 자리로 보이는 곳. 확신이 없으면 넣지 않는다",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "위치": {
+                      "type": "string",
+                      "description": ""
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "이 값이 나온 쪽 번호. 모르면 0"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "type": "integer",
+                "description": "이 값이 나온 쪽 번호. 모르면 0"
+              }
+            }
+          }
+        }
       }
     ],
     "categorySchemaMapping": {
@@ -897,7 +1040,8 @@
       "req_spec": "ie_req_spec",
       "eval_sheet": "ie_eval_sheet",
       "contract_terms": "ie_contract_terms",
-      "form_annex": "ie_form_annex"
+      "form_annex": "ie_form_annex",
+      "our_proposal": "ie_our_proposal"
     },
     "location": true
   },
@@ -911,7 +1055,7 @@
       {
         "name": "judge_eligibility",
         "modelName": "default",
-        "prompt": "You are a MATCHER, not a consultant. 당신은 판단하지 않는다 — 공고가 요구한 것과 회사가 가진 것을 맞대 놓기만 한다.\n\n판정 어휘는 셋뿐이다: 충족 / 미충족 / [확인필요].\n규칙:\n- 모든 판정에 근거를 붙인다 — 회사 프로필의 항목명과 공고의 쪽 번호.\n- 회사 프로필에 없는 실적·자격·등록을 만들지 않는다. 없으면 [확인필요]다.\n- 법령을 해석하지 않는다. 조문 이름은 문서에 적힌 그대로 옮긴다.\n- 「자격인가_가점인가」가 '자격'인 항목이 하나라도 미충족이면 판정은 No-Go다. '가점'만 미충족이면 조건부다. 공동수급이 허용이면 조건부에 그 경로를 한 줄 적는다.\n- 🔴 「설명회_참가의무」가 '참가자에한함'이면 이것을 **참가자격 항목으로 취급**한다. 설명회가 이미 지났으면 그 자리에서 No-Go다.\n- 🔴 「전자제출_제한」에 제출 순서·용량·형식 규정이 있으면 판정 아래 「제출 제약」 항목으로 그대로 옮긴다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 판정: [Go / No-Go / 조건부]\n[한 문장 이유]\n\n### 자격 대조\n| 요건 | 자격/가점 | 판정 | 근거 |\n|---|---|---|---|\n[한 행씩]\n\n### 미충족 항목\n[없으면 \"없음\". 있으면 항목마다 한 줄: 무엇이 부족하고 공고 몇 쪽에 그렇게 적혀 있는지]\n\n### 우회 경로\n[공동수급 허용 여부와 그 경로. 없으면 \"없음\"]\n\n### 제출 제약\n[전자제출 용량·형식·순서 규정. 없으면 \"공고에 명시 없음\"]\n\n### [확인필요]\n[회사 프로필에 정보가 없어 판정하지 못한 항목. 없으면 \"없음\"]"
+        "prompt": "You are a MATCHER, not a consultant. 당신은 판단하지 않는다 — 공고가 요구한 것과 회사가 가진 것을 맞대 놓기만 한다.\n\n## 회사 프로필 — 대조 기준 (데모 고정값, 가상 회사)\n🔴 실존 기업이 아니다. 이 블록 밖의 회사 정보를 쓰지 않는다.\n- 상호 ㈜다온피엠씨 · 설립 2009 · 인원 68 · **중소기업**(확인서 2027-03-31)\n- 등록: 소프트웨어사업자 ✅ · 정보시스템 감리법인 ✅ · **개인정보 영향평가기관 ❌** · **업종코드 6525 ❌**\n- 신용평가등급 A0 (나라장터 등록 ✅) · 부정당업자 해당 없음 · 직전연도 매출 8,420,000,000원\n- 정규직 비율 74% · 기술사 6 · 특급 24 · 고급 19 · 중급 15 · 초급 4\n- 최근 3년 실적: **공공 정보화 PMO 8건** · 감리 3 · ISP 2 · **금융권 PMO 0건** · **개인정보 영향평가 0건**\n- 최대 단일계약 612,000,000원 · 공동수급 허용(주관 선호, 최소지분 40%)\n- 소재 서울 (지사 없음)\n\n판정 어휘는 셋뿐이다: 충족 / 미충족 / [확인필요].\n규칙:\n- 모든 판정에 근거를 붙인다 — 회사 프로필의 항목명과 공고의 쪽 번호.\n- 회사 프로필에 없는 실적·자격·등록을 만들지 않는다. 없으면 [확인필요]다.\n- 법령을 해석하지 않는다. 조문 이름은 문서에 적힌 그대로 옮긴다.\n- 「자격인가_가점인가」가 '자격'인 항목이 하나라도 미충족이면 판정은 No-Go다. '가점'만 미충족이면 조건부다. 공동수급이 허용이면 조건부에 그 경로를 한 줄 적는다.\n- 🔴 「설명회_참가의무」가 '참가자에한함'이면 이것을 **참가자격 항목으로 취급**한다. 설명회가 이미 지났으면 그 자리에서 No-Go다.\n- 🔴 「전자제출_제한」에 제출 순서·용량·형식 규정이 있으면 판정 아래 「제출 제약」 항목으로 그대로 옮긴다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 판정: [Go / No-Go / 조건부]\n[한 문장 이유]\n\n### 자격 대조\n| 요건 | 자격/가점 | 판정 | 근거 |\n|---|---|---|---|\n[한 행씩]\n\n### 미충족 항목\n[없으면 \"없음\". 있으면 항목마다 한 줄: 무엇이 부족하고 공고 몇 쪽에 그렇게 적혀 있는지]\n\n### 우회 경로\n[공동수급 허용 여부와 그 경로. 없으면 \"없음\"]\n\n### 제출 제약\n[전자제출 용량·형식·순서 규정. 없으면 \"공고에 명시 없음\"]\n\n### [확인필요]\n[회사 프로필에 정보가 없어 판정하지 못한 항목. 없으면 \"없음\"]"
       },
       {
         "name": "compliance_matrix",
@@ -927,6 +1071,31 @@
         "name": "critical_path",
         "modelName": "default",
         "prompt": "You compute TWO critical paths and ONE submission checklist. 두 경로를 반드시 구분해서 낸다.\n\n경로 A(제안 준비) — 오늘부터 입찰 마감까지. 주말과 공휴일을 빼고 영업일로 센다.\n  반드시 포함: 발주처 질의 마감, 제3자 발급 서류의 리드타임(제조사 확약서·실적증명서·신용평가등급확인서·법인등기부등본),\n  출력·제본 물량(제출물 부수 합계), 제출 방법이 '인편'이면 이동 시간, 제안발표 준비.\n경로 B(사업 수행) — 앞 단계 WBS의 선후행에서 계산.\n\n규칙:\n- 날짜를 지어내지 않는다. 문서에 없는 리드타임은 \"[확인필요 — 리드타임 미상]\"으로 둔다.\n- 임계경로는 여유(Total Float)가 0인 경로다. 계산 근거를 함께 낸다.\n- 🔴 전자입찰 투찰(입찰서 제출)은 공동인증서와 보안토큰이 필요한 사람의 작업이다. 경로에 넣되 \"사람\" 표시를 한다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 경로 A — 제안 준비 (마감 [YYYY-MM-DD HH:MM])\n- 달력 일수 [N]일 / 실질 영업일 [M]일 (제외: [주말·공휴일 목록])\n| 작업 | 시작 | 종료 | 소요 | 여유 | 임계 | 담당 |\n|---|---|---|---|---|---|---|\n[한 행씩]\n**임계경로: [작업 → 작업 → 작업]**\n**가장 먼저 착수해야 할 것: [한 줄]**\n\n## 경로 B — 사업 수행\n**임계경로: [WBS ID 나열]** / 총 기간 [일]\n\n## 제출 체크리스트\n| 서류 | 부수 | 분량상한 | 유효기간 | 별첨양식 | 준비 주체 |\n|---|---|---|---|---|---|\n[한 행씩]\n- 총 출력 부수 [N]부 · 제출 방법 [인편/전자/우편]\n- 작성양식 지정 여부 [지정/자유/불명] [지정인데 양식 미보유면 경고 한 줄]\n\n## 금지 표현 검사 대상\n[RFP가 금지한 표현 목록. 제출 직전 원고 전수 검색할 것. 없으면 \"명시된 금지 표현 없음\"]"
+      },
+      {
+        "name": "analyze_scoring",
+        "modelName": "default",
+        "prompt": "You are a BID SCORING analyst. 배점표에서 득점 전략의 뼈대를 뽑는다. 🔴 점수를 예측하지 않는다 — 구조와 산술만 낸다.\n\n규칙:\n- 배점은 문서에 적힌 것만. 없는 항목을 만들지 않는다.\n- 🔴 **검산이 이 노드의 절반이다.** 부문 괄호 소계와 그 부문 항목합을 대조한다. 실물에서 표기 (10) vs 항목합 11, 표기 (10) vs 9가 상쇄돼 총합만 맞은 사례가 있다 — 총합만 보면 못 잡는다.\n- 커트라인은 문서에 적힌 하한 비율로만 계산한다. 하한이 없으면 \"문서에 명시 없음\".\n- 분량 배분은 배점 비율에 비례한 산술일 뿐임을 명시한다. 전략적 판단이 아니다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 배점 구조\n- 기술 [N] : 가격 [M] · 기술평가 하한 [X]% → **커트라인 [계산값]점**\n- 평가 방식 [정성/정량 구성] · 동점 처리 [원문]\n\n## 부문별\n| 평가부문 | 표기 소계 | 항목합 | 일치 | 비중 |\n|---|---|---|---|---|\n[부문마다 한 행. 🔴 불일치면 「불일치」라고 적고 아래 경고에 옮긴다]\n\n## 항목별\n| 대항목 | 소항목 | 배점 | 정성/정량 | 1점당 분량(쪽) |\n|---|---|---|---|---|\n[한 행씩. 분량은 전체 허용 쪽수를 총 배점으로 나눈 산술값]\n\n## 🔴 경고\n[소계 불일치·등급환산 누락·하한 미명시 등. 없으면 \"없음\"]"
+      },
+      {
+        "name": "triage_contract_risk",
+        "modelName": "default",
+        "prompt": "You are a CONTRACT RISK analyst. 계약 특수조건에서 **낙찰 후 우리가 지는 의무**만 뽑는다. 요구사항이 아니라 리스크다.\n\n규칙:\n- 문서에 있는 조항만. 일반적인 계약 상식을 끌어와 채우지 않는다.\n- 조항마다 **누가 부담하는지**를 문서에 적힌 대로만. 안 적혔으면 '불명'.\n- 금액·비율이 걸린 조항(지체상금·계약보증금·손해배상 한도)을 먼저 올린다.\n- 🔴 법적 자문을 하지 않는다. 「이 조항은 불리하다」고 판단하지 말고, **무엇을 부담하게 되는지 사실만** 적는다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 금액이 걸린 조항\n| 조번호 | 제목 | 요율/금액 | 부담 주체 | 근거 p |\n|---|---|---|---|---|\n[한 행씩. 없으면 \"문서에 없음\"]\n\n## 그 외 의무 조항\n| 조번호 | 유형 | 무엇을 부담하나 | 근거 p |\n|---|---|---|---|\n[한 행씩]\n\n## 상위 3~5건\n[사업 규모 대비 영향이 큰 순으로. 각 한 줄 + 어느 팀이 봐야 하는지]\n\n## 개인정보 위탁\n[있음/없음. 있으면 재위탁 제한·파기 의무 조항 인용]"
+      },
+      {
+        "name": "build_submission_checklist",
+        "modelName": "default",
+        "prompt": "You build a SUBMISSION CHECKLIST. 제출 직전에 사람이 화면 옆에 놓고 하나씩 지우는 종이다.\n\n규칙:\n- 서식과 제출물 목록을 합친다. 서식의 ※ 주석에 든 인정 범위 규칙을 반드시 옮긴다 (예: '공공기관 유지관리 사업에 한함', '확인이 불가능한 실적은 인정하지 않음') — 🔴 이 괄호 하나가 실적 인정 범위를 좌우한다.\n- 부수·분량 상한·유효기간·날인 필요 여부를 각 행에 붙인다.\n- 제3자 발급 서류(실적증명서·신용평가등급확인서·법인등기부등본·제조사 확약서)는 **리드타임 열**에 「[확인필요 — 발급 소요]」로 표시한다. 날짜를 지어내지 않는다.\n- 전자제출 제한(용량·형식·제출 순서)이 있으면 맨 위에 경고로 올린다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 🔴 제출 제약\n[용량 상한·파일 형식·제출 순서. 없으면 \"공고에 명시 없음\"]\n\n## 제출물\n| 서류 | 서식번호 | 부수 | 분량상한 | 유효기간 | 날인 | 리드타임 | 근거 p |\n|---|---|---|---|---|---|---|---|\n[한 행씩]\n\n## ※ 인정 범위 규칙\n[서식 주석에서 뽑은 규칙. 한 줄씩. 없으면 \"없음\"]\n\n## 집계\n- 총 출력 부수 [N]부 · 제3자 발급 서류 [K]건 · 작성양식 [지정/자유/불명]"
+      },
+      {
+        "name": "draft_questions",
+        "modelName": "default",
+        "prompt": "You draft OFFICIAL QUESTIONS to the buyer. 🔴 **질의 답변은 통상 전 제안사에 공유된다** — 그래서 「무엇을 묻지 않을지」가 질의서 설계의 절반이다.\n\n규칙:\n- 앞 단계가 찾은 불일치(mismatch)와 [확인필요]에서만 질의를 만든다. 새로 궁금한 것을 지어내지 않는다.\n- 질의마다 **조문·쪽 번호를 인용**한다.\n- 🔴 **묻지 않을 것을 반드시 함께 낸다.** 우리 약점을 드러내거나 경쟁사에 힌트를 주는 질의가 여기 간다. 이유를 한 줄로 적는다.\n- 문의처가 과업/입찰 두 갈래면 각 질의에 어느 쪽인지 표시한다.\n- 구두 답변은 근거가 안 된다는 것을 머리말에 넣는다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 질의 (발송 대상)\n| # | 질의 | 근거 조항·쪽 | 왜 물어야 하나 | 문의처 |\n|---|---|---|---|---|\n[한 행씩]\n\n## 🔴 묻지 않을 것\n| 궁금한 것 | 왜 묻지 않나 | 대신 어떻게 가정하나 |\n|---|---|---|\n[한 행씩. 없으면 \"없음\"]\n\n## 주의\n- 회신은 서면으로 받는다. 구두 답변은 계약 근거가 되지 않는다.\n- 질의로 규격이 바뀌면 정정공고가 나가고 마감이 밀릴 수 있다."
+      },
+      {
+        "name": "check_proposal_coverage",
+        "modelName": "default",
+        "prompt": "You audit OUR OWN PROPOSAL against the buyer's requirements. 🔴 입력이 발주 문서가 아니라 **우리가 쓴 제안서**다 — 세 번째 문서군이다.\n\n규칙:\n- 요구사항 조견표의 각 ID가 제안서 본문에서 다뤄졌는지 대조한다. 다뤄졌으면 어느 쪽인지 적는다.\n- 🔴 **금지 표현을 전수 검색한다.** RFP가 열거한 표현(「가능하다」·「고려할 수 있다」 류)이 제안서에 남아 있으면 그 문장과 쪽을 그대로 뽑는다 — 평가에서 불가능한 것으로 간주된다.\n- 분량 상한·부수·지정 양식 준수를 확인한다.\n- 🔴 문장을 고쳐 주지 않는다. **어디가 걸리는지만 짚는다.** 고치는 것은 사람이다.\n\nReturn this output verbatim with the bracketed sections filled in:\n\n## 요구사항 커버리지\n- 전체 [N]건 중 대응 [K]건 · **미대응 [N-K]건**\n| 미대응 요구사항ID | 요구 원문 | 대응했어야 할 목차 |\n|---|---|---|\n[미대응만 한 행씩. 없으면 \"미대응 0건\"]\n\n## 🔴 금지 표현\n| 쪽 | 걸린 문장 | 금지 표현 |\n|---|---|---|\n[한 행씩. 없으면 \"발견 없음\"]\n\n## 형식 준수\n| 항목 | 기준 | 우리 값 | 통과 |\n|---|---|---|---|\n[분량·부수·양식·일련번호 등]\n\n## 판정\n[제출 가능 / 수정 필요 — 수정 필요면 무엇부터]"
       }
     ],
     "connectionMapping": {
@@ -949,7 +1118,88 @@
       "critical_path": {
         "targetType": "instruct",
         "instructNodeName": "build_wbs"
+      },
+      "analyze_scoring": {
+        "targetType": "extract",
+        "schemaName": "ie_eval_sheet"
+      },
+      "triage_contract_risk": {
+        "targetType": "extract",
+        "schemaName": "ie_contract_terms"
+      },
+      "build_submission_checklist": {
+        "targetType": "extract",
+        "schemaName": "ie_form_annex"
+      },
+      "draft_questions": {
+        "targetType": "instruct",
+        "instructNodeName": "cross_check_notice_vs_rfp"
+      },
+      "check_proposal_coverage": {
+        "targetType": "extract",
+        "schemaName": "ie_our_proposal"
       }
+    },
+    "_inputs": {
+      "cross_check_notice_vs_rfp": [
+        "ie_ntce_notice",
+        "ie_rfp_main"
+      ],
+      "judge_eligibility": [
+        "cross_check_notice_vs_rfp",
+        "ie_rfp_main",
+        "회사프로필(고정)"
+      ],
+      "compliance_matrix": [
+        "ie_req_spec",
+        "ie_rfp_main"
+      ],
+      "build_wbs": [
+        "compliance_matrix",
+        "ie_sow_task"
+      ],
+      "critical_path": [
+        "build_wbs",
+        "ie_ntce_notice",
+        "build_submission_checklist(선택)"
+      ],
+      "analyze_scoring": [
+        "ie_eval_sheet",
+        "ie_rfp_main"
+      ],
+      "triage_contract_risk": [
+        "ie_contract_terms"
+      ],
+      "build_submission_checklist": [
+        "ie_form_annex",
+        "ie_rfp_main"
+      ],
+      "draft_questions": [
+        "cross_check_notice_vs_rfp",
+        "compliance_matrix",
+        "judge_eligibility"
+      ],
+      "check_proposal_coverage": [
+        "ie_our_proposal",
+        "compliance_matrix",
+        "ie_rfp_main"
+      ]
+    },
+    "_mvp": {
+      "Must": [
+        "cross_check_notice_vs_rfp",
+        "judge_eligibility",
+        "compliance_matrix",
+        "build_wbs",
+        "critical_path"
+      ],
+      "Should": [
+        "analyze_scoring",
+        "triage_contract_risk",
+        "build_submission_checklist",
+        "draft_questions",
+        "check_proposal_coverage"
+      ]
     }
   },
   "documentParseEnabled": true,
