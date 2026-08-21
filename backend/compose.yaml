@@ -1,0 +1,74 @@
+name: junctionx_backend
+
+services:
+  db:
+    image: postgres:18-bookworm
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    environment:
+      POSTGRES_USER: junctionx
+      POSTGRES_PASSWORD: junctionx_local_only
+      POSTGRES_DB: junctionx
+    volumes:
+      - postgres18_data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U junctionx -d junctionx']
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      target: development
+    command: sh -c "npm run db:generate && npm run db:migrate:deploy && npm run dev"
+    ports:
+      - '${API_PORT:-3000}:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://junctionx:junctionx_local_only@db:5432/junctionx
+      TEST_DATABASE_URL: postgresql://junctionx:junctionx_local_only@db:5432/junctionx_test
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
+      TRUST_PROXY: 'false'
+      LOG_LEVEL: debug
+      JWT_ISSUER: junctionx-korea-backend
+      JWT_AUDIENCE: junctionx-korea-client
+      JWT_ACCESS_SECRET: compose-local-only-access-secret-0123456789abcdef
+      JWT_REFRESH_SECRET: compose-local-only-refresh-secret-fedcba9876543210
+      JWT_ACCESS_TTL_SECONDS: 900
+      JWT_REFRESH_TTL_SECONDS: 604800
+      AUTH_REFRESH_TRANSPORT: cookie
+      AUTH_REFRESH_COOKIE_NAME: junctionx_refresh
+      COOKIE_SECURE: 'false'
+      COOKIE_SAME_SITE: lax
+      ENABLE_API_DOCS: 'true'
+      DATABASE_POOL_MAX: 10
+      DATABASE_CONNECTION_TIMEOUT_MS: 5000
+    volumes:
+      - .:/app
+      - api_node_modules:/app/node_modules
+      - api_generated:/app/src/generated
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres18_data:
+  api_node_modules:
+  api_generated:

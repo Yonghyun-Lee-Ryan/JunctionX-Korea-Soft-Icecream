@@ -1,0 +1,55 @@
+@baseUrl = http://localhost:3000
+@accessToken = paste-access-token-here
+@refreshToken = paste-refresh-token-here
+
+### Liveness
+GET {{baseUrl}}/health/live
+
+### Readiness
+GET {{baseUrl}}/health/ready
+
+### OpenAPI 3.1
+GET {{baseUrl}}/openapi.json
+
+### Register
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "hacker@example.com",
+  "password": "Hackathon!2026",
+  "displayName": "Hacker"
+}
+
+### Login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "hacker@example.com",
+  "password": "Hackathon!2026"
+}
+
+### Current user
+GET {{baseUrl}}/api/v1/users/me
+Authorization: Bearer {{accessToken}}
+
+### Refresh (body mode; cookie mode sends the client's stored HttpOnly cookie and an empty object)
+POST {{baseUrl}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout current session (body mode)
+POST {{baseUrl}}/api/v1/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout every session
+POST {{baseUrl}}/api/v1/auth/logout-all
+Authorization: Bearer {{accessToken}}
