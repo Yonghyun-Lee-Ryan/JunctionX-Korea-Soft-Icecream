@@ -1,0 +1,80 @@
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Apple SD Gothic Neo","AppleGothic","Noto Sans KR",sans-serif;
+         color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 12mm 18mm 9mm; position: relative;
+          display: flex; flex-direction: column; }
+  .wm { position: absolute; inset: 0; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 30mm; pointer-events: none; z-index: 0; }
+  .wm span { transform: rotate(-28deg); font-size: 29pt; font-weight: 800; letter-spacing: 6px;
+             color: rgba(190,40,40,.12); white-space: nowrap; }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+  .formno { font-size: 7.5pt; color: #333; border: 1px solid #333; display: inline-block;
+            padding: 1.3mm 2.3mm; margin-bottom: 5mm; align-self: flex-start; }
+  .frame { border: 2.2px solid #111; padding: 7mm 9mm 6mm; flex: 1; display: flex; flex-direction: column; }
+  h1 { font-size: 21pt; font-weight: 800; letter-spacing: 11px; text-align: center; margin: 2mm 0 2mm; }
+  .docno { text-align: center; font-size: 10.5pt; font-weight: 700; letter-spacing: 2px; margin-bottom: 6mm; }
+  .sect { font-size: 10.5pt; font-weight: 800; margin: 4.5mm 0 1.8mm; }
+  table { border-collapse: collapse; width: 100%; }
+  .kv th, .kv td { border: 1px solid #444; padding: 2.1mm 2.8mm; font-size: 9.5pt; }
+  .kv th { background: #ececec; width: 34mm; font-weight: 700; text-align: center; }
+  .grid th, .grid td { border: 1px solid #444; padding: 1.4mm 2mm; font-size: 8.2pt; }
+  .grid th { background: #ececec; font-weight: 700; text-align: center; }
+  .grid td.c { text-align: center; }
+  .big { font-size: 15pt; font-weight: 900; letter-spacing: 2px; }
+  .attest { margin-top: 6mm; font-size: 10.5pt; line-height: 1.9; text-align: center; }
+  .issue { text-align: center; margin-top: auto; padding-top: 7mm; }
+  .issue .date { font-size: 11.5pt; letter-spacing: 3px; margin-bottom: 8mm; }
+  .issue .org { font-size: 16pt; font-weight: 800; letter-spacing: 8px; position: relative; display: inline-block; }
+  .stamp { position: absolute; right: -23mm; top: 50%; transform: translateY(-50%) rotate(-9deg);
+           width: 18mm; height: 18mm; border: 2.2px solid rgba(190,40,40,.6); border-radius: 50%;
+           color: rgba(190,40,40,.6); font-size: 7pt; font-weight: 800; letter-spacing: 0;
+           display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; }
+  .note { font-size: 7.8pt; color: #333; line-height: 1.6; margin-top: 3mm; }
+  .note b { font-weight: 700; }
+  .disclaimer { margin-top: 4mm; border: 1.2px dashed #b02828; background: #fdf3f3;
+                padding: 2.5mm 3.4mm; font-size: 7.8pt; line-height: 1.5; color: #7a1d1d; }
+  .disclaimer b { font-weight: 800; }
+</style>
+
+<div class="page">
+  <div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>
+  <div class="content">
+    <div class="formno">■ 중소기업기본법 시행규칙 [별지 제1호서식]</div>
+    <div class="frame">
+      <h1>중소기업확인서</h1>
+      <div class="docno">확인번호 : 제 2026-0000000 호</div>
+      <div class="sect">1. 기업 개요</div>
+      <table class="kv">
+      <tr><th>상 호</th><td>주식회사 다온피엠씨</td><th>사업자등록번호</th><td>120-86-01230</td></tr>
+      <tr><th>대 표 자</th><td>강민서</td><th>법인등록번호</th><td>110111-0000000</td></tr>
+      <tr><th>소 재 지</th><td colspan="3">서울특별시 강남구 테헤란로 501, 11층 (삼성동)</td></tr>
+    </table>
+      <table class="kv" style="margin-top:-1px">
+        <tr><th>주 업 종</th><td colspan="3">소프트웨어 개발 및 공급업 (업종코드 6525)</td></tr>
+      </table>
+      <div class="sect">2. 확인 내용</div>
+      <table class="kv">
+        <tr><th>기 업 규 모</th><td class="big" colspan="3">중소기업 (중기업)</td></tr>
+        <tr><th>해당 사업연도</th><td colspan="3">제17기 &nbsp; 2025. 01. 01. ~ 2025. 12. 31.</td></tr>
+        <tr><th>상시근로자 수</th><td>68 명</td><th>매 출 액</th><td>8,420,000,000 원</td></tr>
+        <tr><th>자 산 총 액</th><td>6,471,900,000 원</td><th>업 력</th><td>17 년 (2009. 03. 16. 개업)</td></tr>
+        <tr><th>유 효 기 간</th><td colspan="3"><b>2026. 04. 01. ~ 2027. 03. 31.</b></td></tr>
+      </table>
+      <div class="note">
+        ※ 본 확인서는 「중소기업기본법」 제2조 및 같은 법 시행령 제3조에 따른 확인 결과입니다.<br>
+        ※ 확인 내용은 <b>해당 사업연도의 재무제표와 상시근로자 수</b>를 기준으로 합니다.<br>
+        ※ 유효기간 중이라도 관계 법령상 요건을 충족하지 못하게 된 경우 확인의 효력이 상실될 수 있습니다.<br>
+        ※ 본 확인서의 진위 여부는 중소기업현황정보시스템에서 확인번호로 조회할 수 있습니다.
+      </div>
+      <div class="attest">「중소기업기본법」 제2조에 따라 위와 같이 <b>중소기업</b>임을 확인합니다.</div>
+      <div class="issue">
+        <div class="date">2026 년 04 월 01 일</div>
+        <div class="org">중소벤처기업부장관<span class="stamp">중소벤처<br>기업부<br>印</span></div>
+      </div>
+    </div>
+    <div class="disclaimer"><b>🔴 데모용 견본 문서입니다 — 실제 중소기업확인서가 아닙니다.</b><br>이 문서는 JunctionX Korea 해커톤 프로젝트 <b>Solar for Bid</b>의 문서 처리 파이프라인 시연을 위해 만든 <b>가상 회사</b>의 견본입니다. ㈜다온피엠씨는 실존하지 않으며, 기재된 번호·등급·수치는 모두 <b>허구</b>입니다. 중소벤처기업부는 이 회사에 확인서를 발급한 사실이 없으며, <b>확인번호는 조회되지 않는 자리표시자</b>입니다. 어떠한 증명·제출 용도로도 사용할 수 없습니다.</div>
+  </div>
+</div>

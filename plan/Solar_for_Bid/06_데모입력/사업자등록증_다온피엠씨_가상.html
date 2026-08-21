@@ -1,0 +1,179 @@
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Apple SD Gothic Neo", "AppleGothic", "Noto Sans KR", sans-serif;
+    color: #111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm; height: 297mm;
+    padding: 11mm 18mm;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  /* 워터마크 */
+  .wm {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    gap: 26mm;
+    pointer-events: none; z-index: 0;
+  }
+  .wm span {
+    transform: rotate(-28deg);
+    font-size: 30pt; font-weight: 800; letter-spacing: 6px;
+    color: rgba(190, 40, 40, 0.13);
+    white-space: nowrap;
+  }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+  .formno {
+    font-size: 7.5pt; color: #333;
+    border: 1px solid #333; display: inline-block;
+    padding: 1.5mm 2.5mm; margin-bottom: 6mm; align-self: flex-start;
+  }
+  .frame { border: 2.2px solid #111; padding: 6mm 9mm 5mm; flex: 1; display: flex; flex-direction: column; }
+
+  h1 { font-size: 23pt; font-weight: 800; letter-spacing: 13px; text-align: center; margin: 1mm 0 1.5mm; }
+  .subtitle { text-align: center; font-size: 12pt; letter-spacing: 3px; margin-bottom: 4mm; }
+  .regno { text-align: center; font-size: 13pt; font-weight: 700; letter-spacing: 2px; margin-bottom: 6mm; }
+
+  table.fields { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
+  table.fields td { padding: 2.0mm 0; vertical-align: top; }
+  td.lbl { width: 62mm; white-space: nowrap; }
+  td.lbl .num { display: inline-block; width: 6mm; }
+  td.lbl .txt { display: inline-block; width: 50mm; text-align: justify; text-align-last: justify; }
+  td.lbl .txt.wide { text-align-last: left; font-size: 9.5pt; }
+  td.sep { width: 6mm; text-align: center; }
+  td.val { font-weight: 600; }
+
+  table.biz { border-collapse: collapse; width: 100%; margin: 1mm 0 0; font-size: 10pt; }
+  table.biz th, table.biz td { border: 1px solid #444; padding: 1.8mm 2.5mm; }
+  table.biz th { background: #f1f1f1; font-weight: 600; width: 30mm; text-align: center; }
+
+  .issue { text-align: center; margin-top: auto; padding-top: 7mm; }
+  .issue .date { font-size: 12pt; letter-spacing: 4px; margin-bottom: 9mm; }
+  .issue .office { font-size: 17pt; font-weight: 800; letter-spacing: 10px; position: relative; display: inline-block; }
+  .stamp {
+    position: absolute; right: -24mm; top: 50%; transform: translateY(-50%) rotate(-9deg);
+    width: 19mm; height: 19mm; border: 2.2px solid rgba(190,40,40,.62); border-radius: 50%;
+    color: rgba(190,40,40,.62); font-size: 7.5pt; font-weight: 800; letter-spacing: 0;
+    display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15;
+  }
+  .nts { text-align: center; font-size: 14pt; font-weight: 800; letter-spacing: 8px; margin-top: 8mm; color: #1a1a1a; }
+
+  .disclaimer {
+    margin-top: 4mm; border: 1.2px dashed #b02828; background: #fdf3f3;
+    padding: 2.6mm 3.5mm; font-size: 8pt; line-height: 1.5; color: #7a1d1d;
+  }
+  .disclaimer b { font-weight: 800; }
+</style>
+
+<div class="page">
+  <div class="wm">
+    <span>데모용 견본 · 실제 효력 없음</span>
+    <span>가 상 의 회 사 · SPECIMEN</span>
+    <span>데모용 견본 · 실제 효력 없음</span>
+  </div>
+
+  <div class="content">
+    <div class="formno">■ 부가가치세법 시행규칙 [별지 제7호서식] &lt;개정&gt;</div>
+
+    <div class="frame">
+      <h1>사업자등록증</h1>
+      <div class="subtitle">( 법 인 사 업 자 )</div>
+      <div class="regno">등록번호 : 120-86-01230</div>
+
+      <table class="fields">
+        <tr>
+          <td class="lbl"><span class="num">①</span><span class="txt">법 인 명 ( 단 체 명 )</span></td>
+          <td class="sep">:</td>
+          <td class="val">주식회사 다온피엠씨</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">②</span><span class="txt">대 표 자</span></td>
+          <td class="sep">:</td>
+          <td class="val">강민서</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">③</span><span class="txt">개 업 연 월 일</span></td>
+          <td class="sep">:</td>
+          <td class="val">2009 년 03 월 16 일</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">④</span><span class="txt">법 인 등 록 번 호</span></td>
+          <td class="sep">:</td>
+          <td class="val">110111-0000000</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑤</span><span class="txt">사 업 장 소 재 지</span></td>
+          <td class="sep">:</td>
+          <td class="val">서울특별시 강남구 테헤란로 501, 11층 (삼성동)</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑥</span><span class="txt">본 점 소 재 지</span></td>
+          <td class="sep">:</td>
+          <td class="val">서울특별시 강남구 테헤란로 501, 11층 (삼성동)</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑦</span><span class="txt">사 업 의 종 류</span></td>
+          <td class="sep">:</td>
+          <td class="val"></td>
+        </tr>
+      </table>
+
+      <table class="biz">
+        <tr><th>업 태</th><th>종 목</th><th style="width:26mm">업종코드</th></tr>
+        <tr><td>서비스업</td><td>소프트웨어 개발 및 공급업</td><td style="text-align:center">6525</td></tr>
+        <tr><td>서비스업</td><td>정보시스템 감리업</td><td style="text-align:center">6525</td></tr>
+        <tr><td>서비스업</td><td>경영컨설팅업 (PMO)</td><td style="text-align:center">7411</td></tr>
+      </table>
+
+      <table class="fields" style="margin-top:3mm">
+        <tr>
+          <td class="lbl"><span class="num">⑧</span><span class="txt">발 급 사 유</span></td>
+          <td class="sep">:</td>
+          <td class="val">정정</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑨</span><span class="txt">공동사업자</span></td>
+          <td class="sep">:</td>
+          <td class="val">해당 없음</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑩</span><span class="txt wide">주류판매신고번호</span></td>
+          <td class="sep">:</td>
+          <td class="val">해당 없음</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑪</span><span class="txt wide">사업자 단위 과세 적용사업자 여부</span></td>
+          <td class="sep">:</td>
+          <td class="val">여 (&nbsp;&nbsp;&nbsp;) &nbsp; 부 ( √ )</td>
+        </tr>
+        <tr>
+          <td class="lbl"><span class="num">⑫</span><span class="txt wide">전자세금계산서 전용 전자우편주소</span></td>
+          <td class="sep">:</td>
+          <td class="val">tax@daon-pmc.example</td>
+        </tr>
+      </table>
+
+      <div class="issue">
+        <div class="date">2026 년 01 월 12 일</div>
+        <div class="office">삼성세무서장<span class="stamp">삼성<br>세무서장<br>印</span></div>
+        <div class="nts">국 세 청</div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <b>🔴 데모용 견본 문서입니다 — 실제 사업자등록증이 아닙니다.</b><br>
+      이 문서는 JunctionX Korea 해커톤 프로젝트 <b>Solar for Bid</b>의 문서 처리 파이프라인 시연을 위해 만든
+      <b>가상 회사</b>의 견본입니다. ㈜다온피엠씨는 실존하지 않는 회사이며, 기재된 등록번호·법인등록번호·주소·대표자는 모두 허구입니다.
+      등록번호 <b>120-86-01230</b>은 <b>검증코드가 성립하지 않도록 의도적으로 만든 값</b>이라 국세청 사업자등록 상태조회에서 조회되지 않습니다.
+      어떠한 증명·신고·계약 용도로도 사용할 수 없습니다.
+    </div>
+  </div>
+</div>

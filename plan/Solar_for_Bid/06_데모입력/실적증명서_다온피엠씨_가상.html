@@ -1,0 +1,190 @@
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Apple SD Gothic Neo","AppleGothic","Noto Sans KR",sans-serif;
+         color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 13mm 17mm 10mm; position: relative;
+          display: flex; flex-direction: column; break-after: page; }
+  .page:last-child { break-after: auto; }
+
+  .wm { position: absolute; inset: 0; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 30mm; pointer-events: none; z-index: 0; }
+  .wm span { transform: rotate(-28deg); font-size: 28pt; font-weight: 800; letter-spacing: 6px;
+             color: rgba(190,40,40,.12); white-space: nowrap; }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+  .formno { font-size: 7.5pt; color: #333; border: 1px solid #333; display: inline-block;
+            padding: 1.4mm 2.4mm; margin-bottom: 4mm; align-self: flex-start; }
+  h1 { font-size: 20pt; font-weight: 800; letter-spacing: 10px; text-align: center; margin: 1mm 0 1mm; }
+  .subtitle { text-align: center; font-size: 9.5pt; letter-spacing: 2px; color: #444; margin-bottom: 4.5mm; }
+
+  table { border-collapse: collapse; width: 100%; }
+  .grid th, .grid td { border: 1px solid #444; padding: 1.05mm 1.8mm; font-size: 7.6pt; vertical-align: middle; }
+  .grid th { background: #eee; font-weight: 700; text-align: center; }
+  .grid td.c { text-align: center; }
+  .grid td.r { text-align: right; }
+  .grid tr.sub td { background: #f7f7f7; font-weight: 700; }
+  .grid tr.total td { background: #e6e6e6; font-weight: 800; }
+
+  .kv { border-collapse: collapse; width: 100%; margin-bottom: 4mm; }
+  .kv th, .kv td { border: 1px solid #444; padding: 2.0mm 2.6mm; font-size: 9.5pt; }
+  .kv th { background: #eee; width: 32mm; font-weight: 700; text-align: center; }
+  .sect { font-size: 11pt; font-weight: 800; margin: 4mm 0 2mm; }
+
+  .attest { margin-top: 7mm; font-size: 10.5pt; line-height: 1.9; text-align: center; }
+  .issue { text-align: center; margin-top: auto; padding-top: 8mm; }
+  .issue .date { font-size: 11.5pt; letter-spacing: 3px; margin-bottom: 8mm; }
+  .issue .org { font-size: 15pt; font-weight: 800; letter-spacing: 7px; position: relative; display: inline-block; }
+  .stamp { position: absolute; right: -22mm; top: 50%; transform: translateY(-50%) rotate(-9deg);
+           width: 17mm; height: 17mm; border: 2.2px solid rgba(190,40,40,.6); border-radius: 50%;
+           color: rgba(190,40,40,.6); font-size: 7pt; font-weight: 800; letter-spacing: 0;
+           display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; }
+
+  .note { font-size: 7.6pt; color: #333; line-height: 1.5; margin-top: 2.5mm; }
+  .note b { font-weight: 700; }
+  .disclaimer { margin-top: 4mm; border: 1.2px dashed #b02828; background: #fdf3f3;
+                padding: 2.4mm 3.2mm; font-size: 7.6pt; line-height: 1.45; color: #7a1d1d; }
+  .disclaimer b { font-weight: 800; }
+  .footline { margin-top: auto; padding-top: 3mm; font-size: 7.5pt; color: #b02828; text-align: center;
+              border-top: 1px dashed #d9a0a0; }
+</style>
+
+<!-- ─────────────── p.1 총괄표 ─────────────── -->
+<div class="page">
+  <div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>
+  <div class="content">
+    <div class="formno">[서식 제5호] 유사용역 수행실적 총괄표</div>
+    <h1>용역 수행실적 총괄표</h1>
+    <div class="subtitle">최근 3년 ( 2023. 08. 22. ~ 2026. 08. 21. ) · 주식회사 다온피엠씨</div>
+
+    <table class="kv">
+      <tr><th>상 호</th><td>주식회사 다온피엠씨</td><th>사업자등록번호</th><td>120-86-01230</td></tr>
+      <tr><th>대 표 자</th><td>강민서</td><th>작 성 일</th><td>2026. 08. 21.</td></tr>
+    </table>
+
+    <table class="grid">
+      <tr>
+        <th style="width:9mm">연번</th><th style="width:14mm">구분</th><th style="width:34mm">발주기관</th>
+        <th>사 업 명</th><th style="width:26mm">계약금액(원)</th><th style="width:34mm">계약기간</th><th style="width:20mm">참여형태</th>
+      </tr>
+      <tr><td class="c">1</td><td class="c">PMO</td><td>누리정보자원공단</td><td>차세대 통합정보시스템 구축 PMO</td><td class="r">612,000,000</td><td class="c">2023.09.01 ~ 2024.08.31</td><td class="c">주관</td></tr>
+      <tr><td class="c">2</td><td class="c">PMO</td><td>가온광역시</td><td>스마트도시 통합플랫폼 구축 PMO</td><td class="r">348,000,000</td><td class="c">2023.11.06 ~ 2024.06.30</td><td class="c">주관</td></tr>
+      <tr><td class="c">3</td><td class="c">PMO</td><td>국립한빛연구원</td><td>연구관리시스템 재구축 PMO</td><td class="r">425,000,000</td><td class="c">2024.01.15 ~ 2024.12.14</td><td class="c">주관</td></tr>
+      <tr><td class="c">4</td><td class="c">PMO</td><td>새롬산업진흥원</td><td>정보시스템 클라우드 전환 PMO</td><td class="r">286,000,000</td><td class="c">2024.03.04 ~ 2024.11.30</td><td class="c">주관</td></tr>
+      <tr><td class="c">5</td><td class="c">PMO</td><td>나래도교육청</td><td>교육행정정보 고도화 PMO</td><td class="r">517,000,000</td><td class="c">2024.07.01 ~ 2025.06.30</td><td class="c">주관</td></tr>
+      <tr><td class="c">6</td><td class="c">PMO</td><td>한국미르데이터원</td><td>데이터 통합관리체계 구축 PMO</td><td class="r">394,000,000</td><td class="c">2025.02.10 ~ 2025.10.31</td><td class="c">구성원 40%</td></tr>
+      <tr><td class="c">7</td><td class="c">PMO</td><td>가온시설공단</td><td>시설운영 통합관제 PMO</td><td class="r">233,000,000</td><td class="c">2025.04.01 ~ 2026.01.31</td><td class="c">주관</td></tr>
+      <tr><td class="c">8</td><td class="c">PMO</td><td>아라공사</td><td>업무포털 전면 재구축 PMO</td><td class="r">468,000,000</td><td class="c">2025.09.01 ~ 2026.07.31</td><td class="c">주관</td></tr>
+      <tr class="sub"><td class="c" colspan="4">PMO 소계 (8건)</td><td class="r">3,283,000,000</td><td colspan="2"></td></tr>
+
+      <tr><td class="c">9</td><td class="c">감리</td><td>미르군</td><td>통합민원시스템 구축 감리</td><td class="r">96,000,000</td><td class="c">2023.10.16 ~ 2024.03.15</td><td class="c">주관</td></tr>
+      <tr><td class="c">10</td><td class="c">감리</td><td>마루재단</td><td>회원관리시스템 재구축 감리</td><td class="r">74,000,000</td><td class="c">2024.05.02 ~ 2024.10.31</td><td class="c">주관</td></tr>
+      <tr><td class="c">11</td><td class="c">감리</td><td>도담특별자치도</td><td>지역화폐 플랫폼 감리</td><td class="r">118,000,000</td><td class="c">2025.06.01 ~ 2025.12.31</td><td class="c">주관</td></tr>
+      <tr class="sub"><td class="c" colspan="4">감리 소계 (3건)</td><td class="r">288,000,000</td><td colspan="2"></td></tr>
+
+      <tr><td class="c">12</td><td class="c">ISP</td><td>한빛정책연구원</td><td>정보화전략계획(ISP) 수립</td><td class="r">189,000,000</td><td class="c">2024.02.05 ~ 2024.08.04</td><td class="c">주관</td></tr>
+      <tr><td class="c">13</td><td class="c">ISP</td><td>아라구</td><td>스마트행정 ISP 수립</td><td class="r">152,000,000</td><td class="c">2025.03.10 ~ 2025.09.09</td><td class="c">주관</td></tr>
+      <tr class="sub"><td class="c" colspan="4">ISP 소계 (2건)</td><td class="r">341,000,000</td><td colspan="2"></td></tr>
+
+      <tr><td class="c">14</td><td class="c">영향평가</td><td>도담도</td><td>통합복지시스템 개인정보 영향평가</td><td class="r">58,000,000</td><td class="c">2024.09.02 ~ 2024.12.31</td><td class="c">주관</td></tr>
+      <tr><td class="c">15</td><td class="c">영향평가</td><td>누리건강공단</td><td>건강관리시스템 개인정보 영향평가</td><td class="r">67,000,000</td><td class="c">2025.08.01 ~ 2025.11.30</td><td class="c">주관</td></tr>
+      <tr class="sub"><td class="c" colspan="4">개인정보 영향평가 소계 (2건)</td><td class="r">125,000,000</td><td colspan="2"></td></tr>
+
+      <tr class="total"><td class="c" colspan="4">합 계 (15건)</td><td class="r">4,037,000,000</td><td colspan="2"></td></tr>
+    </table>
+
+    <div class="note">
+      ※ 계약금액은 부가가치세를 포함한 금액입니다.<br>
+      ※ 공동수급 건의 계약금액은 <b>총 계약금액</b>이며, 당사 지분은 「참여형태」란에 표기하였습니다.<br>
+      ※ 각 건의 <b>용역 실적증명서(발주기관 발급)</b>를 첨부합니다. 본 총괄표에는 연번 1·5·8의 증명서를 첨부하였습니다.<br>
+      ※ 금융기관 발주 실적은 <b>해당 없음</b>입니다.
+    </div>
+
+    <div class="disclaimer">
+      <b>🔴 데모용 견본 문서입니다 — 실제 실적증명서가 아닙니다.</b><br>
+      이 문서는 JunctionX Korea 해커톤 프로젝트 <b>Solar for Bid</b>의 문서 처리 파이프라인 시연을 위해 만든 <b>가상 회사</b>의 견본입니다.
+      ㈜다온피엠씨는 실존하지 않으며, 기재된 발주기관·사업명·계약금액·계약기간·담당자는 모두 <b>허구</b>입니다.
+      실존하는 어떤 기관도 이 문서를 발급한 사실이 없습니다. 어떠한 증명·제출·계약 용도로도 사용할 수 없습니다.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── p.2~4 개별 실적증명서 ─────────────── -->
+<div class="page" id="c1"></div>
+<div class="page" id="c2"></div>
+<div class="page" id="c3"></div>
+
+<script>
+const CERTS = [
+  { org:"누리정보자원공단", head:"이사장", stamp:"누리정보<br>자원공단<br>印",
+    name:"차세대 통합정보시스템 구축 사업 PMO",
+    cdate:"2023. 08. 24.", amount:"612,000,000", hangul:"金 육억일천이백만원整",
+    period:"2023. 09. 01. ~ 2024. 08. 31. (12개월)", method:"협상에 의한 계약",
+    share:"단독 (지분 100%)", grade:"특급 2명, 고급 3명, 중급 2명 (연인원 84 M/M)",
+    work:"사업관리 계획 수립, 요구사항 추적관리, 일정·품질·위험 관리, 산출물 검토 및 검수 지원, 단계별 검토보고서 작성",
+    issue:"2024. 09. 05.", mgr:"정보화사업팀 / 담당 최○○ / 02-000-0000" },
+  { org:"나래도교육청", head:"교육감", stamp:"나래도<br>교육감<br>印",
+    name:"교육행정정보시스템 고도화 사업 PMO",
+    cdate:"2024. 06. 18.", amount:"517,000,000", hangul:"金 오억일천칠백만원整",
+    period:"2024. 07. 01. ~ 2025. 06. 30. (12개월)", method:"협상에 의한 계약",
+    share:"단독 (지분 100%)", grade:"특급 2명, 고급 2명, 중급 3명 (연인원 78 M/M)",
+    work:"사업관리 방법론 적용, 과업 범위 변경관리, 성능·보안 요건 점검, 개인정보 보호조치 이행 점검, 검수 지원",
+    issue:"2025. 07. 11.", mgr:"교육정보과 / 담당 김○○ / 000-000-0000" },
+  { org:"아라공사", head:"사장", stamp:"아라공사<br>사 장<br>印",
+    name:"업무포털 전면 재구축 사업 PMO",
+    cdate:"2025. 08. 12.", amount:"468,000,000", hangul:"金 사억육천팔백만원整",
+    period:"2025. 09. 01. ~ 2026. 07. 31. (11개월)", method:"협상에 의한 계약",
+    share:"단독 (지분 100%)", grade:"특급 1명, 고급 3명, 중급 2명 (연인원 66 M/M)",
+    work:"사업 착수 점검, 요구사항 정의서 검토, 아키텍처 검토, 이행·전환 계획 점검, 안정화 지원 관리",
+    issue:"2026. 08. 07.", mgr:"디지털혁신처 / 담당 박○○ / 02-000-0000" },
+];
+
+const wm = `<div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>`;
+
+CERTS.forEach((c, i) => {
+  document.getElementById("c" + (i+1)).innerHTML = wm + `
+  <div class="content">
+    <div class="formno">[서식 제6호] 용역 실적증명서</div>
+    <h1>용역 실적증명서</h1>
+    <div class="subtitle">증명번호 : 제 2026-${String(i+1).padStart(3,"0")} 호</div>
+
+    <div class="sect">1. 수행업체 현황</div>
+    <table class="kv">
+      <tr><th>상 호</th><td>주식회사 다온피엠씨</td><th>사업자등록번호</th><td>120-86-01230</td></tr>
+      <tr><th>대 표 자</th><td>강민서</td><th>법인등록번호</th><td>110111-0000000</td></tr>
+      <tr><th>소 재 지</th><td colspan="3">서울특별시 강남구 테헤란로 501, 11층 (삼성동)</td></tr>
+    </table>
+
+    <div class="sect">2. 용역 개요</div>
+    <table class="kv">
+      <tr><th>용 역 명</th><td colspan="3">${c.name}</td></tr>
+      <tr><th>계 약 일 자</th><td>${c.cdate}</td><th>계 약 방 법</th><td>${c.method}</td></tr>
+      <tr><th>계 약 금 액</th><td>${c.amount} 원 (부가세 포함)</td><th>참 여 형 태</th><td>${c.share}</td></tr>
+      <tr><th>금액(한글)</th><td colspan="3">${c.hangul}</td></tr>
+      <tr><th>용 역 기 간</th><td colspan="3">${c.period}</td></tr>
+      <tr><th>투 입 인 력</th><td colspan="3">${c.grade}</td></tr>
+      <tr><th>수 행 내 용</th><td colspan="3" style="line-height:1.7">${c.work}</td></tr>
+      <tr><th>수 행 결 과</th><td colspan="3">기간 내 완료 · 검수 완료 (지체 없음)</td></tr>
+    </table>
+
+    <div class="sect">3. 발급기관 담당</div>
+    <table class="kv">
+      <tr><th>담 당 부 서</th><td colspan="3">${c.mgr}</td></tr>
+    </table>
+
+    <div class="attest">
+      위와 같이 용역을 수행하였음을 증명합니다.
+    </div>
+
+    <div class="issue">
+      <div class="date">${c.issue}</div>
+      <div class="org">${c.org} ${c.head}<span class="stamp">${c.stamp}</span></div>
+    </div>
+
+    <div class="footline">
+      🔴 데모용 견본 — 가상 회사(㈜다온피엠씨)의 견본 문서이며 실제 발급된 증명서가 아닙니다. 발주기관명은 실존하지 않는 허구입니다.
+    </div>
+  </div>`;
+});
+</script>
