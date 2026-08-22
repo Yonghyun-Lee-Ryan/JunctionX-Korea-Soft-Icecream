@@ -44,81 +44,12 @@ PUT    /api/companies/{companyId}/screening/{caseId}/decision   # 🚪 사람 �
 POST   /api/docs/upload                                     # 🔴 PDF 1장 → 8갈래 판정 → 에이전트 추출 (동기)
 GET    /api/docs/types                                      # 지원 8종 + 에이전트 연결 상태
 
-POST   /api/agents/announcement-decomposition               # 원본 → 5개 Extract Agent → 공고 JSON 병합
-POST   /api/agents/company-bid-fit                          # 파일 1개 → GO / NO-GO
-POST   /api/agents/wps-cp-decomposer                        # 파일 1개 → WPS/CP JSON
-POST   /api/agents/submission-compliance                    # 파일 1개 → 제출 적합성 JSON
-
 POST   /api/cases                                           # S1 공고번호 → 첨부 수집 시작 (202)
 GET    /api/cases/{caseId}                                  # 팩트시트 봉투 (화면②·④가 폴링)
 GET    /api/cases/{caseId}/files/{tabId}.xlsx               # 산출물
 ```
 
 🔴 **`/api/cases/` 복수형으로 통일한다.** 이미 커밋된 `factsheet.demo.json`의 `downloads[].url`이 복수형이고 그쪽이 정본이다 (WBS 결정 12).
-
-## Workflow Agent API
-
-네 API는 모두 `multipart/form-data`의 `file` 필드 하나를 동기 처리한다. 기존 문서 추출용
-`UPSTAGE_API_KEY`를 재사용하지 않고 `UPSTAGE_AGENT_API_KEY`로만 인증한다.
-
-```dotenv
-UPSTAGE_AGENT_API_KEY=up_...
-WORKFLOW_AGENT_RATE_LIMIT_PER_MINUTE=20
-WORKFLOW_AGENT_MAX_CONCURRENT=2
-WORKFLOW_AGENT_POLL_TIMEOUT_MS=1800000
-STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_ID=agt_...
-STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_CONFIG=1
-STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_ID=agt_...
-STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_CONFIG=1
-STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_ID=agt_...
-STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_CONFIG=1
-STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_ID=agt_...
-STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_CONFIG=1
-STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_ID=agt_...
-STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_CONFIG=1
-STUDIO_AGENT_COMPANY_BID_FIT_ID=agt_E29Ks2PXGGqiXT3YFL6xHn
-STUDIO_AGENT_COMPANY_BID_FIT_CONFIG=1
-STUDIO_AGENT_WPS_CP_DECOMPOSER_ID=agt_A32DpZyKcq7cKh8pkzfHLv
-STUDIO_AGENT_WPS_CP_DECOMPOSER_CONFIG=1
-STUDIO_AGENT_SUBMISSION_COMPLIANCE_ID=agt_9uqVjjumhkyNiMMBUx83Ye
-STUDIO_AGENT_SUBMISSION_COMPLIANCE_CONFIG=1
-```
-
-```bash
-curl -F 'file=@announcement.hwpx' http://localhost:3000/api/agents/announcement-decomposition
-curl -F 'file=@company-and-document-info.pdf' http://localhost:3000/api/agents/company-bid-fit
-curl -F 'file=@document-info.json' http://localhost:3000/api/agents/wps-cp-decomposer
-curl -F 'file=@submission-package.pdf' http://localhost:3000/api/agents/submission-compliance
-```
-
-- 기존 Upstage API와 동일하게 별도의 클라이언트 접근 토큰은 요구하지 않는다. 백엔드가
-  `UPSTAGE_AGENT_API_KEY`를 사용해 Upstage에 인증한다.
-- 기본 보호값은 클라이언트 IP당 분당 20회, 서버 전체 동시 실행 2개다.
-- Workflow Agent 폴링 제한은 기본 30분이며 기존 `STUDIO_POLL_TIMEOUT_MS`와 독립적이다.
-- Announcement API는 원본 파일을 변환하거나 페이지 단위로 분할하지 않는다. 한 번 업로드한
-  `file_id`로 기본정보 → 범위·맥락 → 요구사항 → 자격·제출 → 조건·평가의 5개 Agent를 호출한다.
-  결과는 이 고정 순서로 재귀 병합하며 충돌 값은 앞 Agent가 우선한다.
-- 다섯 Studio 설정 파일과 필드·환경변수 manifest는 `agent/announcement_agents/`에 있다.
-  Studio에서 각 설정으로 Agent를 만든 뒤 발급된 ID와 Config 외부 ID를 위 환경변수에 넣는다.
-- WPS CP와 Submission API는 출력 문자열의 Markdown·앞뒤 설명을 제거하고 파싱 가능한 JSON만
-  응답한다. 유효 JSON이 없으면 `E_AGENT_OUTPUT_INVALID`(502)이다.
-- Announcement 입력은 MIME·파일명·바이트를 그대로 업로드한다. 나머지 직접 호출 API의
-  JSON·TXT·Markdown 입력만 Upstage 호환을 위해 UTF-8 HTML로 감싼다.
-- Company Bid Fit API의 응답은 JSON 봉투가 아닌 `text/plain`의 `GO` 또는 `NO-GO`다.
-
-실제 Workflow Agent들을 순서대로 확인하려면 다음 라이브 스모크 테스트를 사용한다. 이 명령은
-실제 API 사용량이 발생하며 결과는 기본적으로 `/private/tmp/sfb-workflow-live-*`에 저장된다.
-
-```bash
-npm run test:agents:live -- \
-  --announcement-file '/path/to/제안요청서_구축사업_원본.hwpx'
-```
-
-Announcement가 이미 성공했다면 `--document-info /path/to/01-announcement.json`으로 결과를
-재사용하여 나머지 세 Agent만 재검증할 수 있다. 이미 WPS를 호출했다면
-`--skip-wps true`를 함께 지정해 중복 과금을 피할 수 있다. `--skip-company true`와
-`--skip-submission true`도 동일하게 사용할 수 있다. 각 호출은 독립적으로 수행되며 하나가
-실패해도 나머지는 계속 실행되고 `summary.json`에 결과가 기록된다.
 
 ## POST /api/docs/upload — 회사 서류 1장 → JSON
 

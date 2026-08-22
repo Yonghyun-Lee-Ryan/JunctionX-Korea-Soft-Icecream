@@ -14,8 +14,7 @@
     "migrate": "node src/db/migrate.js",
     "seed": "node src/db/seed.js",
     "reset": "node src/db/reset.js",
-    "test": "node --test tests/*.test.js",
-    "test:agents:live": "node scripts/run-workflow-agents-live-smoke.js"
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",
