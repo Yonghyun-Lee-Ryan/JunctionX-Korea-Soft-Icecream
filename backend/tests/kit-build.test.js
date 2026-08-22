@@ -240,3 +240,21 @@ test('wbsTab — 나눈 패키지는 경고줄로 말한다 (원본 → 조각)'
   const tab = buildKit({ announcement, plan: { wbs } }).tabs.find((t) => t.id === 'wbs');
   assert.ok(tab.warnings.some((w) => w.includes('1.3') && w.includes('나눴습니다')), JSON.stringify(tab.warnings));
 });
+
+// ── 화면④ 파일제출: 상태 칩의 색은 서버가 정한다 — 「보완 필요」가 초록으로 그려지던 실측 ──
+test('🔴 submitfiles — 파일이 붙은 줄은 상태(준비됨/보완 필요/미확인)를 tone 붙은 칩으로 준다', () => {
+  const docs = [
+    { name: '입찰참가신청서', copies: '1', validity: '', status: '준비됨', rework_note: '', lead_time: '', matched_file: '신청서.pdf', source_page: 4 },
+    { name: '제안서', copies: '', validity: '', status: '보완 필요', rework_note: '분량 초과', lead_time: '', matched_file: '제안서_v1.pdf', source_page: 48 },
+    { name: '발표자료', copies: '1', validity: '', status: '미확인', rework_note: '', lead_time: '', matched_file: '발표.pdf', source_page: 36 },
+  ];
+  const tab = tabOf(buildKit({ announcement, submission: { ...submission, audit: { ...submission.audit, documents: docs } } }), 'submitfiles');
+  // 제목은 공고의 제출물 이름이라 검사 서류 이름과 다를 수 있다 — 붙은 파일명으로 찾는다
+  const byFile = Object.fromEntries(tab.items.map((i) => [i.filename, i]));
+  assert.deepEqual(byFile['신청서.pdf'].chip, { text: '준비됨', tone: 'ok', chip: true });
+  assert.deepEqual(byFile['제안서_v1.pdf'].chip, { text: '보완 필요', tone: 'warn', chip: true });
+  assert.deepEqual(byFile['발표.pdf'].chip, { text: '미확인', tone: 'muted', chip: true });
+  assert.equal(byFile['제안서_v1.pdf'].state, 'done', '파일이 붙었으면 done — 상태는 칩이 말한다');
+  const missing = tab.items.find((i) => i.state === 'missing');
+  assert.equal(missing.chip, undefined, '파일이 없는 줄은 칩 없이 「업로드」');
+});

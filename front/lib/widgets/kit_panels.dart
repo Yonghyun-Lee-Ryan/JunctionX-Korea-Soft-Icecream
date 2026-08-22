@@ -311,7 +311,13 @@ class KitDocsList extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               // 🔴 회사 등록 화면의 줄을 그대로 쓴다 — 같은 뜻이면 같은 모양이어야 한다
-              child: DocumentRow(doc: _toDoc(item), onUpload: () => onUpload?.call(item)),
+              //    파일이 붙은 줄도 「다시 올리기」로 바꿀 수 있다. 칩 색은 서버가 준 tone 이다
+              child: DocumentRow(
+                doc: _toDoc(item),
+                tone: item.chip?.tone ?? 'success',
+                onUpload: () => onUpload?.call(item),
+                onReplace: onUpload == null || item.state != 'done' ? null : () => onUpload!(item),
+              ),
             ),
           if (tab.summary != null && tab.summary!.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -336,7 +342,7 @@ class KitDocsList extends StatelessWidget {
           'reading' => DocStatus.reading,
           _ => DocStatus.missing,
         },
-        typeKey: i.label,
+        typeKey: i.chip?.text ?? i.label,
         progress: i.progress,
       );
 }

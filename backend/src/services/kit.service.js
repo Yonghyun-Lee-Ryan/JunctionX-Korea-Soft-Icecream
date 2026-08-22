@@ -78,11 +78,14 @@ function submitfilesTab(ann, audit) {
     .map((s) => {
       const matched = docs.find((d) => sameDoc(d.name, s.name));
       const done = Boolean(matched?.matched_file);
+      const status = done ? (str(matched.status) || '미확인') : '';
       return {
         title: str(s.name),
         filename: done ? str(matched.matched_file) : '업로드 되지 않음',
         state: done ? 'done' : 'missing',
-        label: done ? str(matched.status) : '업로드',
+        label: done ? status : '업로드',
+        // 🔴 색은 서버가 정한다 — 「보완 필요」가 초록(준비됨) 칩으로 그려지던 실측. 파일이 붙은 줄은 다시 올릴 수 있다(화면의 「다시 올리기」)
+        ...(done ? { chip: chipCell(status, STATUS_TONE[status] ?? 'muted') } : {}),
       };
     });
   const done = items.filter((i) => i.state === 'done').length;

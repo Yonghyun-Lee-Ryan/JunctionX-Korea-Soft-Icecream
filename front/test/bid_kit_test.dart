@@ -335,13 +335,17 @@ void main() {
   });
 
   group('봉투 견고성', _envelopeRobustness);
+  group('다시 올리기', _reuploadTests);
 
   testWidgets('🔴 폭을 훑어도 오버플로 0건', (t) async {
     addTearDown(t.view.reset);
     var overflow = 0;
     final old = FlutterError.onError;
     FlutterError.onError = (d) {
-      if (d.exceptionAsString().contains('overflowed')) overflow++;
+      if (!d.exceptionAsString().contains('overflowed')) return;
+      overflow++;
+      // 어디서 넘쳤는지 말한다 — 개수만으로는 고칠 수 없다
+      debugPrint('overflow @${t.view.physicalSize}: ${d.exceptionAsString().split('\n').first}');
     };
     for (final (w, h) in <(double, double)>[(1920, 1080), (1440, 900), (1100, 900), (820, 900), (600, 900), (375, 812)]) {
       await t.pumpWidget(const SizedBox.shrink());
@@ -585,4 +589,22 @@ class _FutureDeadlineApi extends FakeApi {
   }
   @override
   Future<Factsheet> factsheet(String caseId) async => _f(caseId);
+}
+
+// ── 파일제출 — 준비됨 줄도 다시 올릴 수 있다 ────────────────────
+void _reuploadTests() {
+  Future<PickOutcome> pickOne() async => PickOutcome(
+        docs: [PickedDoc(filename: '신청서_v2.pdf', bytes: Uint8List.fromList([0x25, 0x50, 0x44, 0x46]))],
+        rejected: const {},
+      );
+  testWidgets('🔴 이미 파일이 붙은 줄의 「다시 올리기」는 그 서류용으로 다시 올린다', (t) async {
+    addTearDown(t.view.reset);
+    final api = await _toKit(t, pick: pickOne);
+    // 표본의 첫 done 줄은 입찰참가신청서다
+    expect(find.text('다시 올리기'), findsWidgets);
+    await t.tap(find.text('다시 올리기').first);
+    await settle(t);
+    expect(api.caseUploads.single.requirement, '입찰참가신청서');
+    expect(api.caseUploads.single.filename, '신청서_v2.pdf');
+  });
 }
