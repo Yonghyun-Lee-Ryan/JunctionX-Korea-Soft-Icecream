@@ -448,3 +448,18 @@ BASE_DATE: 2025-11-12
 | Studio UI 가 느리거나 안 뜰 때 | **Agents API 가 있다** — `GET /v2/agents`, `GET /v2/agents/{id}/configs`, `PATCH /v2/agents/{id}` (이름), `POST /v2/agents/{id}/configs` (런타임 모양 `steps[]` 그대로 올리면 새 설정이 기본값이 된다). 키는 `UPSTAGE_AGENT_API_KEY` |
 
 🔴 남은 것: 임계경로가 0건으로 온다(공고가 처리기간을 명시하지 않으면 프롬프트가 비운다 — 규율대로지만 화면이 비어 보인다). WBS 첫 패키지가 요구사항 50개를 한 행에 묶는다(프롬프트 개선 여지).
+
+---
+
+## 11. 2026-08-23 화면④ 미흡 5건 해결 (1-1 · 1-2 · 2-1 · 2-2 · 2-5)
+
+| # | 무엇 | 어디 |
+|---|---|---|
+| 1-1 | **파일제출 연결** — `POST /api/cases/{id}/files` (multipart `file` + `requirement`=서류 이름). PDF 면 텍스트로 8갈래 규칙 분류만(Studio 없음), `data/uploads/<caseId>/` 에 저장, **제출 검사만 다시**(규칙 저장본 재사용 → Solar 1회). `GET /api/cases/{id}/files`. 화면: 줄의 「업로드」·드롭존·드래그앤드롭·「보완 자료 올리기」 | `caseFiles.service.js` · `casePipeline.rejudge()` · `bid_kit_screen.dart` |
+| 1-2 | **제안서 원고 → 금지 표현** — `POST /api/cases/{id}/proposal` (텍스트 있는 PDF 만, 아니면 415). 스캔 + 검사(Solar 2회). 카드에 걸린 자리(표현·문장·쪽)와 「제안서 원고 올리기 / 다른 원고로 다시 검사」 버튼 — 문구는 서버가 준다 | `phrasesTab` · `KitNoteCard` |
+| 2-1 | **임계경로 0건** — 임계경로 호출에 자격 조항·입찰 제출물을 보낸다(`announcementFor('criticalPath')`). 그래도 0건이면 공고에서 채운다(마감 줄 + 등록·증명·유효기간 서류, 리드타임은 `[확인필요]`, `synthesized_note`). 마감 줄은 항상 맨 위. 원가 근거 없으면 예산 | `guardCriticalPath` · `synthesizeCriticalPath` |
+| 2-2 | **WBS 품질** — 프롬프트(`build_agents.py` → `WBS Planner.json`, 백엔드가 실행 시 읽음): 사업기간·추진일정을 duration 근거로, 패키지당 요구사항 15개 이하. 가드가 16개 이상을 `oversized_packages` 로 세고 탭이 「쪼개야 합니다」. 근거요구 칸은 8개 + 「외 N건」 | `guardWbs` · `wbsTab` |
+| 2-5 | **마감 지남** — 공고의 마감 문자열을 읽는 시점에 서버가 계산(`deadline.service.js`): `deadlineAt`·`deadlinePassed`·`daysLeft`(영업일, 주말만 제외). 헤더에 「마감 지남」 칩, D-값은 숨김. 못 읽으면 필드 없음 | `case.service.getFactsheet` |
+
+🔴 `rejudge(caseId, { parts })` 가 공통 재료다 — 저장된 공고 해부로 판정 일부만 다시 돈다(Studio 호출 없음). `parts: ['plan']` 은 Solar 3회(WBS 145건이면 5~9분), `['submission']` 은 1~2회.
+🔴 테스트는 파일(프로세스)마다 임시 DB 를 쓴다(`tests/setup.js`) — 병렬 실행이 서로의 캐시를 지우던 실측.
