@@ -4,6 +4,7 @@ import { AppError } from '../errors/AppError.js';
 import { loadFixture, stripComments } from './fixture.service.js';
 import { KIT_PAGES, KIT_PRIMARY_ACTION, KIT_SECONDARY_ACTION } from '../config/kitPages.js';
 import { env } from '../config/env.js';
+import { isFresh, pipelineConfigured } from './casePipeline.service.js';
 
 /** caseId = 공고번호-차수 */
 export function toCaseId(bidPbancNo, bidPbancOrd = '000') {
@@ -36,8 +37,11 @@ export function getFactsheet(caseId, { live = false } = {}) {
   }
 
   const meta = parseJson(row.meta_json, {});
+  const { header, ...metaRest } = meta;
   const envelope = {
     caseId: row.id,
+    // 헤더용 제목·발주기관·마감 — 파이프라인이 공고 해부에서 적어 둔 것
+    ...(header ?? {}),
     status: row.status,
     progress: repo.listProgress(caseId),
     verdict: parseJson(row.verdict_json, { badge: 'eligible' }),
@@ -51,7 +55,7 @@ export function getFactsheet(caseId, { live = false } = {}) {
       source: row.source,
       agentId: env.studio.agentId || undefined,
       configVersion: env.studio.configVersion || undefined,
-      ...meta,
+      ...metaRest,
       attachments: repo.listAttachments(caseId),
       // 🔴 탭 배치도 서버가 준다 — 프론트가 tab id로 분기하지 않게
       kitPages: KIT_PAGES,
@@ -88,13 +92,20 @@ export const DEFAULT_PROGRESS = [
   { step: '요구사항 추출·판정', state: 'pending' },
 ];
 
-export function createCase({ bidPbancNo, bidPbancOrd = '000', companyId = null }) {
+export function createCase({ bidPbancNo, bidPbancOrd = '000', companyId = null, refresh = false }) {
   const caseId = toCaseId(bidPbancNo, bidPbancOrd);
+
+  // 🔴 Upstage 크레딧 — 7일 안에 끝난 케이스는 다시 돌리지 않는다. 첨부도 다시 받지 않는다
+  const existing = repo.findCase(caseId);
+  if (existing && !refresh && existing.status === 'done' && isFresh(parseJson(existing.meta_json, {}))) {
+    return { caseId, demo: existing.source === 'cached', reuse: true };
+  }
 
   // 🔴 데모 공고는 데모로 남는다. 픽스처가 있는 공고번호를 live로 만들면 첨부 수집이
   //    끝날 때까지 빈 화면이 뜨고, 그게 «아직 안 만들었다»인지 «못 읽었다»인지 알 수 없다.
   //    캐시라는 사실은 meta.cached로 화면에 그대로 나간다 — 숨기는 게 아니다.
-  const demo = cachedFactsheet(caseId) !== null;
+  //    🔴 단, 정운 계정 키가 있으면 데모 공고도 실제로 돌린다 — 실패하면 파이프라인이 fixture 로 되돌린다
+  const demo = cachedFactsheet(caseId) !== null && !pipelineConfigured();
 
   repo.upsertCase({
     id: caseId,
@@ -109,9 +120,12 @@ export function createCase({ bidPbancNo, bidPbancOrd = '000', companyId = null }
     repo.clearTabs(caseId);
     repo.replaceProgress(caseId, cachedFactsheet(caseId).progress ?? []);
   } else {
+    // 🔴 지난 판의 탭이 새 결과가 나올 때까지 화면에 남지 않게
+    repo.clearTabs(caseId);
+    repo.clearDownloads(caseId);
     repo.replaceProgress(caseId, DEFAULT_PROGRESS);
   }
-  return { caseId, demo };
+  return { caseId, demo, reuse: false };
 }
 
 export { repo as caseRepo };

@@ -97,8 +97,9 @@ test('wbs·criticalpath·cost — 기간 미 명시 · 톤 셀 · M/M 합계', (
   assert.deepEqual(wbs.columns, ['ID', '작업 패키지', '산출물', '선행', '기간', 'M/M', '근거요구', 'P']);
   assert.deepEqual(wbs.rows[0], ['1.1', '착수 및 사업수행 계획 수립', '사업 수행 계획서', '-', '미 명시', '특급 0.5・고급 0.5', 'SFR-001', '13']);
   assert.equal(wbs.rows[1][3], '1.1');
-  assert.ok(wbs.warnings.some((w) => String(w.text ?? w).includes('미 명시 1건')));
-  assert.ok(wbs.warnings.some((w) => String(w.text ?? w).includes('SFR-004')), '미연결 요구사항을 숨기지 않는다');
+  assert.ok(wbs.warnings.every((w) => typeof w === 'string'), 'warnings[] 는 문자열 — 프론트 계약');
+  assert.ok(wbs.warnings.some((w) => w.includes('미 명시 1건')));
+  assert.ok(wbs.warnings.some((w) => w.includes('SFR-004')), '미연결 요구사항을 숨기지 않는다');
 
   const cp = tabOf(kit, 'criticalpath');
   assert.deepEqual(cp.columns, ['작업', '남은 일']);

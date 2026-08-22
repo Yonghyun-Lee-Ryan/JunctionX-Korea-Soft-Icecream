@@ -2,6 +2,7 @@ import { AppError } from '../errors/AppError.js';
 import * as caseService from '../services/case.service.js';
 import { caseRepo } from '../services/case.service.js';
 import { collectAttachments } from '../services/g2b.service.js';
+import { runPipeline } from '../services/casePipeline.service.js';
 import { buildXlsx, contentDisposition } from '../services/xlsx.service.js';
 import { logger } from '../config/logger.js';
 
@@ -13,11 +14,20 @@ export function listCases(_req, res) {
 
 export async function createCase(req, res) {
   const { bidPbancNo, bidPbancOrd = '000', companyId = null } = req.body ?? {};
+  const refresh = req.body?.refresh === true || req.body?.refresh === '1' || req.query.refresh === '1';
   if (!bidPbancNo || !/^[A-Za-z0-9-]{6,}$/.test(String(bidPbancNo))) {
     throw new AppError('E_VALIDATION', '공고번호를 확인해 주세요. 예) R25BK00645031');
   }
 
-  const { caseId, demo } = caseService.createCase({ bidPbancNo, bidPbancOrd, companyId });
+  const { caseId, demo, reuse } = caseService.createCase({ bidPbancNo, bidPbancOrd, companyId, refresh });
+
+  // 🔴 크레딧 — 7일 안에 끝난 케이스는 그대로 돌려준다 (202 가 아니라 200). Upstage·나라장터에 가지 않는다
+  if (reuse) {
+    const envelope = caseService.getFactsheet(caseId);
+    envelope.meta.pipeline = { ...(envelope.meta.pipeline ?? {}), reused: true };
+    res.status(200).json(envelope);
+    return;
+  }
 
   // 🔴 데모 공고는 나라장터에 가지 않는다. 첨부가 있을 리 없어 매번 E_UPSTREAM_G2B로 죽고,
   //    그 실패가 케이스를 live로 되돌려 픽스처를 가렸다.
@@ -33,9 +43,9 @@ export async function createCase(req, res) {
         file_seq: f.fileSeq, filename: f.filename, bytes: f.bytes,
       }));
       caseRepo.updateProgressStep(caseId, 0, 'done', `첨부 ${files.length}건`);
-      caseRepo.updateProgressStep(caseId, 1, 'running');
-      caseRepo.setCaseStatus(caseId, 'parsing');
       logger.info('case_collected', { caseId, files: files.length });
+      // 🔴 여기서 공고 해부 → 판정 → 탭까지 이어진다. 실패는 runPipeline 안에서 기록한다
+      return runPipeline(caseId, files, { companyId });
     })
     .catch((err) => {
       caseRepo.updateProgressStep(caseId, 0, 'failed');

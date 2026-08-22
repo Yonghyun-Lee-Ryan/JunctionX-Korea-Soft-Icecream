@@ -16,8 +16,9 @@ export const casesRouter = Router();
  *     tags: [cases]
  *     summary: 공고번호로 케이스를 만들고 첨부 수집을 시작한다 (S1)
  *     description: |
- *       🔴 응답은 즉시 202로 돌아온다. 첨부 수집은 뒤에서 돈다.
- *       🔴 응답 첫 순간부터 `progress[]` 4줄을 **전부** 내보낸다 — 첫 줄만 running.
+ *       🔴 응답은 즉시 202로 돌아온다. 첨부 수집 → 공고 해부(Studio) → 판정(Solar) → 탭까지 뒤에서 이어진다.
+ *       🔴 응답 첫 순간부터 `progress[]` 4줄을 **전부** 내보낸다 — 첫 줄만 running. 화면은 `status`가 done/failed 가 될 때까지 GET 으로 폴링한다.
+ *       🔴 Upstage 크레딧 — 7일 안에 끝난 케이스는 **200** 으로 저장된 봉투를 그대로 준다(`meta.pipeline.reused`). 다시 돌리려면 `refresh: true`.
  *     requestBody:
  *       required: true
  *       content:
@@ -29,7 +30,10 @@ export const casesRouter = Router();
  *               bidPbancNo:  { type: string, example: R25BK00645031 }
  *               bidPbancOrd: { type: string, example: "000" }
  *               companyId:   { type: string, nullable: true }
+ *               refresh:     { type: boolean, description: '🔴 true 면 7일 캐시를 무시하고 Upstage 를 다시 부른다' }
  *     responses:
+ *       200:
+ *         description: 7일 안에 끝난 케이스 — 저장된 봉투 그대로 (Upstage 호출 없음)
  *       202:
  *         description: 수집 시작
  *         content:

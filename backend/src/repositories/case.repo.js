@@ -39,6 +39,17 @@ export function setCaseError(caseId, errorJson) {
   `).run(errorJson, caseId);
 }
 
+/** 파이프라인이 끝났다 — 판정·메타를 적고 오류를 지운다 */
+export function setCaseResult(caseId, { verdict, meta, status = 'done' }) {
+  getDb().prepare(`
+    UPDATE bid_case SET status = ?, verdict_json = ?, meta_json = ?, error_json = NULL, updated_at = datetime('now') WHERE id = ?
+  `).run(status, JSON.stringify(verdict ?? {}), JSON.stringify(meta ?? {}), caseId);
+}
+
+export function setCaseSource(caseId, source) {
+  getDb().prepare("UPDATE bid_case SET source = ?, updated_at = datetime('now') WHERE id = ?").run(source, caseId);
+}
+
 export function setCaseStatus(caseId, status) {
   getDb().prepare("UPDATE bid_case SET status = ?, updated_at = datetime('now') WHERE id = ?").run(status, caseId);
 }
@@ -145,6 +156,10 @@ export function upsertDownload(caseId, d, seq = 0) {
   `).run(caseId, seq, d.id, d.label, d.url, d.bytes ?? null);
 }
 
+export function clearDownloads(caseId) {
+  getDb().prepare('DELETE FROM case_download WHERE case_id = ?').run(caseId);
+}
+
 export function listDownloads(caseId) {
   return getDb().prepare('SELECT down_id, label, url, bytes FROM case_download WHERE case_id = ? ORDER BY seq, id').all(caseId)
     .map((r) => ({ id: r.down_id, label: r.label, url: r.url, ...(r.bytes ? { bytes: r.bytes } : {}) }));
@@ -155,6 +170,10 @@ export function insertExtraction(caseId, { attachmentId, schemaName, payload, co
   getDb().prepare(`INSERT INTO extraction (case_id, attachment_id, schema_name, payload_json, confidence)
                    VALUES (?, ?, ?, ?, ?)`)
     .run(caseId, attachmentId ?? null, schemaName, JSON.stringify(payload ?? {}), confidence ?? null);
+}
+
+export function deleteExtractions(caseId) {
+  getDb().prepare('DELETE FROM extraction WHERE case_id = ?').run(caseId);
 }
 
 export function listExtractions(caseId, schemaName) {

@@ -137,9 +137,10 @@ function wbsTab(wbs) {
   const unspecified = rows.filter((r) => r[4] === '미 명시').length;
   const warnings = [`기간 명시 ${rows.length - unspecified}건 / 미 명시 ${unspecified}건`];
   const unlinked = Array.isArray(wbs.validation?.unlinked_requirement_ids) ? wbs.validation.unlinked_requirement_ids : [];
-  if (unlinked.length) warnings.push(cell(`요구사항 미연결 ${unlinked.length}건: ${unlinked.join(', ')}`, 'warn'));
+  // 🔴 warnings[] 는 문자열이다 — 프론트가 붉은 줄로 그린다. 셀 객체를 넣으면 {text: …} 가 그대로 찍힌다 (실측)
+  if (unlinked.length) warnings.push(`요구사항 미연결 ${unlinked.length}건: ${unlinked.join(', ')}`);
   const unknown = Array.isArray(wbs.validation?.unknown_requirement_refs) ? wbs.validation.unknown_requirement_refs : [];
-  if (unknown.length) warnings.push(cell(`공고에 없는 요구사항 ID ${unknown.length}건: ${unknown.join(', ')}`, 'danger'));
+  if (unknown.length) warnings.push(`공고에 없는 요구사항 ID ${unknown.length}건: ${unknown.join(', ')}`);
   return {
     id: 'wbs', title: 'WBS', kind: 'table',
     columns: ['ID', '작업 패키지', '산출물', '선행', '기간', 'M/M', '근거요구', 'P'],

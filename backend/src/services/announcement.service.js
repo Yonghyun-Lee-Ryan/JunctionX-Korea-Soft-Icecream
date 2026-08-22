@@ -135,14 +135,18 @@ export function mergeAnnouncement({ rfp = {}, notice } = {}) {
   const constraintDoc = noticeHasConstraint ? 'notice' : 'rfp';
   const constraintSource = constraintDoc === 'notice' ? n : el;
 
+  // 🔴 같은 문서 안의 중복도 한 번만 — 실측: 공고문이 같은 제출 서류를 두 번 나열했다(12행 중 5행이 중복)
+  const dedupe = (rows, keyOf, seen = new Set()) => rows.filter((r) => { const k = keyOf(r); if (seen.has(k)) return false; seen.add(k); return true; });
   const tag = (rows, doc) => arr(rows).map((r) => ({ ...r, source_doc: doc }));
-  const noticeRules = tag(n?.eligibility_rules, 'notice');
-  const seenRule = new Set(noticeRules.map((r) => norm(r.condition)));
-  const rfpRules = tag(el.eligibility_rules, 'rfp').filter((r) => !seenRule.has(norm(r.condition)));
+  const ruleKey = (r) => norm(r.condition);
+  const seenRule = new Set();
+  const noticeRules = dedupe(tag(n?.eligibility_rules, 'notice'), ruleKey, seenRule);
+  const rfpRules = dedupe(tag(el.eligibility_rules, 'rfp'), ruleKey, seenRule);
 
-  const noticeSubs = tag(n?.submission_requirements, 'notice');
-  const seenSub = new Set(noticeSubs.map((r) => `${norm(r.name)}|${s(r.submission_stage)}`));
-  const rfpSubs = tag(el.submission_requirements, 'rfp').filter((r) => !seenSub.has(`${norm(r.name)}|${s(r.submission_stage)}`));
+  const subKey = (r) => `${norm(r.name)}|${s(r.submission_stage)}`;
+  const seenSub = new Set();
+  const noticeSubs = dedupe(tag(n?.submission_requirements, 'notice'), subKey, seenSub);
+  const rfpSubs = dedupe(tag(el.submission_requirements, 'rfp'), subKey, seenSub);
 
   return {
     ...ov,
