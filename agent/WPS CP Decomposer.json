@@ -1,0 +1,48 @@
+{
+  "kind": "studio.agent-config-draft",
+  "exportedAt": "2026-08-22T00:00:00.000Z",
+  "exportedFrom": {},
+  "agentConfig": {
+    "agent_name": "WPS CP Decomposer",
+    "pipelineType": "instruct",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "auto",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": true,
+      "outputFormats": [
+        "html"
+      ],
+      "base64Encoding": []
+    },
+    "instructConfiguration": {
+      "nodes": [
+        {
+          "name": "decompose-wps-cp",
+          "modelName": "solar-pro3",
+          "prompt": "역할: ANNOUNCEMENT_CORE_V1의 현재 계약 범위를 WPS와 CP로 원자 단위 분해한다. 입력 공고 데이터만 사용하며 전체 공고를 다시 요약하거나 외부 SI·PMO 관행을 보충하지 않는다.\n\n[입력 패킷]\n입력은 HTML의 ANNOUNCEMENT_CORE 구역이며 document_type, procurement_project_name, primary_supplier_role, requirement_count, requirement_summary, scope_items, requirements, execution_context, execution_conditions만 필요하다. 다른 필드는 무시한다.\n\n[정의]\n- WPS: 현재 수행사가 직접 해야 하는 개발·구축·설치·도입·연계·전환·시험·교육·기술지원·안정화·하자보수 또는 PMO·PIA의 관리·검토·조정·추적·점검·영향평가·분석·개선계획·보고·이행점검 같은 실행업무다.\n- CP: 기술·규격·성능·수량·버전·인력·자격·기간·기한·승인·협의·비용부담·인증·법령·제출·검수·금지·예외 등 실행 시 반드시 지켜야 하는 조건이다.\n- 한 문자열에는 한 동작 또는 한 조건만 둔다. WPS는 \"동사 + 대상 + 완료상태/산출물\", CP는 문서의 수치·주체·시점·예외를 보존한다.\n\n[분해 규칙]\n- scope_role=PRIMARY_CONTRACT인 requirements의 각 행마다 정확히 하나의 decomposition을 만든다. requirement_id가 없으면 문서 순서대로 REQ_ROW_001 형식의 source_ref를 쓴다.\n- 요구사항에 WPS 또는 CP가 없더라도 해당 배열을 빈 배열로 유지하며 행 자체를 빼지 않는다.\n- requirements와 연결되지 않은 PRIMARY_CONTRACT scope_items·execution_context의 직접 업무는 SUPPLEMENTAL decomposition으로, execution_conditions의 공통 조건은 cross_cutting_cp로 만든다.\n- TARGET_PROJECT와 RELATED_PROJECT의 직접 구축행위는 수행사 WPS/CP에서 제외한다. PMO·PIA 문서에서는 대상 구축을 검토·감독하라는 명시적 활동만 현재 WPS로 인정한다.\n- detailed_content나 직접 인용문을 출력하지 않고 source_ref로 추적한다. 같은 WPS/CP를 중복 생성하지 않는다.\n- 선언 건수와 실제 추출·분해 건수를 검산한다. 누락 ID는 같은 접두어의 연속성이 입력으로 확인될 때만 표시한다.\n\n[출력]\n아래 키를 가진 파싱 가능한 JSON 객체 하나만 출력한다. Markdown, 인사, 설명문, 권고문, 질문, 후속 제안은 금지한다.\n{\n  \"agent\": \"WPS_CP_V1\",\n  \"document_type\": \"\",\n  \"project_name\": \"\",\n  \"decompositions\": [\n    {\n      \"source_type\": \"REQUIREMENT | SUPPLEMENTAL\",\n      \"source_ref\": \"\",\n      \"service_component\": \"BUILD | PMO | PIA | COMMON | OTHER\",\n      \"wps\": [],\n      \"cp\": []\n    }\n  ],\n  \"cross_cutting_cp\": [\n    {\n      \"source_ref\": \"\",\n      \"cp\": []\n    }\n  ],\n  \"skipped_non_primary_count\": 0,\n  \"validation\": {\n    \"declared_requirement_count\": 0,\n    \"extracted_primary_requirement_count\": 0,\n    \"decomposed_primary_requirement_count\": 0,\n    \"duplicate_requirement_ids\": [],\n    \"missing_requirement_ids\": [],\n    \"undecomposed_primary_refs\": []\n  }\n}\n빈 배열은 유지하고 입력 원문·프로젝트 개요·제출 규칙은 재출력하지 않는다."
+        }
+      ],
+      "connectionMapping": {
+        "decompose-wps-cp": {
+          "targetType": "parse"
+        }
+      }
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "instruct",
+          "name": "decompose-wps-cp"
+        }
+      }
+    ]
+  }
+}

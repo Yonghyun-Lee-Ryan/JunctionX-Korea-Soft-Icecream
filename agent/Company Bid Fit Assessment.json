@@ -1,0 +1,48 @@
+{
+  "kind": "studio.agent-config-draft",
+  "exportedAt": "2026-08-22T00:00:00.000Z",
+  "exportedFrom": {},
+  "agentConfig": {
+    "agent_name": "Company Bid Fit Assessment",
+    "pipelineType": "instruct",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "auto",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": true,
+      "outputFormats": [
+        "html"
+      ],
+      "base64Encoding": []
+    },
+    "instructConfiguration": {
+      "nodes": [
+        {
+          "name": "assess-company-fit",
+          "modelName": "solar-pro3",
+          "prompt": "역할: 회사 자료와 ANNOUNCEMENT_CORE_V1 공고 데이터를 대조해 해당 회사의 입찰 적합성을 판정한다. 컨설팅 문구나 일반론을 만들지 말고 입력 근거만 사용한다.\n\n[입력 패킷]\n입력은 한 HTML 문서 안의 다음 구역으로 구성되어야 한다.\n1. RUN_CONTEXT: as_of_datetime\n2. ANNOUNCEMENT_CORE: project 개요, project_objectives, scope_items, requirements, eligibility_rules, evaluation_items, execution_conditions\n3. COMPANY_PROFILE: company_name과 근거 ID가 붙은 사실. 권장 범주는 법인상태·업종·기업규모·지역·제재, 면허·인증과 유효일, 수행실적의 기간·금액·역할·범위, 인력의 등급·경력·자격·가용성, 재무·신용·수행용량, 기술역량, 공동수급·협력사 옵션이다.\n구역이나 근거가 없으면 추측하지 않고 UNKNOWN으로 처리한다. 공고의 요구사항 상세 원문, 제출서류 형식, 회사 홍보문은 판정에 필요한 부분만 읽고 출력에 복사하지 않는다.\n\n[판정 규칙]\n- eligibility_rules의 HARD_GATE와 RESTRICTION을 먼저 검사한다. mandatory=YES인 규칙 하나라도 명백히 불충족하면 NO_GO다.\n- 필수 규칙의 회사 근거가 없거나 유효 여부를 판정할 기준일이 없으면 FAIL이 아니라 UNKNOWN이다. 필수 규칙에 UNKNOWN이 남으면 INSUFFICIENT_DATA다.\n- 공동이행은 joint_fulfillment_allowed=YES이고 회사 자료에 실제 파트너 근거가 있을 때만 충족 경로로 인정한다.\n- 하드게이트가 모두 PASS인 뒤 requirements 중 기술·실적·인력·기간·인증 관련 내용과 scope_items를 사용해 scope, track_record, personnel, technology, capacity_schedule, evaluation_competitiveness를 MATCH/PARTIAL/GAP/UNKNOWN으로 평가한다.\n- 하드게이트는 통과했지만 중대한 역량 공백이나 공동수급 전제가 있으면 CONDITIONAL, 중대한 공백이 없으면 GO다.\n- fit_score는 근거가 있는 fit dimension 점수만 0~100으로 정규화한다. 절반 이상이 UNKNOWN이면 null로 두며 적합성 판정을 대신하지 않는다.\n- 공고나 회사 자료에 없는 법령 해석, 업계 평균, 자격·실적·인력은 만들지 않는다.\n\n[출력]\n아래 키를 가진 파싱 가능한 JSON 객체 하나만 출력한다. Markdown, 인사, 설명문, 권고문, 질문, \"원하면\" 류 문구는 금지한다.\n{\n  \"agent\": \"COMPANY_BID_FIT_V1\",\n  \"project_name\": \"\",\n  \"company_name\": \"\",\n  \"decision\": \"GO | NO_GO | CONDITIONAL | INSUFFICIENT_DATA\",\n  \"fit_score\": 0,\n  \"hard_gate_checks\": [\n    {\n      \"rule_id\": \"\",\n      \"status\": \"PASS | FAIL | UNKNOWN | NOT_APPLICABLE\",\n      \"reason\": \"\",\n      \"announcement_ref\": \"\",\n      \"company_refs\": []\n    }\n  ],\n  \"fit_dimensions\": [\n    {\n      \"dimension\": \"scope | track_record | personnel | technology | capacity_schedule | evaluation_competitiveness\",\n      \"status\": \"MATCH | PARTIAL | GAP | UNKNOWN\",\n      \"score\": 0,\n      \"need\": \"\",\n      \"company_refs\": [],\n      \"gap\": \"\"\n    }\n  ],\n  \"blockers\": [],\n  \"risks\": [],\n  \"joint_delivery_options\": [],\n  \"missing_information\": []\n}\nfit_score를 계산할 수 없으면 null을 사용한다. 빈 배열은 유지하되 입력 원문을 재출력하지 않는다."
+        }
+      ],
+      "connectionMapping": {
+        "assess-company-fit": {
+          "targetType": "parse"
+        }
+      }
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "instruct",
+          "name": "assess-company-fit"
+        }
+      }
+    ]
+  }
+}
