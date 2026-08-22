@@ -214,10 +214,12 @@ test('🔴 guardCriticalPath — Solar 가 0건이면 공고에서 채운다: �
   assert.ok(out.synthesized_note.includes('공고'));
 });
 
-test('guardCriticalPath — Solar 가 항목을 줬으면 채우지 않는다 (synthesized 없음)', () => {
+test('guardCriticalPath — Solar 가 항목을 줬으면 채우지 않는다 (synthesized 없음) — 마감 줄만 덧붙는다', () => {
   const out = guardCriticalPath(cpReply(), { work_packages: [] }, noticeAnn);
   assert.equal(out.synthesized, undefined);
-  assert.equal(out.critical_path.length, 2);
+  assert.equal(out.critical_path.length, 3);
+  assert.ok(out.critical_path[0].item.includes('제출 마감'));
+  assert.equal(out.critical_path[1].item, '조달청 전자입찰 참가자격 등록', 'Solar 항목은 리드타임 내림차순 그대로');
 });
 
 test('guardCriticalPath — 원가 근거가 없으면 공고 예산을 근거로 (쪽은 0 = 모름)', () => {
@@ -234,4 +236,18 @@ test('judgePlan — 임계경로 호출에는 자격 조항·제출물이 실려
   assert.ok(!cpUser.includes('"execution_conditions"'), '수행조건은 안 보낸다');
   const wbsUser = calls[1].messages[1].content;
   assert.ok(!wbsUser.includes('ELIG_005'), 'WBS 호출에는 자격 조항이 없다');
+});
+
+test('guardCriticalPath — Solar 가 항목을 줘도 마감 줄이 없으면 맨 위에 마감을 둔다 (날짜는 공고의 것)', () => {
+  const reply = cpReply();   // 등록·실적증명 두 건, 마감 줄 없음
+  const out = guardCriticalPath(reply, { work_packages: [] }, noticeAnn);
+  assert.ok(out.critical_path[0].item.includes('제출 마감'));
+  assert.equal(out.critical_path[0].due_label, noticeAnn.constraint_deadline);
+  assert.equal(out.critical_path[0].severity, 'danger');
+  assert.equal(out.critical_path.length, 3);
+  assert.equal(out.synthesized, undefined, '채워 넣은 게 아니라 마감만 덧붙였다');
+
+  // 이미 마감 줄이 있으면 더하지 않는다
+  const withDeadline = { ...cpReply(), critical_path: [{ item: '제안서 제출 마감', lead_time_days: 0, source_page: 2 }, ...cpReply().critical_path] };
+  assert.equal(guardCriticalPath(withDeadline, { work_packages: [] }, noticeAnn).critical_path.filter((c) => c.item.includes('마감')).length, 1);
 });

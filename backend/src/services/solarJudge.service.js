@@ -316,7 +316,11 @@ export function guardCriticalPath(out, wbs, announcement) {
     result.synthesized = true;
     result.synthesized_note = '공고가 처리기간을 명시하지 않아 리드타임은 [확인필요] — 항목은 자격 조항·제출 서류에서 뽑았습니다';
   }
-  result.critical_path = (given.length ? given : (announcement ? synthesizeCriticalPath(announcement) : []))
+  // 🔴 마감은 임계경로의 기준선이다 — Solar 가 빠뜨려도 공고의 마감 날짜를 맨 위에 둔다 (날짜가 있을 때만)
+  const base = given.length ? given : (announcement ? synthesizeCriticalPath(announcement) : []);
+  const hasDeadlineRow = base.some((c) => /마감/.test(text(c?.item)));
+  const deadlineRow = announcement && !hasDeadlineRow && text(announcement.constraint_deadline).trim() ? [synthesizeCriticalPath(announcement)[0]] : [];
+  result.critical_path = [...deadlineRow, ...base]
     .map((c) => {
       const lead = Math.max(0, Math.round(Number(c?.lead_time_days) || 0));
       // 채워 넣은 마감 줄은 날짜가 곧 라벨이다 — 「N일 전」으로 바꾸지 않는다
@@ -328,8 +332,11 @@ export function guardCriticalPath(out, wbs, announcement) {
         severity: isDeadline ? 'danger' : (lead >= 7 ? 'danger' : lead >= 3 ? 'warn' : 'default'),
         source_page: Number(c?.source_page) || 0,
       };
-    })
-    .sort((a, b) => b.lead_time_days - a.lead_time_days);
+    });
+  // 리드타임 내림차순 — 단, 마감 줄은 항상 맨 위
+  const deadlineRows = result.critical_path.filter((c) => c.synthesized && /마감/.test(text(c.item)));
+  const rest = result.critical_path.filter((c) => !deadlineRows.includes(c)).sort((a, b) => b.lead_time_days - a.lead_time_days);
+  result.critical_path = [...deadlineRows, ...rest];
 
   const byGrade = new Map();
   for (const p of wbs?.work_packages ?? []) {
