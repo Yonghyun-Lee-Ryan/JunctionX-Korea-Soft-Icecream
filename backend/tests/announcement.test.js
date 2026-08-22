@@ -32,12 +32,13 @@ const REPLY = {
 };
 let studioCalls;
 function mockStudio() {
-  studioCalls = { uploads: [], jobs: [] };
+  studioCalls = { uploads: [], jobs: [], authHeaders: new Set() };
   const files = new Map();
   const jobs = new Map();
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
     if (!u.startsWith(MOCK)) return nativeFetch(url, init);
+    studioCalls.authHeaders.add(init.headers?.Authorization ?? '(none)');
     if (u.endsWith('/v2/files')) {
       const file = init.body.get('file');
       const id = `file_${files.size + 1}`;
@@ -67,7 +68,9 @@ function mockStudio() {
 }
 test.afterEach(() => { globalThis.fetch = nativeFetch; });
 
-env.studio.apiKey = 'studio-test-key';
+// 🔴 내 층(공고 해부·회사 카드·Solar)은 정운 계정 키(UPSTAGE_AGENT_API_KEY)를 쓴다 — 기존 /api/docs 의 UPSTAGE_API_KEY 와 다르다
+env.studio.apiKey = 'other-team-key';
+env.studio.agentApiKey = 'agent-test-key';
 env.studio.baseUrl = MOCK;
 env.studio.pollIntervalMs = 0;
 Object.assign(env.studio.agents, Object.fromEntries(Object.entries(AGENTS).map(([k, id]) => [k, { agentId: id, configId: '1' }])));
@@ -128,11 +131,12 @@ test('decomposeAnnouncement — 제안요청서는 5 Agent 에 같은 file_id �
   assert.equal(out.meta.source, 'studio');
   assert.equal(out.meta.jobs.length, 6);
   assert.equal(out.meta.cached, false);
+  assert.deepEqual([...studioCalls.authHeaders], ['Bearer agent-test-key'], '업로드·실행·폴링 전부 정운 계정 키로');
 });
 
 test('decomposeAnnouncement — 키가 없으면 fixtures/studio 로 폴백하고 cached 를 밝힌다', async () => {
-  const saved = env.studio.apiKey;
-  env.studio.apiKey = '';
+  const saved = env.studio.agentApiKey;
+  env.studio.agentApiKey = '';
   try {
     const out = await decomposeAnnouncement({ rfp: rfpFile, notice: noticeFile });
     assert.equal(out.meta.source, 'fixture');
@@ -140,7 +144,7 @@ test('decomposeAnnouncement — 키가 없으면 fixtures/studio 로 폴백하�
     assert.equal(out.requirements.length, 33);
     assert.equal(out.constraint_deadline, '2026. 08. 24(월) 10:30');
   } finally {
-    env.studio.apiKey = saved;
+    env.studio.agentApiKey = saved;
   }
 });
 

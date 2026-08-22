@@ -21,7 +21,7 @@ export const companyCardRouter = Router();
  *       🔴 `source_document` 는 업로드 파일명으로 백엔드가 채운다 (Studio 는 파일명을 모른다).
  *       🔴 실적 건수·갈래별·최대 단일계약·합계(`performance_summary`)는 백엔드가 센다 — Extract 는 세지 않는다.
  *       🔴 갈래를 못 정한 서류는 `review_required[]` 로 — 화면 「직접 확인」. 빠진 카드 요건은 `requirements.missing[]` 문장으로.
- *       🔴 `UPSTAGE_API_KEY` 가 없으면 `fixtures/studio/company_card.flat.json` (다온피엠씨 실물 8장) 으로 떨어지고 `meta.cached=true`.
+ *       🔴 `UPSTAGE_AGENT_API_KEY` 가 없으면 `fixtures/studio/company_card.flat.json` (다온피엠씨 실물 8장) 으로 떨어지고 `meta.cached=true`.
  *     requestBody:
  *       required: true
  *       content:

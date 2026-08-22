@@ -21,7 +21,7 @@ export const announcementsRouter = Router();
  *       제안요청서를 Studio Extract 5종(01~05)에 **같은 file_id** 로 보내고, 입찰공고서는 04(BID_NOTICE) 에만 보낸 뒤 병합한다.
  *       🔴 「공고서가 이긴다」 — 마감·전자입찰·접수처는 공고서, 분량 상한은 제안요청서.
  *       🔴 제안서 부수가 계약 후 산출물(COMPLETION)의 부수와 같으면 버린다 (실측 오귀속 「최종보고서 5부」).
- *       🔴 `UPSTAGE_API_KEY` 가 없으면 `fixtures/studio/` 실물 출력으로 떨어지고 `meta.cached=true` 로 밝힌다.
+ *       🔴 `UPSTAGE_AGENT_API_KEY` 가 없으면 `fixtures/studio/` 실물 출력으로 떨어지고 `meta.cached=true` 로 밝힌다.
  *     requestBody:
  *       required: true
  *       content:

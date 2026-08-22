@@ -67,7 +67,7 @@ export function extractJson(text) {
 
 function assertConfigured() {
   if (!env.solar.apiKey) {
-    throw new AppError('E_NOT_CONFIGURED', 'Solar API 키(UPSTAGE_API_KEY)가 설정되지 않아 판정을 실행할 수 없습니다.');
+    throw new AppError('E_NOT_CONFIGURED', 'Solar API 키(UPSTAGE_AGENT_API_KEY · 정운 계정)가 설정되지 않아 판정을 실행할 수 없습니다.');
   }
 }
 

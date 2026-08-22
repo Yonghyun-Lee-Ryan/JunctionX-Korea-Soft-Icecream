@@ -15,23 +15,24 @@ import { AppError } from '../errors/AppError.js';
  *    「모든 판정에 쪽 번호」 규율의 원천이 여기다.
  */
 const V2 = () => `${env.studio.baseUrl}/v2`;
-const auth = () => ({ Authorization: `Bearer ${env.studio.apiKey}` });
+// 🔴 키는 둘이다 — 기본은 팀 키(UPSTAGE_API_KEY). 정운 계정의 Agent(공고 해부·회사 카드)는 apiKey 를 넘겨 그 계정 키로 부른다
+const auth = (apiKey = env.studio.apiKey) => ({ Authorization: `Bearer ${apiKey}` });
 
-export function isConfigured() {
-  return Boolean(env.studio.apiKey);
+export function isConfigured(apiKey = env.studio.apiKey) {
+  return Boolean(apiKey);
 }
 
-function assertConfigured() {
-  if (!isConfigured()) throw new AppError('E_NOT_CONFIGURED', 'UPSTAGE_API_KEY가 설정되지 않아 문서를 분석할 수 없습니다.');
+function assertConfigured(apiKey) {
+  if (!isConfigured(apiKey)) throw new AppError('E_NOT_CONFIGURED', 'Upstage API 키가 설정되지 않아 문서를 분석할 수 없습니다. (UPSTAGE_API_KEY · 정운 계정 Agent 는 UPSTAGE_AGENT_API_KEY)');
 }
 
-export async function uploadFile({ buffer, filename, mimeType = 'application/pdf' }) {
-  assertConfigured();
+export async function uploadFile({ buffer, filename, mimeType = 'application/pdf', apiKey = env.studio.apiKey }) {
+  assertConfigured(apiKey);
   const form = new FormData();
   form.append('file', new Blob([buffer], { type: mimeType }), filename);
   form.append('purpose', 'assistants');
 
-  const res = await fetch(`${V2()}/files`, { method: 'POST', headers: auth(), body: form });
+  const res = await fetch(`${V2()}/files`, { method: 'POST', headers: auth(apiKey), body: form });
   if (!res.ok) {
     throw new AppError('E_UPSTREAM_STUDIO', undefined, { stage: 'upload', status: res.status, body: await res.text().catch(() => '') });
   }
@@ -40,11 +41,11 @@ export async function uploadFile({ buffer, filename, mimeType = 'application/pdf
   return json.id;
 }
 
-export async function runAgent({ agentId, fileId }) {
-  assertConfigured();
+export async function runAgent({ agentId, fileId, apiKey = env.studio.apiKey }) {
+  assertConfigured(apiKey);
   const res = await fetch(`${V2()}/responses`, {
     method: 'POST',
-    headers: { ...auth(), 'Content-Type': 'application/json' },
+    headers: { ...auth(apiKey), 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: agentId,
       input: [{ role: 'user', content: [{ type: 'input_file', file_id: fileId }] }],
@@ -61,12 +62,12 @@ export async function runAgent({ agentId, fileId }) {
 const TERMINAL = new Set(['completed', 'failed', 'incomplete', 'cancelled']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function pollResponse(jobId, { intervalMs = env.studio.pollIntervalMs, timeoutMs = env.studio.pollTimeoutMs, onTick } = {}) {
-  assertConfigured();
+export async function pollResponse(jobId, { intervalMs = env.studio.pollIntervalMs, timeoutMs = env.studio.pollTimeoutMs, onTick, apiKey = env.studio.apiKey } = {}) {
+  assertConfigured(apiKey);
   const deadline = Date.now() + timeoutMs;
 
   for (let tick = 0; ; tick += 1) {
-    const res = await fetch(`${V2()}/responses/${jobId}`, { headers: auth() });
+    const res = await fetch(`${V2()}/responses/${jobId}`, { headers: auth(apiKey) });
     if (!res.ok) throw new AppError('E_UPSTREAM_STUDIO', undefined, { stage: 'poll', jobId, status: res.status });
 
     const job = await res.json();

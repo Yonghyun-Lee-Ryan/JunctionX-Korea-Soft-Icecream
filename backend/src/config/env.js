@@ -25,7 +25,9 @@ export const env = {
   databaseFile: path.resolve(ROOT, str('DATABASE_FILE', './data/solar-for-bid.sqlite')),
 
   studio: {
-    apiKey: str('UPSTAGE_API_KEY'),
+    apiKey: str('UPSTAGE_API_KEY'),            // 팀 계정 — 기존 /api/docs 서류별 Agent 8종
+    // 🔴 공고 해부 5종·회사 카드는 정운 Studio 계정에 있다 — 그 계정의 console 키. 팀 키로 조용히 대신하지 않는다
+    agentApiKey: str('UPSTAGE_AGENT_API_KEY'),
     agentId: str('STUDIO_AGENT_ID'),
     configVersion: str('STUDIO_CONFIG_VERSION'),
     baseUrl: str('STUDIO_BASE_URL', 'https://api.upstage.ai'),
@@ -44,9 +46,9 @@ export const env = {
   },
 
   // 🔴 Solar 판정 층 — Studio Instruct 노드가 프롬프트를 안 타서(agent/README.md 3-1) 백엔드가
-  //    Chat API를 직접 부른다. 키는 console 키 하나(UPSTAGE_API_KEY). backend/HANDOFF-solar-judgment.md
+  //    Chat API를 직접 부른다. 키는 정운 계정 키(UPSTAGE_AGENT_API_KEY) — Studio 6종과 같은 키. backend/HANDOFF-solar-judgment.md
   solar: {
-    apiKey: str('UPSTAGE_API_KEY'),
+    apiKey: str('UPSTAGE_AGENT_API_KEY'),
     chatUrl: str('SOLAR_CHAT_URL', 'https://api.upstage.ai/v1/chat/completions'),
     model: str('SOLAR_MODEL', 'solar-pro3'),
     reasoningEffort: str('SOLAR_REASONING_EFFORT', 'medium'),
@@ -80,6 +82,7 @@ export function envReport() {
   return {
     hasApiKey: Boolean(env.studio.apiKey),
     studioReady: Boolean(env.studio.apiKey),
+    agentKeyReady: Boolean(env.studio.agentApiKey),
     solarReady: Boolean(env.solar.apiKey),
     listSourceReady: Boolean(env.g2b.serviceKey),
     databaseFile: env.databaseFile,

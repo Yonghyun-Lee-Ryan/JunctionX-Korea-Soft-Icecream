@@ -27,7 +27,7 @@
 | 항목 | 값 |
 |---|---|
 | Endpoint | `POST https://api.upstage.ai/v1/chat/completions` — OpenAI 호환 |
-| 인증 | `Authorization: Bearer $UPSTAGE_API_KEY` — **console 키** 하나. (옛 Agent 전용 키 `UPSTAGE_AGENT_API_KEY` 는 `e7d37a5` 에서 사라졌다) |
+| 인증 | `Authorization: Bearer $UPSTAGE_AGENT_API_KEY` — **정운 계정의 console 키**. Studio Agent 6종이 그 계정에 있어서 공고 해부·회사 카드·Solar 판정 층은 전부 이 키를 쓴다. 팀 키 `UPSTAGE_API_KEY` 는 기존 `/api/docs` 전용 |
 | 모델 | `solar-pro3` (Studio 설정과 같음) · `solar-pro4` (최신) · 고정판 `solar-pro4-260806` |
 | JSON 강제 | `response_format: {"type":"json_object"}` — 또는 `{"type":"json_schema", ...}` |
 | `reasoning_effort` | pro3: `minimal`·`low`·`medium`·`high` · pro4: `xhigh`·`max`까지 |
@@ -36,7 +36,7 @@
 
 ```bash
 curl -s https://api.upstage.ai/v1/chat/completions \
-  -H "Authorization: Bearer $UPSTAGE_API_KEY" \
+  -H "Authorization: Bearer $UPSTAGE_AGENT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"solar-pro3","messages":[{"role":"user","content":"{\"ping\":1} 을 JSON으로 되돌려줘"}],"response_format":{"type":"json_object"}}'
 ```
@@ -61,7 +61,7 @@ curl -s https://api.upstage.ai/v1/chat/completions \
 ```js
 // backend/src/config/env.js — studio: {...} 아래
 solar: {
-  apiKey: str('UPSTAGE_API_KEY'),                    // Chat API는 console 키
+  apiKey: str('UPSTAGE_AGENT_API_KEY'),              // 정운 계정 console 키 — Studio 6종과 같은 키
   chatUrl: str('SOLAR_CHAT_URL', 'https://api.upstage.ai/v1/chat/completions'),
   model: str('SOLAR_MODEL', 'solar-pro3'),
   reasoningEffort: str('SOLAR_REASONING_EFFORT', 'medium'),
@@ -289,7 +289,7 @@ HWP를 변환 없이 먹는다 — 77쪽 2MB가 그대로 Parse됐다. 무료 �
 
 ### 4-2. `backend/.env.example` — 🔴 `env.js` 가 읽는 건 이 파일이다
 
-`env.js` 는 `.env` 를 `backend/` 기준으로 읽는다. 아래 블록을 **`backend/.env.example` 에 넣어 뒀다** — `.env` 에 복사하고 키만 채우면 된다. 키는 `UPSTAGE_API_KEY` 하나다(`e7d37a5` 에서 Agent 전용 키가 사라졌다):
+`env.js` 는 `.env` 를 `backend/` 기준으로 읽는다. 아래 블록을 **`backend/.env.example` 에 넣어 뒀다** — `.env` 에 복사하고 키만 채우면 된다. 키는 **`UPSTAGE_AGENT_API_KEY`(정운 계정)** — 팀 키 `UPSTAGE_API_KEY` 와 다르다. 이 6종은 정운 Studio 계정에 있어서 팀 키로는 못 부른다:
 
 ```env
 STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_ID=agt_2z8o3Lvz9oSuJDPz8hwAiK

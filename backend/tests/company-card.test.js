@@ -27,12 +27,13 @@ const nativeFetch = globalThis.fetch;
 const MOCK = 'https://mock-studio.invalid';
 let studioCalls;
 function mockStudio({ replyFor = (filename) => byFile[filename], howFor = (filename) => CATEGORY[filename] } = {}) {
-  studioCalls = { uploads: [], jobs: [] };
+  studioCalls = { uploads: [], jobs: [], authHeaders: new Set() };
   const files = new Map();
   const jobs = new Map();
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
     if (!u.startsWith(MOCK)) return nativeFetch(url, init);
+    studioCalls.authHeaders.add(init.headers?.Authorization ?? '(none)');
     if (u.endsWith('/v2/files')) {
       const file = init.body.get('file');
       const id = `file_${files.size + 1}`;
@@ -66,7 +67,8 @@ function mockStudio({ replyFor = (filename) => byFile[filename], howFor = (filen
 }
 test.afterEach(() => { globalThis.fetch = nativeFetch; });
 
-env.studio.apiKey = 'studio-test-key';
+env.studio.apiKey = 'other-team-key';
+env.studio.agentApiKey = 'agent-test-key';
 env.studio.baseUrl = MOCK;
 env.studio.pollIntervalMs = 0;
 env.studio.agents.companyCard = { agentId: 'agt_cc', configId: '1' };
@@ -136,6 +138,7 @@ test('buildCompanyCard — 파일마다 Agent 1개, source_document 는 백엔�
   assert.equal(card.requirements.complete, true);
   assert.equal(card.meta.source, 'studio');
   assert.equal(card.meta.jobs.length, 8);
+  assert.deepEqual([...studioCalls.authHeaders], ['Bearer agent-test-key'], '정운 계정 키로');
 });
 
 test('buildCompanyCard — 검토 갈래 서류는 review_required 로 내고 요건 빠짐을 문장으로', async () => {
@@ -151,8 +154,8 @@ test('buildCompanyCard — 검토 갈래 서류는 review_required 로 내고 �
 });
 
 test('buildCompanyCard — 키가 없으면 fixtures/studio/company_card.flat.json 으로 폴백', async () => {
-  const saved = env.studio.apiKey;
-  env.studio.apiKey = '';
+  const saved = env.studio.agentApiKey;
+  env.studio.agentApiKey = '';
   try {
     const card = await buildCompanyCard({ documents: uploads.slice(0, 2) });
     assert.equal(card.meta.source, 'fixture');
@@ -161,7 +164,7 @@ test('buildCompanyCard — 키가 없으면 fixtures/studio/company_card.flat.js
     assert.ok(card.documents.every((d) => d.docTypeKey));
     assert.equal(card.performance_summary.count, 15);
   } finally {
-    env.studio.apiKey = saved;
+    env.studio.agentApiKey = saved;
   }
 });
 

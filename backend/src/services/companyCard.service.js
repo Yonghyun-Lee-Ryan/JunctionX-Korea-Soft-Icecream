@@ -14,7 +14,10 @@ import { isConfigured, uploadFile, runAgent, pollResponse, parseAgentOutput, rol
  * 🔴 `source_document` 는 Studio 가 못 채운다 (Extract 프롬프트에 파일명이 안 넘어간다) — 응답 받는 자리에서 업로드 파일명을 넣는다.
  * 🔴 실적 합계·최대 단일계약·갈래별 건수는 Extract 가 세지 않는다 (프롬프트가 금지) — 여기서 센다.
  * 🔴 키가 없으면 fixtures/studio/company_card.flat.json (다온피엠씨 실물 8장) 으로 떨어진다 — meta.cached 로 밝힌다.
+ * 🔴 키는 정운 Studio 계정의 것(UPSTAGE_AGENT_API_KEY) — 팀 키(UPSTAGE_API_KEY)는 기존 /api/docs 용.
  */
+
+const KEY = () => env.studio.agentApiKey;
 
 const AGENT_ENV = 'STUDIO_AGENT_COMPANY_CARD_ID';
 const FIXTURE = path.join(ROOT, 'fixtures', 'studio', 'company_card.flat.json');
@@ -141,9 +144,9 @@ function agentId() {
 }
 
 async function buildOne(file, agent) {
-  const fileId = await uploadFile(file);
-  const started = await runAgent({ agentId: agent, fileId });
-  const job = await pollResponse(started.id);
+  const fileId = await uploadFile({ ...file, apiKey: KEY() });
+  const started = await runAgent({ agentId: agent, fileId, apiKey: KEY() });
+  const job = await pollResponse(started.id, { apiKey: KEY() });
   const parsed = parseAgentOutput(job);
   const data = parsed.data && typeof parsed.data === 'object' ? parsed.data : {};
   const category = detectCategory(job);
@@ -183,7 +186,7 @@ function assemble(documents) {
 export async function buildCompanyCard({ documents }) {
   const started = Date.now();
 
-  if (!isConfigured()) {
+  if (!isConfigured(KEY())) {
     logger.warn('company_card_fallback_fixture', { uploaded: documents.map((d) => d.filename) });
     const fixture = JSON.parse(fs.readFileSync(FIXTURE, 'utf8'));
     const docs = arr(fixture.documents).map((d) => ({ ...d, docTypeKey: docTypeKeyFor({ data: d }), category: null, confidence: null, job_id: null }));

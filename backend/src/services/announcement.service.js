@@ -12,7 +12,10 @@ import { isConfigured, uploadFile, runAgent, pollResponse, parseAgentOutput } fr
  *    제안요청서 → 01·02·03·04·05 (같은 file_id), 입찰공고서 → 04 (BID_NOTICE 갈래) 만.
  * 🔴 병합 규칙은 기획안 4-1 「공고서가 이긴다」를 코드로 옮긴 것이다 (backend/HANDOFF-solar-judgment.md §4-3).
  * 🔴 키가 없으면 fixtures/studio 의 실물 출력으로 떨어진다 — meta.cached 로 밝힌다.
+ * 🔴 키는 정운 Studio 계정의 것(UPSTAGE_AGENT_API_KEY) — Agent 6종이 그 계정에 있다. 팀 키(UPSTAGE_API_KEY)로는 404.
  */
+
+const KEY = () => env.studio.agentApiKey;
 
 const RFP_AGENTS = ['overview', 'scopeContext', 'requirements', 'eligibilitySubmission', 'conditionsEvaluation'];
 const AGENT_ENV = {
@@ -55,8 +58,8 @@ function loadFixtureParts(doc) {
 /** 같은 file_id 로 Agent 하나 실행 → JSON. 🔴 config_id 는 보내지 않는다 — Studio 가 게시된 최신 설정을 쓴다 */
 async function runOn(fileId, key, doc) {
   const { agentId } = agentFor(key);
-  const started = await runAgent({ agentId, fileId });
-  const job = await pollResponse(started.id);
+  const started = await runAgent({ agentId, fileId, apiKey: KEY() });
+  const job = await pollResponse(started.id, { apiKey: KEY() });
   const parsed = parseAgentOutput(job);
   if (!parsed.data || typeof parsed.data !== 'object') {
     throw new AppError('E_UPSTREAM_STUDIO', `공고 해부 Agent 「${key}」가 JSON 결과를 돌려주지 않았습니다.`,
@@ -68,7 +71,7 @@ async function runOn(fileId, key, doc) {
 export async function decomposeAnnouncement({ rfp, notice }) {
   const started = Date.now();
 
-  if (!isConfigured()) {
+  if (!isConfigured(KEY())) {
     logger.warn('announcement_fallback_fixture', { rfp: rfp?.filename, notice: notice?.filename });
     const merged = mergeAnnouncement({ rfp: loadFixtureParts('rfp'), notice: notice ? loadFixtureParts('notice') : undefined });
     return { ...merged, meta: { source: 'fixture', cached: true, jobs: [], elapsedMs: Date.now() - started } };
@@ -77,12 +80,12 @@ export async function decomposeAnnouncement({ rfp, notice }) {
   // 🔴 업로드 전에 ID 를 전부 확인한다 — 무료 실행(에이전트당 10회)을 반쯤 쓰고 죽지 않게
   for (const key of RFP_AGENTS) agentFor(key);
 
-  const rfpFileId = await uploadFile(rfp);
+  const rfpFileId = await uploadFile({ ...rfp, apiKey: KEY() });
   const rfpResults = await Promise.all(RFP_AGENTS.map((key) => runOn(rfpFileId, key, 'rfp')));
 
   let noticeResult = null;
   if (notice) {
-    const noticeFileId = await uploadFile(notice);
+    const noticeFileId = await uploadFile({ ...notice, apiKey: KEY() });
     noticeResult = await runOn(noticeFileId, 'eligibilitySubmission', 'notice');
   }
 
