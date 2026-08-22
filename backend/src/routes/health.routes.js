@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { envReport } from '../config/env.js';
+import { agentCoverage } from '../config/agents.js';
 
 export const healthRouter = Router();
 
@@ -20,9 +21,22 @@ export const healthRouter = Router();
  *               properties:
  *                 ok:          { type: boolean, example: true }
  *                 uptimeSec:   { type: integer, example: 42 }
- *                 studioReady: { type: boolean, description: UPSTAGE_API_KEY와 STUDIO_AGENT_ID가 둘 다 있는가 }
+ *                 studioReady: { type: boolean, description: API 키가 있고 갈래별 에이전트가 하나라도 연결됐는가 }
+ *                 agentsConfigured: { type: integer, description: 연결된 갈래 수 (0~8) }
  *                 listSourceReady: { type: boolean, description: 조달청 OpenAPI 키가 있는가 }
  */
 healthRouter.get('/health', (_req, res) => {
-  res.json({ ok: true, uptimeSec: Math.round(process.uptime()), ...envReport() });
+  const report = envReport();
+  const agents = agentCoverage();
+  const configured = agents.filter((a) => a.configured).length;
+  res.json({
+    ok: true,
+    uptimeSec: Math.round(process.uptime()),
+    ...report,
+    // 🔴 studioReady는 「갈래별 에이전트가 하나라도 붙었나」다.
+    //    예전엔 쓰지도 않는 STUDIO_AGENT_ID를 봐서 항상 false였다.
+    studioReady: Boolean(report.hasApiKey && configured > 0),
+    agentsConfigured: configured,
+    agentsTotal: agents.length,
+  });
 });

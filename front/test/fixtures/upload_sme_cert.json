@@ -1,0 +1,134 @@
+{
+  "uploadId": "up_fixture_sme_cert",
+  "filename": "중소기업확인서_다온피엠씨_가상.pdf",
+  "bytes": 100000,
+  "docType": {
+    "key": "sme_cert",
+    "label": "중소기업확인서",
+    "confidence": "high",
+    "score": 22,
+    "margin": 21,
+    "matched": [
+      "중소기업확인서"
+    ],
+    "candidates": [
+      {
+        "key": "sme_cert",
+        "label": "중소기업확인서",
+        "score": 22
+      }
+    ]
+  },
+  "extraction": {
+    "data": {
+      "certificate_confirmation_number": "제 2026-0000000 호",
+      "company_name": "주식회사 다온피엠씨",
+      "business_registration_number": "120-86-01230",
+      "representative_name": "강민서",
+      "corporate_registration_number": "110111-0000000",
+      "company_address": "서울특별시 강남구 테헤란로 501, 11층 (삼성동)",
+      "main_business_type": "소프트웨어 개발 및 공급업 (업종코드 6525)",
+      "company_size_classification": "중소기업 (중기업)",
+      "applicable_fiscal_year_term": "제17기 2025. 01. 01. ~ 2025. 12. 31.",
+      "number_of_regular_employees": 68,
+      "sales_amount": 8420000000,
+      "total_assets_amount": 6471900000,
+      "business_history_years": 17,
+      "business_opening_date": "2009-03-16",
+      "validity_start_date": "2026-04-01",
+      "validity_end_date": "2027-03-31",
+      "certificate_issue_date": "2026-04-01",
+      "issuing_authority": "중 소 벤 처 기 업 부 장 관"
+    },
+    "fields": {
+      "certificate_confirmation_number": {
+        "confidence": "high",
+        "page": 1
+      },
+      "company_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "business_registration_number": {
+        "confidence": "high",
+        "page": 1
+      },
+      "representative_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "corporate_registration_number": {
+        "confidence": "high",
+        "page": 1
+      },
+      "company_address": {
+        "confidence": "high",
+        "page": 1
+      },
+      "main_business_type": {
+        "confidence": "high",
+        "page": 1
+      },
+      "company_size_classification": {
+        "confidence": "high",
+        "page": 1
+      },
+      "applicable_fiscal_year_term": {
+        "confidence": "high",
+        "page": 1
+      },
+      "number_of_regular_employees": {
+        "confidence": "high",
+        "page": 1
+      },
+      "sales_amount": {
+        "confidence": "high",
+        "page": 1
+      },
+      "total_assets_amount": {
+        "confidence": "high",
+        "page": 1
+      },
+      "business_history_years": {
+        "confidence": "high",
+        "page": 1
+      },
+      "business_opening_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "validity_start_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "validity_end_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "certificate_issue_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "issuing_authority": {
+        "confidence": "high",
+        "page": 1
+      }
+    },
+    "confidence": "high",
+    "confidenceCounts": {
+      "high": 18,
+      "low": 0,
+      "unknown": 0
+    },
+    "lowFields": []
+  },
+  "meta": {
+    "source": "agent",
+    "cached": false,
+    "agentId": "agt_fixture",
+    "configId": "1",
+    "pages": 1,
+    "textChars": 1000,
+    "elapsedMs": 8000
+  }
+}

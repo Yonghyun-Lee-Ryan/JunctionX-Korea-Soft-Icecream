@@ -17,6 +17,7 @@ export const ERROR_CODES = {
   E_FILE_REQUIRED:     { status: 400, message: '분석할 PDF 파일을 올려 주세요.' },
   E_DOC_TYPE_UNKNOWN:  { status: 422, message: '문서 종류를 판정하지 못했습니다. 지원하는 8종(사업자등록증·중소기업확인서·신용평가등급확인서·개인정보 영향평가기관 지정서·소프트웨어사업자 신고확인서·실적증명서·재무제표·기술인력 보유현황) 중 하나인지 확인해 주세요.' },
   E_AGENT_NOT_SET:     { status: 503, message: '이 문서 종류를 처리할 분석기가 아직 연결되지 않았습니다.' },
+  E_CARD_INCOMPLETE:   { status: 422, message: '회사 카드를 만들기에 서류가 부족합니다.' },
   E_NOT_CONFIGURED:    { status: 503, message: '실시간 분석 설정이 없어 저장된 결과를 보여 드립니다.' },
   E_INTERNAL:          { status: 500, message: '처리 중 오류가 발생했습니다.' },
 };
