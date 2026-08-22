@@ -191,13 +191,94 @@ export const components = {
           type: 'array',
           items: {
             type: 'object',
-            required: ['id', 'title', 'columns', 'rows'],
+            required: ['id'],
             properties: {
               id: { type: 'string', example: 'compliance' },
-              kind: { type: 'string', enum: ['table', 'checklist'], default: 'table' },
+              kind: {
+                type: 'string',
+                enum: ['table', 'checklist', 'docs', 'metric', 'tasks', 'note', 'banner'],
+                default: 'table',
+                description: '🔴 어떤 «모양»으로 그릴지. 프론트가 탭 id로 분기하지 않게 서버가 정한다',
+              },
               title: { type: 'string' },
               columns: { type: 'array', items: { type: 'string' } },
-              rows: { type: 'array', items: { type: 'array', items: { type: 'string' } } },
+              columnAlign: {
+                type: 'array',
+                items: { type: 'string', enum: ['left', 'right'] },
+                description: '열 정렬. 🔴 화면과 xlsx가 같은 정렬을 쓴다',
+              },
+              rows: {
+                type: 'array',
+                description: '셀은 문자열이거나 {text,tone,chip} 객체다',
+                items: {
+                  type: 'array',
+                  items: {
+                    oneOf: [
+                      { type: 'string' },
+                      {
+                        type: 'object',
+                        required: ['text'],
+                        properties: {
+                          text: { type: 'string' },
+                          tone: { type: 'string', enum: ['default', 'proviso', 'ok', 'warn', 'danger', 'muted'] },
+                          chip: { type: 'boolean', description: '칩(둥근 배경)으로 그린다' },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+              metric: {
+                type: 'object',
+                description: 'kind=metric — 큰 숫자 하나로 말하는 카드',
+                properties: {
+                  value: { type: 'string', example: '4.0' },
+                  unit: { type: 'string', example: 'M/M' },
+                  caption: { type: 'string' },
+                  note: { type: 'string', description: '🔴 «못 한 것»을 말하는 줄' },
+                  evidence: { type: 'array', items: { type: 'string' } },
+                },
+              },
+              banner: {
+                type: 'object',
+                description: 'kind=banner — 표 위에 얹는 띠',
+                properties: {
+                  label: { type: 'string', example: '제출 제약' },
+                  text: { type: 'string' },
+                  evidence: { type: 'string', example: '공고문 p21' },
+                },
+              },
+              note: {
+                type: 'object',
+                description: 'kind=note — 글로 말하는 카드',
+                properties: {
+                  body: { type: 'string' },
+                  emphasis: { type: 'string', description: 'body 안에서 붉게 강조할 조각' },
+                  evidence: { type: 'string' },
+                },
+              },
+              items: {
+                type: 'array',
+                description: 'kind=docs(서류 줄) 또는 kind=tasks(보완요청)',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    filename: { type: 'string' },
+                    detail: { type: 'string' },
+                    state: { type: 'string', enum: ['done', 'reading', 'missing'] },
+                    label: { type: 'string' },
+                    chip: { type: 'object', properties: { text: { type: 'string' }, tone: { type: 'string' } } },
+                    action: {
+                      type: 'object',
+                      properties: {
+                        label: { type: 'string' },
+                        kind: { type: 'string', enum: ['upload', 'file'] },
+                      },
+                    },
+                  },
+                },
+              },
               warnings: { type: 'array', items: { type: 'string' }, description: '🔴 Node가 다시 센 검산 결과. 표 위에 붉게' },
               summary: { type: 'string', example: '전체 151건 중 미대응 0건' },
             },

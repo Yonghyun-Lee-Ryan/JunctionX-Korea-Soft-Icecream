@@ -7,6 +7,7 @@ import 'package:solar_for_bid/services/document_picker.dart';
 import 'package:solar_for_bid/state/company_registration_controller.dart';
 
 import 'support/fake_api.dart';
+import 'support/settle.dart';
 import 'support/scaled.dart';
 
 Future<void> _pump(WidgetTester t, FakeApi api,
@@ -21,13 +22,13 @@ Future<void> _pump(WidgetTester t, FakeApi api,
       pickDocuments: () async => const PickOutcome(docs: [], rejected: {}),
     ),
   ));
-  await t.pumpAndSettle();
+  await settle(t);
 }
 
 /// 회사 카드 → 「이 카드로 공고 추천」 → 공고 탐색
 Future<void> _toDiscovery(WidgetTester t) async {
   await t.tap(find.text('이 카드로 공고 추천'));
-  await t.pumpAndSettle();
+  await settle(t);
 }
 
 FakeApi _api() => FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'));
@@ -40,7 +41,7 @@ void main() {
     await _toDiscovery(t);
 
     await t.tap(find.text('응찰 준비').first);
-    await t.pumpAndSettle();
+    await settle(t);
 
     // 서버에 판정과 저장이 둘 다 갔다
     expect(api.decisions['R25BK00645031-000'], 'go');
@@ -62,10 +63,10 @@ void main() {
     await _pump(t, api);
     await _toDiscovery(t);
     await t.tap(find.text('응찰 준비').first);
-    await t.pumpAndSettle();
+    await settle(t);
 
     await t.tap(find.text('응찰하러 가기'));
-    await t.pumpAndSettle();
+    await settle(t);
 
     expect(api.createdCases, ['R25BK00645031-000']);
     expect(find.text('요구사항 체크리스트'), findsWidgets);
@@ -77,12 +78,12 @@ void main() {
     await _pump(t, api);
     await _toDiscovery(t);
     await t.tap(find.text('응찰 준비').first);
-    await t.pumpAndSettle();
+    await settle(t);
     await t.tap(find.text('응찰하러 가기'));
-    await t.pumpAndSettle();
+    await settle(t);
 
     await t.tap(find.bySemanticsLabel('응찰 목록으로').first);
-    await t.pumpAndSettle();
+    await settle(t);
     expect(find.text('응찰 준비중인 공고'), findsOneWidget);
   });
 
@@ -95,7 +96,7 @@ void main() {
     await _toDiscovery(t);
 
     await t.tap(find.text('응찰 준비').first);
-    await t.pumpAndSettle();
+    await settle(t);
 
     expect(find.text('저장된 회사가 없습니다.'), findsOneWidget);
     expect(find.text('나에게 맞는 공고'), findsOneWidget);
@@ -108,10 +109,10 @@ void main() {
     await _pump(t, api);
     await _toDiscovery(t);
     await t.tap(find.text('응찰 준비').first);
-    await t.pumpAndSettle();
+    await settle(t);
 
     await t.tap(find.text('빼기'));
-    await t.pumpAndSettle();
+    await settle(t);
 
     expect(api.savedBids, isEmpty);
     expect(find.text('아직 응찰하겠다고 정한 공고가 없습니다.'), findsOneWidget);
@@ -124,7 +125,7 @@ void main() {
     await _pump(t, api);
 
     await t.tap(find.text('응찰 건'));
-    await t.pumpAndSettle();
+    await settle(t);
     expect(find.text('응찰 준비중인 공고'), findsOneWidget);
     expect(find.text('아직 응찰하겠다고 정한 공고가 없습니다.'), findsOneWidget);
   });
@@ -151,9 +152,9 @@ void main() {
       final api = _api();
       await _pump(t, api, w: w, h: h, textScale: ts);
       await t.tap(find.text('이 카드로 공고 추천').first, warnIfMissed: false);
-      await t.pumpAndSettle();
+      await settle(t);
       await t.tap(find.text('응찰 준비').first, warnIfMissed: false);
-      await t.pumpAndSettle();
+      await settle(t);
     }
     FlutterError.onError = old;
     expect(overflow, 0);

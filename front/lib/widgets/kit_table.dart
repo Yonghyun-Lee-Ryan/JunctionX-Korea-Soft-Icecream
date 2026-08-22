@@ -113,10 +113,14 @@ class _KitTableCardState extends State<KitTableCard> {
         TableRow(
           children: [
             if (t.isChecklist) const SizedBox(height: 44),
-            for (final c in t.columns)
+            for (var c = 0; c < t.columns.length; c++)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 24, 12),
-                child: Text(c, style: AppText.cellHead, maxLines: 1, overflow: TextOverflow.ellipsis),
+                child: Align(
+                  alignment: t.alignRight(c) ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Text(t.columns[c],
+                      style: AppText.cellHead, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
               ),
           ],
         ),
@@ -131,12 +135,9 @@ class _KitTableCardState extends State<KitTableCard> {
               for (var c = 0; c < t.columns.length; c++)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 14, 24, 14),
-                  child: Text(
-                    c < t.rows[r].length ? t.rows[r][c] : '',
-                    // 🔴 ※로 시작하는 단서는 주황으로. 요구의 뜻을 뒤집는 문장이라 눈에 띄어야 한다
-                    style: (c < t.rows[r].length && t.rows[r][c].trimLeft().startsWith('※'))
-                        ? AppText.cellProviso
-                        : AppText.cell,
+                  child: Align(
+                    alignment: t.alignRight(c) ? Alignment.centerRight : Alignment.centerLeft,
+                    child: KitCellView(c < t.rows[r].length ? t.rows[r][c] : const KitCell('')),
                   ),
                 ),
             ],
@@ -183,4 +184,29 @@ class _KitTableCardState extends State<KitTableCard> {
           ),
         ),
       );
+}
+
+
+/// 셀 하나를 그린다.
+///
+/// 🔴 색을 **값에서 짐작하지 않는다.** 서버가 준 tone을 옮길 뿐이다.
+///    「준비됨이면 초록」처럼 문구를 보고 고르면, 에이전트가 문구를 바꾸는 날 색이 죽는다.
+class KitCellView extends StatelessWidget {
+  const KitCellView(this.cell, {super.key});
+  final KitCell cell;
+
+  @override
+  Widget build(BuildContext context) {
+    if (cell.text.isEmpty) return const SizedBox.shrink();
+    if (cell.chip) return AppChip.tone(cell.text, cell.tone);
+    return Text(cell.text, style: _style(cell.tone));
+  }
+
+  static TextStyle _style(String tone) => switch (tone) {
+        'proviso' || 'warn' => AppText.cellProviso,
+        'danger' => AppText.cellDanger,
+        'muted' => AppText.cellMuted,
+        'ok' => AppText.cellOk,
+        _ => AppText.cell,
+      };
 }

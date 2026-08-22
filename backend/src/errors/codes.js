@@ -9,6 +9,7 @@ export const ERROR_CODES = {
   E_CASE_NOT_FOUND:    { status: 404, message: '해당 공고 건을 찾지 못했습니다. 공고번호와 차수를 다시 확인해 주세요.' },
   E_COMPANY_NOT_FOUND: { status: 404, message: '회사 정보를 찾지 못했습니다. 회사 서류를 먼저 올려 주세요.' },
   E_TAB_NOT_FOUND:     { status: 404, message: '요청하신 표를 찾지 못했습니다.' },
+  E_TAB_NOT_TABULAR:   { status: 409, message: '이 자료는 표가 아니라 파일로 내려받을 수 없습니다.' },
   E_NO_ATTACHMENT:     { status: 404, message: '첨부를 찾지 못했습니다. 공고번호와 차수를 다시 확인해 주세요.' },
   E_UPSTREAM_G2B:      { status: 502, message: '나라장터에서 첨부를 받지 못했습니다. 잠시 후 다시 시도해 주세요.' },
   E_UPSTREAM_STUDIO:   { status: 502, message: '문서 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' },

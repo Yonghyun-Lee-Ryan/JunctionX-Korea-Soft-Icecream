@@ -7,12 +7,16 @@ import '../api/http_docs_api.dart';
 import '../api/models.dart';
 import '../theme/tokens.dart';
 import '../widgets/app_chip.dart';
+import '../widgets/kit_panels.dart';
 import '../widgets/kit_table.dart';
+import '../widgets/dropzone_card.dart';
 
 /// 화면④ 응찰 준비(Bid Kit) — Figma `정션2026`
-///   57:4571 요구사항 체크리스트 · 58:4886 WBS · 60:5059 제출준비
+///   74:6470 파일제출 · 74:7004 요구사항 체크리스트 · 77:8081 WBS · 74:7362 제출준비
 ///
 /// 🔴 탭 구성·배치·버튼 문구는 **서버가 준다**(`meta.kitPages`). 프론트는 그대로 그린다.
+///    한 탭을 어떤 «모양»으로 그릴지도 서버가 준 `kind`가 정한다 — 화면이 탭 id를 보고
+///    «이건 원가 카드»라고 판단하지 않는다. 그래야 패널이 늘어도 이 파일이 안 바뀐다.
 /// 🔴 아직 만들어지지 않은 탭은 「아직 없음」이라고 말한다 — 0건으로 그리지 않는다.
 class BidKitScreen extends StatefulWidget {
   const BidKitScreen({
@@ -133,7 +137,13 @@ class _BidKitScreenState extends State<BidKitScreen> {
       runSpacing: 10,
       alignment: WrapAlignment.end,
       children: [
-        _ghost('임시저장', () => _toast('임시저장은 아직 준비 중입니다.')),
+        // 🔴 문구를 화면이 고르지 않는다 — 파일제출에서는 「나중에」다
+        _ghost(
+          (page == null ? null : f.secondaryAction[page.id]) ?? '임시저장',
+          () => page != null && page.isUpload
+              ? _advance(f)
+              : _toast('임시저장은 아직 준비 중입니다.'),
+        ),
         if (page != null && f.primaryAction[page.id] != null)
           _primary(f.primaryAction[page.id]!, () => _advance(f)),
       ],
@@ -202,8 +212,8 @@ class _BidKitScreenState extends State<BidKitScreen> {
 
   Widget _tab(Factsheet f, KitPage p, int index) {
     final active = index == _page;
-    // 🔴 이 페이지가 그릴 탭이 하나도 없으면 «아직» 표시를 단다
-    final ready = p.tabs.any((t) => f.tab(t.id) != null);
+    // 🔴 탭이 «있다»가 아니라 «그릴 것이 있다»로 본다 — 열만 있고 행이 없는 빈 탭도 아직이다
+    final ready = p.tabs.any((t) => f.tab(t.id)?.hasContent ?? false);
     return InkWell(
       onTap: () => setState(() => _page = index),
       child: Padding(
@@ -236,9 +246,11 @@ class _BidKitScreenState extends State<BidKitScreen> {
   }
 
   Widget _pageBody(Factsheet f, KitPage page) {
+    // 🔴 «탭이 있다»가 아니라 «그릴 것이 있다»로 거른다. 탭 배지는 hasContent로 판정하는데
+    //    본문만 존재 여부로 그리면, 배지는 「준비 중」인데 본문엔 빈 카드가 넉 장 깔린다.
     final present = [
       for (final pt in page.tabs)
-        if (f.tab(pt.id) != null) (pt, f.tab(pt.id)!),
+        if (f.tab(pt.id)?.hasContent ?? false) (pt, f.tab(pt.id)!),
     ];
 
     if (present.isEmpty) {
@@ -262,22 +274,35 @@ class _BidKitScreenState extends State<BidKitScreen> {
       );
     }
 
+    // 🔴 전폭 탭(배너·큰 표)은 열 위에 얹는다
+    final full = [for (final (pt, tab) in present) if (pt.isFull) tab];
+    final columned = [for (final e in present) if (!e.$1.isFull) e];
+
     return LayoutBuilder(
       builder: (context, c) {
         const gap = 20.0;
+        final children = <Widget>[
+          for (final tab in full)
+            Padding(padding: const EdgeInsets.only(bottom: gap), child: _panel(f, tab)),
+        ];
+
+        // 파일 제출은 좌 서류 목록 · 우 드롭존 (Figma 74:6470)
+        if (page.isUpload) {
+          children.add(_uploadBody(f, columned.map((e) => e.$2).toList(), c.maxWidth));
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+        }
+
         final wide = c.maxWidth >= 1240 && page.columnCount > 1;
         if (!wide) {
-          return Column(
-            children: [
-              for (final (_, tab) in present)
-                Padding(padding: const EdgeInsets.only(bottom: gap), child: _card(f, tab)),
-            ],
-          );
+          children.addAll([
+            for (final (_, tab) in columned)
+              Padding(padding: const EdgeInsets.only(bottom: gap), child: _panel(f, tab)),
+          ]);
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
         }
-        final flex = page.columnFlex.isNotEmpty
-            ? page.columnFlex
-            : List.filled(page.columnCount, 1);
-        return Row(
+
+        final flex = page.columnFlex.isNotEmpty ? page.columnFlex : List.filled(page.columnCount, 1);
+        children.add(Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (var col = 0; col < page.columnCount; col++) ...[
@@ -286,18 +311,66 @@ class _BidKitScreenState extends State<BidKitScreen> {
                 flex: col < flex.length ? flex[col] : 1,
                 child: Column(
                   children: [
-                    for (final (pt, tab) in present)
+                    for (final (pt, tab) in columned)
                       if (pt.column == col)
-                        Padding(padding: const EdgeInsets.only(bottom: gap), child: _card(f, tab)),
+                        Padding(padding: const EdgeInsets.only(bottom: gap), child: _panel(f, tab)),
                   ],
                 ),
               ),
             ],
           ],
-        );
+        ));
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
       },
     );
   }
+
+  /// 파일제출 — 좌 「필요한 서류」 · 우 드롭존.
+  ///
+  /// 🔴 드롭존과 「업로드」는 **아직 아무것도 하지 않는다.** 제출 서류 적격 판단 에이전트가
+  ///    붙기 전이라, 파일을 받아 놓고 검사한 척하면 그게 화면이 하는 거짓말이다.
+  ///    누르면 무엇이 없어서 안 되는지 말한다.
+  Widget _uploadBody(Factsheet f, List<KitTab> tabs, double maxWidth) {
+    final docs = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final tab in tabs)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: KitDocsList(tab: tab, onUpload: (_) => _notWired()),
+          ),
+      ],
+    );
+    final zone = DropzoneCard(onPick: () async => _notWired());
+
+    if (maxWidth < 1240) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [zone, const SizedBox(height: 20), docs],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(flex: 1055, child: docs),
+        const SizedBox(width: 20),
+        Expanded(flex: 714, child: zone),
+      ],
+    );
+  }
+
+  void _notWired() => _toast('제출 서류 적격 판단이 아직 연결되지 않았습니다. 지금은 화면만 있습니다.');
+
+  /// 🔴 탭 하나를 어떤 모양으로 그릴지는 `kind`가 정한다. 모르는 kind면 표로 떨어진다 —
+  ///    에이전트가 새 kind를 보내도 화면이 죽지 않는다.
+  Widget _panel(Factsheet f, KitTab tab) => switch (tab.kind) {
+        'banner' when tab.banner != null => KitBanner(data: tab.banner!),
+        'metric' when tab.metric != null => KitMetricCard(tab: tab),
+        'note' when tab.note != null => KitNoteCard(tab: tab),
+        'tasks' => KitTasksCard(tab: tab, onAction: (_) => _notWired()),
+        'docs' => AppCard(child: KitDocsList(tab: tab, onUpload: (_) => _notWired())),
+        _ => _card(f, tab),
+      };
 
   Widget _card(Factsheet f, KitTab tab) {
     // 🔴 다운로드는 서버가 downloads[]에 실은 탭에만 붙는다 — 조견표는 웹 체크리스트라 파일이 없다

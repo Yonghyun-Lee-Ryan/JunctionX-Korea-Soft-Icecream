@@ -6,6 +6,7 @@ import 'package:solar_for_bid/services/document_picker.dart';
 import 'package:solar_for_bid/state/company_registration_controller.dart';
 
 import 'support/fake_api.dart';
+import 'support/settle.dart';
 
 Future<void> _pump(WidgetTester t, FakeApi api, {double w = 1920, double h = 1080}) async {
   t.view.physicalSize = Size(w, h);
@@ -15,7 +16,7 @@ Future<void> _pump(WidgetTester t, FakeApi api, {double w = 1920, double h = 108
     controller: CompanyRegistrationController(api),
     pickDocuments: () async => const PickOutcome(docs: [], rejected: {}),
   ));
-  await t.pumpAndSettle();
+  await settle(t);
 }
 
 void main() {
@@ -41,7 +42,7 @@ void main() {
     addTearDown(t.view.reset);
     await _pump(t, FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x')));
     await t.tap(find.text('카드 수정하기'));
-    await t.pumpAndSettle();
+    await settle(t);
     expect(find.text('회사 등록'), findsOneWidget);
   });
 
@@ -50,7 +51,7 @@ void main() {
     await _pump(t, _DeadApi());
     expect(find.textContaining('연결하지 못했습니다'), findsOneWidget);
     await t.tap(find.text('회사 등록으로'));
-    await t.pumpAndSettle();
+    await settle(t);
     expect(find.text('회사 등록'), findsOneWidget);
   });
 

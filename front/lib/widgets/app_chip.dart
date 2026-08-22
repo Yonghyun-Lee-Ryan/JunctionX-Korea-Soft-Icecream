@@ -29,12 +29,17 @@ class AppChip extends StatelessWidget {
   const AppChip.urgent(String label, {Key? key})
       : this(key: key, label: label, background: AppColors.urgentBg, foreground: AppColors.urgentFg);
 
-  /// 서버가 준 tone 문자열 그대로 — 🔴 프론트가 색을 판단하지 않는다
+  /// 서버가 준 tone 문자열 그대로 — 🔴 프론트가 색을 판단하지 않는다.
+  ///    두 벌의 이름을 다 받는다: 스크리닝 봉투의 success/urgent/…와
+  ///    Bid Kit 봉투의 ok/warn/muted/…. 매핑을 여기 한 곳에만 둔다.
   factory AppChip.tone(String label, String tone) => switch (tone) {
-        'success' => AppChip.success(label),
+        'success' || 'ok' => AppChip.success(label),
         'danger' => AppChip.danger(label),
         'neutral' => AppChip.neutral(label),
-        'urgent' => AppChip.urgent(label),
+        'urgent' || 'warn' || 'proviso' => AppChip.urgent(label),
+        'primary' => AppChip.primary(label),
+        // 🔴 muted를 «모르는 tone»과 같은 자리에 두면 서버 오타와 구분이 안 된다
+        'muted' || 'info' => AppChip.info(label),
         _ => AppChip.info(label),
       };
 

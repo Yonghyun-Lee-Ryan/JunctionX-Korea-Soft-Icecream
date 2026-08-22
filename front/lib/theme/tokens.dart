@@ -38,6 +38,12 @@ abstract final class AppColors {
   static const urgentFg = Color(0xFFFF8800);
   /// 제출 제약 배너
   static const noticeBg = Color(0xFFFFF4DB);
+
+  // ── M/M 예상 원가 카드 (Figma 77:8081) ───────────────
+  /// 🔴 rgba(238,243,251,0.51) — 흰 카드 위에 얹히는 반투명이라 알파를 그대로 둔다
+  static const metricBg = Color(0x82EEF3FB);
+  static const metricBorder = Color(0xFFD4E3F8);
+  static const metricEvidence = Color(0xFF6684A6);
 }
 
 /// 🔴 Pretendard가 없으면 시스템 한글 폰트로 떨어진다 — 자간·크기는 그대로 유지된다.
@@ -86,6 +92,28 @@ abstract final class AppText {
   static final cell = _t(18, FontWeight.w600, AppColors.black, -0.54);
   static final cellProviso = _t(18, FontWeight.w600, AppColors.urgentFg, -0.54);
   static final bigNumber = _t(36, FontWeight.w700, AppColors.black, -1.08);
+
+  /// M/M 예상 원가의 큰 숫자 — 🔴 보라다. 강조가 아니라 «우리가 계산한 값»이라는 표시다
+  static final metricValue = _t(36, FontWeight.w700, AppColors.primary, -1.08);
+  static final metricCaption = _t(18, FontWeight.w600, AppColors.fontGray1, -0.54);
+  static final metricNote = _t(16, FontWeight.w500, AppColors.primary, -0.48);
+  static final metricEvidence = _t(16, FontWeight.w500, AppColors.metricEvidence, -0.48);
+
+  /// 제출 제약 배너
+  static final bannerLabel = _t(18, FontWeight.w700, AppColors.urgentFg, -0.54);
+  static final bannerText = _t(18, FontWeight.w600, AppColors.chipTypo1, -0.54);
+  static final bannerEvidence = _t(18, FontWeight.w500, AppColors.fontGray2, -0.54);
+
+  /// 셀 색 — 🔴 서버가 준 tone을 옮길 뿐, 값을 보고 고르지 않는다
+  static final cellDanger = _t(18, FontWeight.w700, AppColors.dangerFg, -0.54);
+  static final cellWarn = _t(18, FontWeight.w700, AppColors.urgentFg, -0.54);
+  static final cellMuted = _t(18, FontWeight.w700, AppColors.fontGray2, -0.54);
+  static final cellOk = _t(18, FontWeight.w700, AppColors.successFg, -0.54);
+
+  /// 글로 말하는 카드
+  static final noteBody = _t(16, FontWeight.w400, AppColors.black, -0.48);
+  static final noteEmphasis = _t(16, FontWeight.w600, AppColors.dangerFg, -0.48);
+  static final noteEvidence = _t(16, FontWeight.w400, AppColors.fontGray1, -0.48);
 
   static final cardHeadline = _t(22, FontWeight.w600, AppColors.black, -0.66);
   static final reqTitle = _t(20, FontWeight.w600, AppColors.fontGray1, -0.6);

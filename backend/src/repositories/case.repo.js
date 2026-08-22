@@ -26,6 +26,19 @@ export function upsertCase(row) {
   return findCase(row.id);
 }
 
+/**
+ * 🔴 실패를 기록할 때 `upsertCase`를 부르면 안 된다.
+ *    upsertCase는 빠진 칸을 **기본값으로 채워 넣는다** — company_id는 null,
+ *    verdict_json·meta_json은 '{}', source는 'live'가 된다.
+ *    즉 첨부 수집이 한 번 실패하면 그 케이스의 회사·판정·출처가 통째로 지워졌다.
+ *    실패는 실패만 적는다.
+ */
+export function setCaseError(caseId, errorJson) {
+  getDb().prepare(`
+    UPDATE bid_case SET status = 'failed', error_json = ?, updated_at = datetime('now') WHERE id = ?
+  `).run(errorJson, caseId);
+}
+
 export function setCaseStatus(caseId, status) {
   getDb().prepare("UPDATE bid_case SET status = ?, updated_at = datetime('now') WHERE id = ?").run(status, caseId);
 }
@@ -70,21 +83,40 @@ export function listAttachments(caseId) {
 }
 
 // ── tabs / downloads ────────────────────────────────────────
+/**
+ * 🔴 kind마다 짐이 다르다(metric·banner·note·items·columnAlign).
+ *    칸을 하나씩 늘리면 kind가 늘 때마다 마이그레이션을 해야 하고,
+ *    빠뜨리면 값이 **조용히** 사라진다. 알려진 칸 밖은 통째로 extra_json에 담는다.
+ */
+const TAB_KNOWN = new Set(['id', 'kind', 'title', 'columns', 'rows', 'warnings', 'summary']);
+
 export function upsertTab(caseId, tab, seq = 0) {
+  const extra = {};
+  for (const [k, v] of Object.entries(tab)) if (!TAB_KNOWN.has(k) && v !== undefined) extra[k] = v;
+
   getDb().prepare(`
-    INSERT INTO case_tab (case_id, seq, tab_id, kind, title, columns_json, rows_json, warnings_json, summary)
-    VALUES (@case_id, @seq, @tab_id, @kind, @title, @columns_json, @rows_json, @warnings_json, @summary)
+    INSERT INTO case_tab (case_id, seq, tab_id, kind, title, columns_json, rows_json, warnings_json, summary, extra_json)
+    VALUES (@case_id, @seq, @tab_id, @kind, @title, @columns_json, @rows_json, @warnings_json, @summary, @extra_json)
     ON CONFLICT(case_id, tab_id) DO UPDATE SET
       seq = excluded.seq, kind = excluded.kind, title = excluded.title,
       columns_json = excluded.columns_json, rows_json = excluded.rows_json,
-      warnings_json = excluded.warnings_json, summary = excluded.summary
+      warnings_json = excluded.warnings_json, summary = excluded.summary,
+      extra_json = excluded.extra_json
   `).run({
-    case_id: caseId, seq, tab_id: tab.id, kind: tab.kind ?? 'table', title: tab.title,
+    // 🔴 case_tab.title은 NOT NULL이다. banner·note는 title이 본체가 아니라
+    //    없이 오기 쉬운데, 그러면 저장이 SQLITE_CONSTRAINT로 죽어 탭 하나가 통째로 사라진다.
+    case_id: caseId, seq, tab_id: tab.id, kind: tab.kind ?? 'table', title: tab.title ?? '',
     columns_json: JSON.stringify(tab.columns ?? []),
     rows_json: JSON.stringify(tab.rows ?? []),
     warnings_json: JSON.stringify(tab.warnings ?? []),
     summary: tab.summary ?? null,
+    extra_json: JSON.stringify(extra),
   });
+}
+
+/** 🔴 지난 판의 탭이 남아 픽스처나 새 결과를 가리지 않게 */
+export function clearTabs(caseId) {
+  getDb().prepare('DELETE FROM case_tab WHERE case_id = ?').run(caseId);
 }
 
 export function listTabs(caseId) {
@@ -96,6 +128,7 @@ export function listTabs(caseId) {
     rows: parseJson(r.rows_json, []),
     ...(parseJson(r.warnings_json, []).length ? { warnings: parseJson(r.warnings_json, []) } : {}),
     ...(r.summary ? { summary: r.summary } : {}),
+    ...parseJson(r.extra_json, {}),
   }));
 }
 

@@ -6,6 +6,7 @@ import 'package:solar_for_bid/services/document_picker.dart';
 import 'package:solar_for_bid/state/company_registration_controller.dart';
 
 import 'support/fake_api.dart';
+import 'support/settle.dart';
 
 Future<FakeApi> _pump(WidgetTester t, {double w = 1920, double h = 1080, bool live = false}) async {
   final api = FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'))..liveScreening = live;
@@ -16,10 +17,10 @@ Future<FakeApi> _pump(WidgetTester t, {double w = 1920, double h = 1080, bool li
     controller: CompanyRegistrationController(api),
     pickDocuments: () async => const PickOutcome(docs: [], rejected: {}),
   ));
-  await t.pumpAndSettle();
+  await settle(t);
   // 회사 카드 → 「이 카드로 공고 추천」
   await t.tap(find.text('이 카드로 공고 추천'));
-  await t.pumpAndSettle();
+  await settle(t);
   return api;
 }
 
@@ -88,7 +89,7 @@ void main() {
     addTearDown(t.view.reset);
     final api = await _pump(t);
     await t.tap(find.text('응찰 준비').first);
-    await t.pumpAndSettle();
+    await settle(t);
 
     expect(api.decisions['R25BK00645031-000'], 'go');
     // 🔴 go를 찍은 건만 저장된다
@@ -102,7 +103,7 @@ void main() {
     addTearDown(t.view.reset);
     final api = await _pump(t);
     await t.tap(find.text('보류').first);
-    await t.pumpAndSettle();
+    await settle(t);
 
     expect(api.decisions['R25BK00645031-000'], 'skip');
     expect(api.createdCases, isEmpty, reason: '보류는 응찰 준비가 아니다');
@@ -122,7 +123,7 @@ void main() {
       addTearDown(t.view.reset);
       await _pump(t);
       await t.tap(find.text('제외 124건'));
-      await t.pumpAndSettle();
+      await settle(t);
 
       expect(find.text('(데모) 금융권 차세대 PMO'), findsOneWidget);
       expect(find.text('최근 3년 금융권 PMO 실적 2건 이상 필요 — 회사 카드 0건'), findsOneWidget);
@@ -135,9 +136,9 @@ void main() {
       addTearDown(t.view.reset);
       await _pump(t);
       await t.tap(find.text('제외 124건'));
-      await t.pumpAndSettle();
+      await settle(t);
       await t.tap(find.text('제외 124건'));
-      await t.pumpAndSettle();
+      await settle(t);
       expect(find.text('(데모) 금융권 차세대 PMO'), findsNothing);
     });
   });
@@ -153,7 +154,7 @@ void main() {
       await t.pumpWidget(const SizedBox.shrink());
       await _pump(t, w: w, h: h);
       await t.tap(find.text('제외 124건'));
-      await t.pumpAndSettle();
+      await settle(t);
     }
     FlutterError.onError = old;
     expect(overflow, 0);

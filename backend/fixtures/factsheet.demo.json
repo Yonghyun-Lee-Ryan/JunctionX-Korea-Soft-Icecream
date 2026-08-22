@@ -23,63 +23,427 @@
     ]
   },
   "tabs": [
-    { "id": "compliance", "title": "요구사항 조견표", "kind": "checklist",
-      "columns": ["요구사항ID", "분류", "명칭", "※ 단서", "근거 p", "수용 여부", "대응 목차"],
-      "rows": [
-        ["CSR-001", "공통", "PMO 사업의 수행전략 및 방안 제시", "", "47", "", "Ⅲ-나-1"],
-        ["CSR-007", "공통", "대상사업 일정관리", "※ 단, 중앙회 일정에 종속되는 구간은 제외", "49", "", "Ⅲ-나-2"],
-        ["ECR-004", "장비", "H/W 공통 요구사항", "※ 신규 도입장비에 한함", "63", "", "Ⅲ-다-1"]
+    {
+      "id": "submitfiles",
+      "title": "필요한 서류",
+      "kind": "docs",
+      "items": [
+        {
+          "title": "입찰참가신청서",
+          "filename": "사업자 등록증_다온피엠씨.pdf",
+          "state": "done",
+          "label": "co_biz_reg"
+        },
+        {
+          "title": "제안서・제안요약서",
+          "filename": "실적증명서_2024-2026.pdf",
+          "state": "reading",
+          "label": "읽는 중"
+        },
+        {
+          "title": "실적증명서",
+          "filename": "업로드 되지 않음",
+          "state": "missing",
+          "label": "업로드"
+        },
+        {
+          "title": "신용평가등급확인서",
+          "filename": "업로드 되지 않음",
+          "state": "missing",
+          "label": "업로드"
+        },
+        {
+          "title": "청렴계약이행서약서",
+          "filename": "중소기업 확인서_2027-03-31.pdf",
+          "state": "done",
+          "label": "co_sme_cert"
+        }
       ],
-      "warnings": ["총괄표 151건 / 추출 151건 — 일치", "※ 단서가 붙은 항목 136건"],
-      "summary": "151건 · 웹에서 한 행씩 체크합니다 — xlsx 없음" },
-    { "id": "wbs", "title": "WBS",
-      "columns": ["WBS ID", "작업 패키지", "산출물", "선행", "기간", "M/M (추천)", "근거 요구사항", "근거 p"],
-      "rows": [
-        ["1.1", "착수 및 사업수행계획 수립", "사업수행계획서", "", "문서에 없음", "특급 0.5 · 고급 0.5 (추천)", "CSR-001", "47"],
-        ["1.2", "현행 분석", "현황분석서", "1.1", "문서에 없음", "고급 1.0 · 중급 1.0 (추천)", "CSR-003", "48"],
-        ["2.1", "일정·진척 관리체계 수립", "마스터일정", "1.2", "문서에 없음", "특급 0.5 · 중급 0.5 (추천)", "CSR-007", "49"]
+      "summary": "제출 서류 적격 판단은 아직 연결되지 않았습니다 — 지금 보이는 상태는 데모 표본입니다."
+    },
+    {
+      "id": "compliance",
+      "title": "요구사항 체크리스트",
+      "kind": "checklist",
+      "columns": [
+        "요구사항 ID",
+        "분류",
+        "명칭",
+        "단서",
+        "근거 페이지"
       ],
-      "warnings": ["기간이 문서에 명시된 작업 0건 / 미명시 3건"],
-      "summary": "작업 패키지 3건 (데모 축약)" },
-    { "id": "criticalpath", "title": "임계경로",
-      "columns": ["작업", "시작", "종료", "소요", "여유", "임계", "담당"],
-      "rows": [
-        ["입찰참가자격 등록 확인", "08-22", "08-22", "1일", "0", "🔴", "관리"],
-        ["실적증명서 발급 (발주기관 3곳)", "08-22", "08-27", "[확인필요 — 리드타임 미상]", "0", "🔴", "관리"],
-        ["신용평가등급확인서 발급", "08-22", "08-25", "[확인필요 — 리드타임 미상]", "2일", "", "관리"],
-        ["제안서 집필", "08-23", "09-01", "6영업일", "0", "🔴", "제안팀"],
-        ["인쇄·제본 5부 + 인편 제출", "09-02", "09-02", "1일", "0", "🔴", "관리"]
+      "columnAlign": [
+        "left",
+        "left",
+        "left",
+        "left",
+        "right"
       ],
-      "warnings": ["🔴 경로 A 임계경로: 실적증명서 발급 → 제안서 집필 → 인쇄·제본. 제3자 발급은 오늘 신청해야 합니다", "제3자 발급 서류 리드타임 [확인필요]"],
-      "summary": "달력 9일 / 실질 5영업일" },
-    { "id": "cost", "title": "M/M 예상 원가 (추천)",
-      "columns": ["항목", "값", "근거"],
       "rows": [
-        ["추정가격", "공고에서 추출", "공고문 p3"],
-        ["낙찰하한율", "공고에서 추출", "공고문 p7"],
-        ["가격평가 산식", "공고 원문 그대로 옮김", "공고문 p7"],
-        ["총 M/M (추천)", "특급 1.0 · 고급 1.5 · 중급 1.5 = 4.0 M/M (데모 축약)", "AI Agent 추천 — 과업 범위·산출물 수·기간"],
-        ["금액 환산", "단가 미입력 — M/M까지만", "🔴 회사 카드에 등급별 단가가 있을 때만 곱합니다"]
+        [
+          "CSR-001",
+          "공통",
+          "PMO 사업의 수행전략 및 방안 제시",
+          "-",
+          "47p"
+        ],
+        [
+          "CSR-003",
+          "공통",
+          "현행 시스템 및 사업 현황 분석",
+          "-",
+          "12p"
+        ],
+        [
+          "CSR-007",
+          "공통",
+          "대상사업 일정관리",
+          {
+            "text": "※중앙회 일정에 종속되는 구간은 제외",
+            "tone": "proviso"
+          },
+          "54p"
+        ],
+        [
+          "PMR-002",
+          "사업관리",
+          "품질관리 방안 및 산출물 검토 체계",
+          {
+            "text": "※발주기관 품질기준을 우선 적용",
+            "tone": "proviso"
+          },
+          "123p"
+        ],
+        [
+          "PMR-005",
+          "사업관리",
+          "위험 식별・대응 및 보고 추가",
+          "-",
+          "324p"
+        ],
+        [
+          "ECR-004",
+          "장비",
+          "H/W 공통 요구사항",
+          {
+            "text": "※신규 도입장비에 한함",
+            "tone": "proviso"
+          },
+          "12p"
+        ],
+        [
+          "SER-001",
+          "보안",
+          "개인정보 처리위탁 보안 요구사항",
+          {
+            "text": "※위탁 범위는 계약특수 조건 제4조에 따름",
+            "tone": "proviso"
+          },
+          "57p"
+        ]
       ],
-      "warnings": ["🔴 투찰가를 추천하지 않습니다. M/M(맨먼스)을 추천값으로 내고 「(추천)」을 붙이며, 공고에 적힌 값은 옮기기만 합니다"],
-      "summary": "" }
+      "warnings": [
+        "총괄표 151건 · 여기 표시 7건 — 데모 축약"
+      ],
+      "summary": "151건 · 웹에서 한 행씩 체크합니다 — xlsx 없음"
+    },
+    {
+      "id": "wbs",
+      "title": "WBS",
+      "kind": "table",
+      "columns": [
+        "ID",
+        "작업 패키지",
+        "산출물",
+        "선행",
+        "기간",
+        "M/M",
+        "근거요구",
+        "P"
+      ],
+      "columnAlign": [
+        "left",
+        "left",
+        "left",
+        "left",
+        "left",
+        "left",
+        "left",
+        "right"
+      ],
+      "rows": [
+        [
+          "1.1",
+          "착수 및 사업수행 계획 수립",
+          "사업 수행 계획서",
+          "-",
+          "미 명시",
+          "특급 0.5・고급 0.5",
+          "CSR-001",
+          "47"
+        ],
+        [
+          "1.2",
+          "현행 분석",
+          "현황 분석서",
+          "1.1",
+          "미 명시",
+          "고급 0.1・중급 0.1",
+          "CSR-003",
+          "48"
+        ]
+      ],
+      "warnings": [
+        "기간 명시 0건 / 미 명시 2건"
+      ],
+      "summary": "기간은 문서를 참고해주세요. 없으면 「미 명시」로 표기합니다. - M/M은 추천값입니다."
+    },
+    {
+      "id": "criticalpath",
+      "title": "임계경로",
+      "kind": "table",
+      "columns": [
+        "작업",
+        "남은 일"
+      ],
+      "columnAlign": [
+        "left",
+        "right"
+      ],
+      "rows": [
+        [
+          "입찰참가자격 등록 확인",
+          {
+            "text": "3일 전",
+            "tone": "danger"
+          }
+        ],
+        [
+          "실적증명서 발급 (발주기관 3곳)",
+          {
+            "text": "7일 전",
+            "tone": "warn"
+          }
+        ],
+        [
+          "제안서 집필",
+          {
+            "text": "10일 전",
+            "tone": "muted"
+          }
+        ]
+      ],
+      "warnings": [
+        "공휴일 미반영 — 주말만 제외했습니다"
+      ]
+    },
+    {
+      "id": "cost",
+      "title": "M/M 예상 원가 (추천)",
+      "kind": "metric",
+      "metric": {
+        "value": "4.0",
+        "unit": "M/M",
+        "caption": "특급 1.0・고급 1.5・중급 1.5",
+        "note": "금액 환산 - 단가 미입력 · 회사 카드에 등급별 단가가 있을 때만",
+        "evidence": [
+          "추정가격・공고 p3",
+          "낙찰하한율・공고 p7"
+        ]
+      },
+      "summary": "투찰가 아님"
+    },
+    {
+      "id": "constraints",
+      "title": "제출 제약",
+      "kind": "banner",
+      "banner": {
+        "label": "제출 제약",
+        "text": "인편 제출・제안서 5부・분량 상한 100쪽・가격제안서는 별도 밀봉",
+        "evidence": "공고문 p21"
+      }
+    },
+    {
+      "id": "checklist",
+      "title": "제출 서류",
+      "kind": "table",
+      "columns": [
+        "서류",
+        "부수",
+        "유효기간",
+        "상태",
+        "보완요청・리드타임",
+        "P"
+      ],
+      "columnAlign": [
+        "left",
+        "left",
+        "left",
+        "left",
+        "left",
+        "right"
+      ],
+      "rows": [
+        [
+          "입찰참가신청서 (서식 제1호)",
+          "1",
+          "-",
+          {
+            "text": "준비됨",
+            "tone": "ok",
+            "chip": true
+          },
+          "-",
+          "23"
+        ],
+        [
+          "제안서・제안요약서",
+          "5",
+          "-",
+          {
+            "text": "준비됨",
+            "tone": "ok",
+            "chip": true
+          },
+          "인쇄 1일",
+          "36"
+        ],
+        [
+          "실적증명서",
+          "1",
+          "발급 30일 내",
+          {
+            "text": "보완 필요",
+            "tone": "warn",
+            "chip": true
+          },
+          "발주기관 직인본이 필요합니다 - 사본 불가・3곳에 오늘 신청・「확인 필요」 발급 소요",
+          "36"
+        ],
+        [
+          "신용평가등급확인서",
+          "1",
+          "2026-11-30",
+          {
+            "text": "준비됨",
+            "tone": "ok",
+            "chip": true
+          },
+          "-",
+          "87"
+        ],
+        [
+          "청렴계약이행서약서",
+          "5",
+          "-",
+          {
+            "text": "미확인",
+            "tone": "muted",
+            "chip": true
+          },
+          "인쇄 1일",
+          "94"
+        ],
+        [
+          "가격제안서",
+          "5",
+          "-",
+          {
+            "text": "보완 필요",
+            "tone": "warn",
+            "chip": true
+          },
+          "인쇄 1일",
+          "167"
+        ]
+      ]
+    },
+    {
+      "id": "rework",
+      "title": "보완요청 2건",
+      "kind": "tasks",
+      "items": [
+        {
+          "title": "실적증명서",
+          "chip": {
+            "text": "보완 필요",
+            "tone": "warn"
+          },
+          "detail": "발주기관 직인본 필요 - 사본 불가",
+          "action": {
+            "label": "보완 자료 올리기",
+            "kind": "upload"
+          }
+        },
+        {
+          "title": "가격제안서",
+          "chip": {
+            "text": "보완 필요",
+            "tone": "warn"
+          },
+          "detail": "별도 봉투 밀봉・겉면 기재",
+          "action": {
+            "label": "다온피엠씨_가격제안서.pdf",
+            "kind": "file"
+          }
+        }
+      ],
+      "summary": "사람이 검토한 뒤 보완 자료를 올리면 다시 검사합니다."
+    },
+    {
+      "id": "phrases",
+      "title": "금지 표현 검사",
+      "kind": "note",
+      "note": {
+        "body": "제안서 원고에서 「가능하다」・「고려할 수 있다」 류 3곳 - 평가에서 불가능한 것으로 간주되는 표현입니다.",
+        "emphasis": "3곳",
+        "evidence": "RFP p18"
+      }
+    }
   ],
   "downloads": [
-    { "id": "wbs", "label": "WBS.xlsx", "url": "/api/cases/R25BK00645031-000/files/wbs.xlsx", "bytes": 0 },
-    { "id": "criticalpath", "label": "임계경로.xlsx", "url": "/api/cases/R25BK00645031-000/files/cp.xlsx", "bytes": 0 },
-    { "id": "cost", "label": "MM예상원가.xlsx", "url": "/api/cases/R25BK00645031-000/files/cost.xlsx", "bytes": 0 }
+    {
+      "id": "wbs",
+      "label": "WBS.xlsx",
+      "url": "/api/cases/R25BK00645031-000/files/wbs.xlsx"
+    },
+    {
+      "id": "criticalpath",
+      "label": "임계경로.xlsx",
+      "url": "/api/cases/R25BK00645031-000/files/criticalpath.xlsx"
+    }
   ],
   "meta": {
     "cached": true,
-    "agentId": "agt_TBD",
-    "configVersion": "Config #TBD",
+    "agentId": "agt_demo",
+    "configVersion": "1",
     "elapsedMs": 0,
     "attachments": [
-      { "fileSeq": 1, "filename": "입찰공고문(체육진흥투표권사업 온라인발매 결제서비스(PG) 대행 용역).hwp", "docClass": "ntce_notice", "bytes": 72192 },
-      { "fileSeq": 2, "filename": "제안요청서.hwp", "docClass": "rfp_main", "bytes": 345600 },
-      { "fileSeq": 3, "filename": "계약이행특수조건.hwp", "docClass": "contract_terms", "bytes": 135680 },
-      { "fileSeq": 4, "filename": "개인정보처리위탁특수조건.hwp", "docClass": "contract_terms", "bytes": 72704 },
-      { "fileSeq": 5, "filename": "[별첨 1] 공동수급표준협정서(공동이행방식).hwpx", "docClass": "form_annex", "bytes": 12781 }
+      {
+        "fileSeq": 1,
+        "filename": "입찰공고문.hwp",
+        "docClass": "ntce_notice"
+      },
+      {
+        "fileSeq": 2,
+        "filename": "제안요청서.hwp",
+        "docClass": "rfp_main"
+      },
+      {
+        "fileSeq": 3,
+        "filename": "계약특수조건.hwp",
+        "docClass": "contract_terms"
+      },
+      {
+        "fileSeq": 4,
+        "filename": "과업지시서.hwp",
+        "docClass": "contract_terms"
+      },
+      {
+        "fileSeq": 5,
+        "filename": "제출서식.hwp",
+        "docClass": "form_annex"
+      }
     ]
   }
 }

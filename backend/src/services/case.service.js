@@ -2,7 +2,7 @@ import { parseJson } from '../db/index.js';
 import * as repo from '../repositories/case.repo.js';
 import { AppError } from '../errors/AppError.js';
 import { loadFixture, stripComments } from './fixture.service.js';
-import { KIT_PAGES, KIT_PRIMARY_ACTION } from '../config/kitPages.js';
+import { KIT_PAGES, KIT_PRIMARY_ACTION, KIT_SECONDARY_ACTION } from '../config/kitPages.js';
 import { env } from '../config/env.js';
 
 /** caseId = 공고번호-차수 */
@@ -44,7 +44,11 @@ export function getFactsheet(caseId, { live = false } = {}) {
     tabs: repo.listTabs(caseId),
     downloads: repo.listDownloads(caseId),
     meta: {
-      cached: row.source === 'cached',
+      // 🔴 «캐시를 썼다»가 아니라 «캐시로 만들어진 케이스다»만 말하던 값이다.
+      //    ?live=1로 DB 분기를 타 열화된 봉투를 받아도 true라, 화면은 자기가 받은 게
+      //    픽스처인지 DB인지 구분할 수 없었다. 실제로 판 분기를 적는다.
+      cached: false,
+      source: row.source,
       agentId: env.studio.agentId || undefined,
       configVersion: env.studio.configVersion || undefined,
       ...meta,
@@ -52,6 +56,7 @@ export function getFactsheet(caseId, { live = false } = {}) {
       // 🔴 탭 배치도 서버가 준다 — 프론트가 tab id로 분기하지 않게
       kitPages: KIT_PAGES,
       kitPrimaryAction: KIT_PRIMARY_ACTION,
+      kitSecondaryAction: KIT_SECONDARY_ACTION,
     },
   };
   const error = parseJson(row.error_json, null);
@@ -67,8 +72,10 @@ function cachedFactsheet(caseId) {
   clean.meta = {
     ...(clean.meta ?? {}),
     cached: true,
+    source: 'cached',
     kitPages: KIT_PAGES,
     kitPrimaryAction: KIT_PRIMARY_ACTION,
+    kitSecondaryAction: KIT_SECONDARY_ACTION,
   };
   return clean;
 }
@@ -83,16 +90,28 @@ export const DEFAULT_PROGRESS = [
 
 export function createCase({ bidPbancNo, bidPbancOrd = '000', companyId = null }) {
   const caseId = toCaseId(bidPbancNo, bidPbancOrd);
+
+  // 🔴 데모 공고는 데모로 남는다. 픽스처가 있는 공고번호를 live로 만들면 첨부 수집이
+  //    끝날 때까지 빈 화면이 뜨고, 그게 «아직 안 만들었다»인지 «못 읽었다»인지 알 수 없다.
+  //    캐시라는 사실은 meta.cached로 화면에 그대로 나간다 — 숨기는 게 아니다.
+  const demo = cachedFactsheet(caseId) !== null;
+
   repo.upsertCase({
     id: caseId,
     bid_pbanc_no: bidPbancNo,
     bid_pbanc_ord: String(bidPbancOrd).padStart(3, '0'),
     company_id: companyId,
-    status: 'collecting',
-    source: 'live',
+    status: demo ? 'done' : 'collecting',
+    source: demo ? 'cached' : 'live',
   });
-  repo.replaceProgress(caseId, DEFAULT_PROGRESS);
-  return caseId;
+  if (demo) {
+    // 🔴 지난 판에서 만들어 둔 탭이 픽스처를 가린다 — 데모로 되돌릴 때 치운다
+    repo.clearTabs(caseId);
+    repo.replaceProgress(caseId, cachedFactsheet(caseId).progress ?? []);
+  } else {
+    repo.replaceProgress(caseId, DEFAULT_PROGRESS);
+  }
+  return { caseId, demo };
 }
 
 export { repo as caseRepo };
