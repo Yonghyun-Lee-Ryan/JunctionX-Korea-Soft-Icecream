@@ -31,6 +31,16 @@ export const env = {
     baseUrl: str('STUDIO_BASE_URL', 'https://api.upstage.ai'),
     pollIntervalMs: int('STUDIO_POLL_INTERVAL_MS', 3000),
     pollTimeoutMs: int('STUDIO_POLL_TIMEOUT_MS', 300000),
+    // 🔴 공고 해부 5종 + 회사 카드 1종 (정운 계정 · 2026-08-22 실측). 설정 원본 agent/*.json
+    //    ID가 비어도 서버는 뜬다 — 그 호출만 E_AGENT_NOT_SET, 키가 없으면 fixtures/studio 로 폴백
+    agents: {
+      overview:              { agentId: str('STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_ID'),               configId: str('STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_CONFIG') },
+      scopeContext:          { agentId: str('STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_ID'),          configId: str('STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_CONFIG') },
+      requirements:          { agentId: str('STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_ID'),           configId: str('STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_CONFIG') },
+      eligibilitySubmission: { agentId: str('STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_ID'), configId: str('STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_CONFIG') },
+      conditionsEvaluation:  { agentId: str('STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_ID'),  configId: str('STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_CONFIG') },
+      companyCard:           { agentId: str('STUDIO_AGENT_COMPANY_CARD_ID'),                         configId: str('STUDIO_AGENT_COMPANY_CARD_CONFIG') },
+    },
   },
 
   // 🔴 Solar 판정 층 — Studio Instruct 노드가 프롬프트를 안 타서(agent/README.md 3-1) 백엔드가

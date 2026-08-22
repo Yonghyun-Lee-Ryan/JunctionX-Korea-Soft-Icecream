@@ -4,6 +4,7 @@ import { casesRouter } from './cases.routes.js';
 import { companiesRouter } from './companies.routes.js';
 import { docsRouter } from './docs.routes.js';
 import { judgeRouter } from './judge.routes.js';
+import { announcementsRouter } from './announcements.routes.js';
 
 export const router = Router();
 
@@ -15,3 +16,5 @@ router.use('/api', companiesRouter);
 router.use('/api', docsRouter);
 // 🔴 판정 층 — Studio Instruct 대신 Solar Chat API (backend/HANDOFF-solar-judgment.md)
 router.use('/api', judgeRouter);
+// 🔴 공고 해부 — 제안요청서·입찰공고서를 Studio 5 Agent 에 돌리고 병합 (S3)
+router.use('/api', announcementsRouter);
