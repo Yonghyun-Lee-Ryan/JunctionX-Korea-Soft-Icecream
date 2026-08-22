@@ -1,0 +1,410 @@
+{
+  "requirement_count": 33,
+  "requirement_summary": [
+    {
+      "category_code": "SFR",
+      "category_name": "기능",
+      "declared_count": "10"
+    },
+    {
+      "category_code": "PER",
+      "category_name": "성능",
+      "declared_count": "1"
+    },
+    {
+      "category_code": "INR",
+      "category_name": "인터페이스",
+      "declared_count": "2"
+    },
+    {
+      "category_code": "DAR",
+      "category_name": "데이터",
+      "declared_count": "5"
+    },
+    {
+      "category_code": "SER",
+      "category_name": "보안",
+      "declared_count": "4"
+    },
+    {
+      "category_code": "TQR",
+      "category_name": "테스트 및 품질",
+      "declared_count": "2"
+    },
+    {
+      "category_code": "PMR",
+      "category_name": "프로젝트",
+      "declared_count": "5"
+    },
+    {
+      "category_code": "PSR",
+      "category_name": "프로젝트 지원",
+      "declared_count": "4"
+    }
+  ],
+  "requirements": [
+    {
+      "requirement_id": "SFR-001",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "도메인 모드 선택 기능 구현",
+      "detailed_content": " 서비스 시작 화면 `범용AX', `피지컬AX' 2종 모드 선택 구분 제공\n 세션 전반에 걸쳐 선택한 모드 유지 및 이후 진단․컨설팅 전 단계 일괄 적용\n 모드 미선택 시 다음 단계 진행 불가 처리 및 안내 메시지 표시",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 13
+    },
+    {
+      "requirement_id": "SFR-002",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "진단그룹 자동 분류",
+      "detailed_content": " AX 기본역량 파악을 위한 초기 질의 제공\n 사용자 질의 응답값 분석 및 A/B/C 그룹 자동 매칭 로직 구현\n 그룹별 진단영역 차별화 진단 경로 분기\n 분류 결과 화면 표시 기능 설계",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 13
+    },
+    {
+      "requirement_id": "SFR-003",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "AX 성숙도 진단 기능 구현",
+      "detailed_content": " 각 진단영역별 구조화된 선택지 제공 대화 흐름 구현\n 사용자 응답(선택지/서술형) 실시간 분석 및 맥락 맞춤형 후속 질문 동적 생성\n 진단 단계 진행 바 및 진행률(%) 화면 상단 상시 표시 기능 제공",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 14
+    },
+    {
+      "requirement_id": "SFR-004",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "진단 채점 로직 구현",
+      "detailed_content": " 사용자 응답 분석 및 영역별 Evidence 자동 추출 기능 개발\n 추출된 Evidence 기반 진단영역별 0~5점 점수 산출 로직 구현\n 채점 기준 및 점수 산출 근거 내부 문서 정의 재현성 설계",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 14
+    },
+    {
+      "requirement_id": "SFR-005",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "진단 결과 대시보드",
+      "detailed_content": " 진단 영역별 점수 레이더 차트 시각화\n 성숙도 Level 맵 상 현재 위치 표시\n 주요 벤치마크 및 동종기업 그룹 대비 비교 분석 그래프 제공",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 14
+    },
+    {
+      "requirement_id": "SFR-006",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "AX 전환 전략 가이드 자동 생성 기능 구현",
+      "detailed_content": " 기업 AX 수준 기반 맞춤 전략 가이드\n 진단 결과 기반 단기·중기·장기 AX 전환 로드맵 생성\n 우선순위 내용 기반 AX 로드맵 자동 생성\n 유사 기업의 AI 도입 성공 요인·실패 사례 분석",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 15
+    },
+    {
+      "requirement_id": "SFR-007",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "맞춤형 데이터 전략 컨설팅 기능 구현",
+      "detailed_content": "수집.\n·관리 현황 분석\n 진단 결과 기반 데이터\n 기업 규모.\n·업종별 데이터 거버넌스 수준 평가\n 데이터 품질.\n·보안.\n·활용성 개선 방향 자동 도출\n ISO/IEC 25012 기반 데이터 품질 개선 가이드 제공",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 15
+    },
+    {
+      "requirement_id": "SFR-008",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "AI 인증·검증 절차 가이드 기능 구현",
+      "detailed_content": " 인증 취득 단계별 체크리스트 및 준비 가이드 제공\n 지원 인증 유형 6종 정보 제공: ISO/IEC 42001, NET/NEP, 혁신제품 인증, GS인증, IEC 61508(피지컬AI), EU AI Act\n 인증 기간․소요 비용․기간 정보 자동 안내",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 15
+    },
+    {
+      "requirement_id": "SFR-009",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "통합 PDF 리포트 자동 생성",
+      "detailed_content": " 진단결과․전환 가이드․데이터 컨설팅․표준인증 등 통합 리포트 PDF 형식 자동 생성\n 경영진 요약본(핵심지표, 결론중심)과 실무자 상세본(전 영역 세부 내용) 이원화 구성\n 리포트 생성 완료 후 즉시 다운로드 가능 버튼 제공",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 16
+    },
+    {
+      "requirement_id": "SFR-010",
+      "requirement_category": "기능 요구사항",
+      "requirement_name": "사용자/관리자 기능 분리",
+      "detailed_content": " 사용자용인터페이스: 진단 수행, 결과 조회, 리포트 다운로드 기능\n 관리자용 인터페이스: 진단 현황 모니터링, 데이터 관리, 시스템 설 정 기능 제공\n 역할별 접근 권한 정책 연계 권한 외 기능 접근 차단 처리 ※ 세부 기능 구현 사항은 발주기관과 협의 하에 변동 가능",
+      "note_clause": "※ 세부 기능 구현 사항은 발주기관과 협의 하에 변동 가능",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "가. 기능 요구사항 (System Function Requirements)",
+      "source_page": 16
+    },
+    {
+      "requirement_id": "PER-001",
+      "requirement_category": "성능 요구 사항",
+      "requirement_name": "데이터 처리 응답 시간",
+      "detailed_content": " 화면: 사용자가 활용할 수 있는 모든 페이지  사용자 응답 제출 및 후속 질문 생성과 화면 출력까지 소요 시간을 3초 이내로 유지(피크타임 기준)  응답 지연 발생 시 로딩 인디케이터 팝업 표시",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "나. 성능 요구사항 (Performance Requirements)",
+      "source_page": 17
+    },
+    {
+      "requirement_id": "INR-001",
+      "requirement_category": "인터페이스 요구사항",
+      "requirement_name": "웹 표준화 인터페이스",
+      "detailed_content": " 웹 표준(XHTML, CSS, Script) 등 표준 기술 적용하여 개발\n HTML5로 대표되는 W3C 국제 표준 준수\n 모든 웹페이지는 웹 표준화 가이드라인을 준수\n 웹 표준 진단방법과 진단도구 제시",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "다. 인터페이스 요구사항 (Interface Requirements)",
+      "source_page": 18
+    },
+    {
+      "requirement_id": "INR-002",
+      "requirement_category": "인터페이스 요구사항",
+      "requirement_name": "반응형 웹 UI 인터페이스",
+      "detailed_content": " PC태블릿모바일 화면 크기에 따라 레이아웃 자동 최적화되는 반응 형 웹 UI 설계 및 구현 대화형 진단 인터페이스/결과 시각화/PDF 다운로드 등 전 기능이\n 모바일 환경에서도 동일하게 동작하도록 구현\n 주요 브라우저(Chrome, Safari, Edge 등) 및 OS(iOS, Android, Winodws, macOS 등) 환경에서의 호환성 검증",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "다. 인터페이스 요구사항 (Interface Requirements)",
+      "source_page": 18
+    },
+    {
+      "requirement_id": "DAR-001",
+      "requirement_category": "데이터 요구사항",
+      "requirement_name": "데이터 구조 설계",
+      "detailed_content": " 정책·과제·기술 분야 구축된 데이터를 의미 단위로 분리하여 구조화\n 데이터에 대한 메타데이터 구조 설계\n 기술 분야, 산업 영역, 정책 키워드 등 데이터 연결을 위한 메타데이터 체계 구축\n AX 컨설팅 콘텐츠 생성을 위해 활용 가능한 데이터 구조 설계",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "라. 데이터 요구사항 (Data Requirements)",
+      "source_page": 19
+    },
+    {
+      "requirement_id": "DAR-002",
+      "requirement_category": "데이터 요구사항",
+      "requirement_name": "Vector DB 기반 데이터 저장 구조 구축",
+      "detailed_content": " 데이터의 임베딩 기반 Vector DB 저장 구조 설계\n 의미 기반 데이터 검색을 위한 Vector DB 구축\n RAG 기반 AX 컨설팅 콘텐츠 생성 과정에서 활용 가능한 데이터 저장 구조 구현",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "라. 데이터 요구사항 (Data Requirements)",
+      "source_page": 19
+    },
+    {
+      "requirement_id": "DAR-003",
+      "requirement_category": "데이터 요구사항",
+      "requirement_name": "데이터 메타정보 및 출처 관리",
+      "detailed_content": " 데이터 출처 정보를 인지 가능하도록 구성\n 데이터 생성 시점 및 데이터 유형 관리\n 데이터 활용 이력 관리 기능 고려\n 데이터 신뢰성 확보를 위한 메타데이터 관리 체계 구축",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "라. 데이터 요구사항 (Data Requirements)",
+      "source_page": 20
+    },
+    {
+      "requirement_id": "DAR-004",
+      "requirement_category": "데이터 요구사항",
+      "requirement_name": "외부 공공데이터 활용 구조 설계",
+      "detailed_content": " 공공데이터 API를 통해 AX 관련 정책\n.#지원사업 정보 정기 수집\n 수집된 정책 정보 표준화 및 Vector DB 적재\n 데이터 수집주기/보존기간 정책 정의 및 버전 관리 체계 적용",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "라. 데이터 요구사항 (Data Requirements)",
+      "source_page": 20
+    },
+    {
+      "requirement_id": "DAR-005",
+      "requirement_category": "데이터 요구사항",
+      "requirement_name": "기업 진단 데이터 저장 관리",
+      "detailed_content": " 기업별 진단 세션 단위 사용자 응답 로그.\n·영역별 채점 결과.\n·컨설팅 콘텐츠.\n·리포트 생성 이력 통합 저장\n·저장 데이터 조회 및 재활용이 용이한 스키마 설계\n·개인정보.\n·기업 민간정보 포함 데이터에 대한 접근 권한 제어 및 보존 기간 정책을 고려한 설계 적용",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "라. 데이터 요구사항 (Data Requirements)",
+      "source_page": 20
+    },
+    {
+      "requirement_id": "SER-001",
+      "requirement_category": "보안 요구사항",
+      "requirement_name": "사업 수행 과정 보안관리",
+      "detailed_content": " 사업 수행 과정에서 취득한 자료 및 정보는 사업 수행 목적 외 사 용 금지\n 사업 수행 중 취득한 정보는 사업 완료 후에도 외부 유출 금지\n 사업 종료 시 발주기관이 제공한 자료 및 데이터는 반납 또는 완전 폐기 수행\n 사업 수행 참여 인원에 대한 보안 서약서 작성 및 보안 교육 실시\n 사업 수행 중 생성되는 산출물 및 데이터에 대한 저장 관리 체계 수립\n 사업 수행 장소 및 장비에 대한 물리적 보안 관리 수행",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "마. 보안 요구사항 (Security Requirements)",
+      "source_page": 21
+    },
+    {
+      "requirement_id": "SER-002",
+      "requirement_category": "보안 요구사항",
+      "requirement_name": "시스템 접근통제 및 사용자 인증 관리",
+      "detailed_content": " 시스템 사용자 계정 기반 인증 기능 제공\n 사용자 역할 기반 접근 권한 관리 기능 구현\n 관리자 및 일반 사용자 권한 구분 운영\n 시스템 접속 로그 및 주요 기능 사용 로그 기록 관리\n 패스워드 관리 정책 적용 및 안전한 인증 정보 관리",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "마. 보안 요구사항 (Security Requirements)",
+      "source_page": 21
+    },
+    {
+      "requirement_id": "SER-003",
+      "requirement_category": "보안 요구사항",
+      "requirement_name": "응용 프로그램 및 데이터베이스 보안",
+      "detailed_content": " 일반 사용자의 데이터베이스 직접 접근 제한\n 중요 데이터 및 사용자 정보에 대한 보호 조치 적용\n 사용자 인증 정보 및 시스템 접근 정보의 안전한 저장 관리\n 소스코드 내 중요 정보(계정, 패스워드 등) 하드코딩 금지\n 시스템 운영 환경에서 데이터 접근 통제 적용",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "마. 보안 요구사항 (Security Requirements)",
+      "source_page": 22
+    },
+    {
+      "requirement_id": "SER-004",
+      "requirement_category": "보안 요구사항",
+      "requirement_name": "정보보안 정책 및 개발보안 준수",
+      "detailed_content": " 정보시스템 개발 시 소프트웨어 개발보안 가이드 준수\n OWASP 주요 취약점 대응을 고려한 보안 설계 적용\n 시스템 개발 완료 후 취약점 점검 수행\n 개인정보 및 데이터 외부 유출 방지를 위한 보안 대책 적용\n 발주기관(KISTI) 정보보안 정책 및 지침 준수",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "마. 보안 요구사항 (Security Requirements)",
+      "source_page": 22
+    },
+    {
+      "requirement_id": "TQR-001",
+      "requirement_category": "테스트 및 품질 요구사항",
+      "requirement_name": "시스템 기능 및 통합 테스트 방안",
+      "detailed_content": " 서비스는 제공하기로 한 기능 요구사항 및 협의·승인된 변경 요구 사항을 포함한 최종 요구사항 기준을 충족하여야 함\n 요구사항 충족 여부는 각 기능 요구사항별 테스트 수행 결과를 기 준으로 검증하여야 함\n 테스트는 기능 단위별 테스트, 업무 시나리오 기반 테스트, 통합 테 스트, 시스템 테스트를 포함하여 수행하여야 함\n AX 성숙도 진단을 위한 기본역량 진단, 기본역량 결과에 따른 그룹 분류, 그룹별 5대영역 맞춤형 질의, 진단결과 종합 결과 제공, 맞춤 형 데이터 준비전략 컨설팅, 표준 및 인증 관련 컨설팅 기능에 대 한 테스트 시나리오를 작성하여야 함\n 주요 AX 정책․기술 문서의 DB화, 하이브리드 RAG 시스템, RAG기 반 컨설팅 콘텐츠 생성 등 핵심 서비스 흐름이 정상 동작하는지 검 증하여야 함\n 테스트 수행 시 구체적인 테스트 항목, 수행 절차, 기대 결과, 판정 기준을 포함한 체크리스트를 작성하여야 함\n 기능 구현 정확성은 발주기관과 협의한 테스트 시나리오를 기준으 로 검증하여야 함\n 시스템 기능은 개발 환경에서 1차 검증 후 발주기관 확인 절차를 거쳐 반영하여야 함\n 테스트 과정에서 발견된 오류 및 개선 필요사항은 조치 결과까지 추적 관리하여야 함\n 시범 운영 단계에서는 실제 사용 시나리오 기반 점검을 통해 서비 스 안정성과 기능 적합성을 검증하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "바. 테스트 및 품질 요구사항 (Test & Quality Requirements)",
+      "source_page": 23
+    },
+    {
+      "requirement_id": "TQR-002",
+      "requirement_category": "테스트 및 품질 요구사항",
+      "requirement_name": "AI 문서 생성 품질 검증 및 서비스 품질 확보",
+      "detailed_content": " 맞춤형 데이터 준비전략 컨설팅 콘텐츠는 발주기관이 요구하는 활 용 목적에 부합하는 수준으로 품질을 확보하여야 함\n 표준 및 인증 관련 컨설팅 콘텐츠는 발주기관이 요구하는 활용 목 적에 부합하는 수준으로 품질을 확보하여야 함\n 맞춤형 데이터 준비전략 컨설팅 콘텐츠 생성 결과는 기업이 보유 및 신규로 구축할 데이터의 AI 활용에 직접적으로 활용가능한 수준 으로 검증하여야 함\n 표준 및 인증 관련 컨설팅 콘텐츠 생성 결과는 기업이 향후 AX 관련 표준과 인증 획득을 위해 검토할 수 있는 수준으로 수립되어야 함\n 컨설팅 콘텐츠 생성 결과의 품질 검증은 발주기관 협의를 통해 선 정한 검토 항목 및 샘플 케이스를 기준으로 수행하여야 함\n 컨설팅 내용 생성 실패, 응답 오류, 비정상 결과 출력 등 서비스 품 질 저해 요소에 대한 점검 및 개선 절차를 마련하여야 함\n 생성 결과의 안정적 제공을 위해 오류 로그, 처리 이력, 예외 상황 대응 방안을 포함한 품질 관리 체계를 마련하여야 함\n 시범 운영 과정에서 수집된 사용자 의견 및 발주기관 검토 의견을 반영하여 품질을 보완하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "바. 테스트 및 품질 요구사항 (Test & Quality Requirements)",
+      "source_page": 24
+    },
+    {
+      "requirement_id": "PMR-001",
+      "requirement_category": "프로젝트 관리",
+      "requirement_name": "사업 수행 조직 및 역할 체계 수립",
+      "detailed_content": " 사업 수행을 위한 총괄 책임자, 시스템 개발 인력, 데이터 구축 인력, 진단-컨설팅 엔진 및 서비스 구현 인력, 품질관리 인력 등 적정한 수행 조직을 구성하여야 함\n 참여 인력별 역할, 책임 범위, 투입 시기 및 수행 업무를 구체적으로 제시하여야 함\n 공동수급 또는 협력체계를 구성하는 경우 주사업자와 참여기관 간 역할 분담 및 책임 범위를 명확히 제시하여야 함\n 발주기관과 수행사 간 의사결정 체계, 보고 체계, 협의 체계를 문서화하여 제시하여야 함\n 사업 수행 중 주요 의사결정, 이슈 대응, 변경 협의가 신속하게 이루어질 수 있도록 조직 운영 방안을 제시하여야 함\n 인터페이스 구축, 데이터 구축, 진단-컨설팅 서비스 구현, 테스트 및 이관 단계별 책임 담당자를 명확히 지정하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "PMO",
+      "source_reference": "사. 프로젝트 관리 요구사항 (Project Management Requirements)",
+      "source_page": 25
+    },
+    {
+      "requirement_id": "PMR-002",
+      "requirement_category": "프로젝트 관리",
+      "requirement_name": "개발 방법론 및 추진 절차 제시",
+      "detailed_content": " 제안사는 본 사업의 규모와 특성, 공공데이터 기반 AI 시스템 구축 특성을 반영한 개발 방법론을 제시하여야 함\n 개발 방법론은 요구사항 분석, 설계, 구현, 테스트, 시범 운영, 결과 이관 전 단계에 대해 적용 가능하여야 함\n 개발 방법론 적용 시 시스템 개발, 데이터 자산 구축, 멀티턴 대화형 진단 및 맞춤형 컨설팅 콘텐츠 생성 서비스 구현이 유기적으로 연계될 수 있도록 절차를 설계하여야 함\n 요구사항 협의 및 변경, 중간 점검, 결과 검증이 가능한 반복적·점진적 개발 절차를 제시하여야 함\n 적용 방법론의 특징, 적용 사유, 기대효과 및 유지관리 측면의 적합성을 설명하여야 함\n 데이터 구축과 AI 품질 개선이 병행되는 사업 특성을 반영하여 단계별 검토 및 개선 절차를 포함하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "PMO",
+      "source_reference": "사. 프로젝트 관리 요구사항 (Project Management Requirements)",
+      "source_page": 26
+    },
+    {
+      "requirement_id": "PMR-003",
+      "requirement_category": "프로젝트 관리",
+      "requirement_name": "단계별 산출물 작성 및 관리",
+      "detailed_content": " 제안사는 분석, 설계, 구현, 시험, 이관 단계별 주요 산출물 목록을 제시하여야 함\n 요구사항 분석서, 기능 구성도, 시스템 아키텍처 문서, 데이터 구조 설계서, Vector DB 및 RAG 구조 설명서, 화면 설계서, 테스트 계획서 및 결과서, 운영·관리 매뉴얼 등 필요한 산출물을 작성하여야 함\n 각 산출물은 작성 시점, 작성 책임자, 검토 주체, 제출 시기를 포함하여 관리하여야 함\n 산출물 간 연관관계와 추적 가능성을 확보할 수 있도록 관리 체계를 제시하여야 함\n 사업 수행 중 변경된 내용은 산출물에 반영하고 이력 관리가 가능하여야 함\n 최종 산출물은 발주기관의 운영 및 향후 고도화에 활용 가능하도록 충분한 수준으로 작성되어야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "PMO",
+      "source_reference": "사. 프로젝트 관리 요구사항 (Project Management Requirements)",
+      "source_page": 27
+    },
+    {
+      "requirement_id": "PMR-004",
+      "requirement_category": "프로젝트 관리",
+      "requirement_name": "요구사항 및 변경사항 관리",
+      "detailed_content": " 제안사는 기능 요구사항, 데이터 요구사항, 보안 요구사항, 테스트 및 품질 요구사항 등 전체 요구사항을 체계적으로 관리하여야 함\n 발주기관과 협의하여 확정된 요구사항을 기준선으로 관리하여야 함\n 사업 수행 중 발생하는 변경사항은 변경 사유, 영향 범위, 처리 결과를 포함하여 관리하여야 함\n 요구사항이 분석, 설계, 구현, 테스트, 산출물에 반영되었는지 추적 가능한 체계를 마련하여야 함\n 요구사항 변경이 일정, 품질, 비용, 운영에 미치는 영향을 검토하고 발주기관과 협의하여 확정하여야 함\n 협의 결과 및 변경 내역은 정기 보고 및 산출물에 반영하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "PMO",
+      "source_reference": "사. 프로젝트 관리 요구사항 (Project Management Requirements)",
+      "source_page": 28
+    },
+    {
+      "requirement_id": "PMR-005",
+      "requirement_category": "프로젝트 관리",
+      "requirement_name": "일정 및 진도 관리",
+      "detailed_content": " 제안사는 계약 체결일부터 2026년 11월 30일까지의 사업 기간을 고려한 전체 추진 일정을 제시하여야 함\n 제안 내용 협의, 시스템 설계, 데이터 구축, 진단-컨설팅 서비스 구현, 테스트, 시범 운영, 결과 이관 단계별 세부 일정을 제시하여야 함\n 단계별 주요 마일스톤과 완료 기준을 명확히 정의하여야 함\n 일정 지연 가능 요인, 외부 데이터 확보 지연, 모델 적용 이슈 등 주요 리스크를 고려한 일정 관리 방안을 제시하여야 함\n 일정 변경이 필요한 경우 사유, 영향도, 조정 일정을 발주기관에 보고하고 협의하여야 함\n 격주 업무 보고 및 월간 정기 협의 등 사업 추진 현황 공유 체계를 포함하여야 함\n 착수보고, 중간보고, 최종보고 등 주요 보고 일정을 포함하여 사업 진도 관리가 가능하도록 하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "PMO",
+      "source_reference": "사. 프로젝트 관리 요구사항 (Project Management Requirements)",
+      "source_page": 29
+    },
+    {
+      "requirement_id": "PSR-001",
+      "requirement_category": "프로젝트 지원",
+      "requirement_name": "하자보수 및 운영 안정화 지원",
+      "detailed_content": " 구축 완료 후 시스템의 하자보수 기간은 검사완료일로부터 12개월을 기준으로 함\n 사업자는 시스템의 안정성 및 신뢰성 확보를 위하여 기능별·구성요소별 하자보수 계획을 제시하여야 함\n 하자 발생 시 장애 유형별 대응 절차와 조치 방법을 포함한 지원 체계를 마련하여야 함\n 멀티턴 대화기반 AX 성숙도 진단 기능, 진단 결과 기반 맞춤형 컨설팅 콘텐츠 생성 기능, 사용자 기능, 데이터 처리 기능, 시스템 운영 기능 등 주요 기능별 점검 및 지원 방안을 포함하여야 함\n 운영 초기 안정화 기간 동안 시스템 장애 및 오류 대응 지원을 수행하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "차. 프로젝트 지원 요구사항 (Project Support Requirements)",
+      "source_page": 30
+    },
+    {
+      "requirement_id": "PSR-002",
+      "requirement_category": "프로젝트 지원",
+      "requirement_name": "사용자 교육 및 운영자 교육 지원",
+      "detailed_content": " 시스템 주요 기능, 운영 절차, 관리자 기능, 진단-컨설팅 콘텐츠 생성 절차 등을 포함한 교육 계획을 수립하여야 함\n 교육 대상, 교육 시기, 교육 내용, 교육 방식 등을 포함한 교육훈련 계획서를 작성하여야 함\n 사용자 교육과 운영자 교육을 구분하여 필요한 교육 내용을 제공하여야 함\n 시스템 사용 매뉴얼, 관리자 매뉴얼, 교육 자료 등을 제공하여야 함\n 발주기관이 시스템 활용을 위해 추가 교육을 요청하는 경우 협의를 통해 지원할 수 있어야 함\n 교육 일정, 장소, 방식, 교재 등 세부 사항은 발주기관과 협의하여 정하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "차. 프로젝트 지원 요구사항 (Project Support Requirements)",
+      "source_page": 31
+    },
+    {
+      "requirement_id": "PSR-003",
+      "requirement_category": "프로젝트 지원",
+      "requirement_name": "기술이전 및 결과 이관 지원",
+      "detailed_content": " 시스템 운영에 필요한 구조, 구성, 운영 절차, 계정 관리, 장애 대응 방법 등을 포함한 기술이전 계획을 제시하여야 함\n 온프레미스 환경에서의 시스템 운영 방법, AI 모델 운영 방식, 데이터 관리 방식 등을 설명할 수 있어야 함\n 시스템 운영 담당자가 자체적으로 기본 운영 및 점검을 수행할 수 있도록 기술이전 내용을 구성하여야 함\n 시스템 구조 문서, 운영 매뉴얼, 주요 설정 정보, 데이터 관리 관련 문서 등을 이관 대상에 포함하여야 함\n 사업 종료 시 발주기관이 향후 시스템을 활용·확장할 수 있도록 충분한 수준의 결과 이관을 수행하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "차. 프로젝트 지원 요구사항 (Project Support Requirements)",
+      "source_page": 32
+    },
+    {
+      "requirement_id": "PSR-004",
+      "requirement_category": "프로젝트 지원",
+      "requirement_name": "보안 취약점 점검 및 조치 지원",
+      "detailed_content": " 구축되는 시스템에 대하여 보안 취약점 점검을 수행하여야 함\n 웹 기반 시스템이 포함되는 경우 OWASP Top 10 등 일반적인 웹 보안 취약점에 대한 대응 방안을 적용하여야 함\n 발주기관 또는 상위기관의 보안성 검토 결과 도출된 취약점 및 권고사항에 대하여 조치 방안을 제시하고 반영하여야 함\n 사용자 인증, 접근통제, 데이터 보호, 로그 관리 등 주요 보안 항목에 대한 점검을 수행하여야 함\n 취약점 점검 결과와 조치 내역을 문서화하여 제출하여야 함",
+      "note_clause": "",
+      "scope_role": "PRIMARY_CONTRACT",
+      "service_component": "BUILD",
+      "source_reference": "차. 프로젝트 지원 요구사항 (Project Support Requirements)",
+      "source_page": 32
+    }
+  ]
+}

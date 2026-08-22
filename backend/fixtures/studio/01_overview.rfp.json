@@ -1,0 +1,24 @@
+{
+  "schema_version": "ANNOUNCEMENT_CORE_V1",
+  "document_type": "SYSTEM_BUILD",
+  "document_form": "제안요청서",
+  "procurement_project_name": "AX 진단-컨설팅 통합 서비스 개발",
+  "issuer": "한국과학기술정보연구원",
+  "project_period": "계약체결일로부터 2026.12.15",
+  "budget": "70,000,000원(금칠천만원) (부가세포함)",
+  "bid_method": "제한 경쟁 입찰, 제한(중기간)경쟁 입찰",
+  "contract_method": "협상에 의한 계약",
+  "primary_supplier_role": "BUILD",
+  "project_objectives": [
+    "AX를 희망하는 기업이 멀티턴 대화 형식으로 AX 성숙도를 진단받고, 이를 기반으로 현황 파악과 향후 성공적인 AX를 위한 맞춤형 AI-ready 데이터 준비전략 컨설팅 및 표준·인증 가이드를 제공받는 서비스 구현",
+    "KISTI 중소기업 AX 성숙도 진단 프레임워크를 기반으로 기업의 AX 성숙도를 진단하고 관련 AX 정책·기술 자료 등의 RAG(Retrieval-Augmented Generation) 참조를 통한 맞춤형 컨설팅 제공으로 중소기업의 실질적인 AX 성숙도를 향상할 수 있는 수준의 컨설팅 콘텐츠 제공 기능 구현",
+    "사업 기획·관리 및 품질 통제",
+    "데이터 자산 구성 및 구조화 체계",
+    "멀티턴 질의응답 형식 자동화 진단-컨설팅 엔진 개발",
+    "웹 기반 진단-컨설팅 서비스 프로토타입 개발 및 PoC",
+    "시스템 구현·운영 지원 및 결과 이관"
+  ],
+  "source_documents": [
+    "제안요청서"
+  ]
+}
