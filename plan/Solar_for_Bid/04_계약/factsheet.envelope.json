@@ -1,0 +1,72 @@
+{
+  "_주의": "🔴 팩트시트 응답 스키마 — 공고 1건의 상세. 프론트·백엔드의 접점이다. 개별 필드가 아니라 응답의 바깥 구조를 얼린다 — 추출 결과가 무엇이든 화면 코드가 안 바뀐다. 🔴 목록(스크리닝) 응답은 별도다 → screening.envelope.json",
+  "_왜_봉투인가": "프리플라이트(08:00)가 동결(04:00) 뒤에 있다. 200쪽 HWP에서 Extract가 실제로 무엇을 뱉는지 아무도 본 적이 없고, 장문 F1이 41.3/63.2라 값이 안 나오는 필드가 반드시 생긴다. 필드 이름으로 계약하면 그때마다 계약이 깨지고 화면③ 탭4와 xlsx 빌더가 동시에 재작업된다.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["caseId", "status", "verdict", "tabs", "downloads"],
+  "properties": {
+    "caseId": { "type": "string", "description": "공고번호-차수 (예: 'R25BK00645031-000')" },
+    "status": { "type": "string", "enum": ["collecting", "parsing", "judging", "done", "failed"] },
+    "progress": {
+      "type": "array", "description": "화면②의 단계 표시. 순서대로",
+      "items": { "type": "object", "required": ["step", "state"], "properties": {
+        "step":  { "type": "string", "description": "예: '첨부 5건 수집'" },
+        "state": { "type": "string", "enum": ["pending", "running", "done", "failed"] },
+        "detail":{ "type": "string" } } }
+    },
+    "verdict": {
+      "type": "object", "description": "화면③ 상단. 이게 헤드라인이다",
+      "required": ["badge"],
+      "properties": {
+        "badge":   { "type": "string", "enum": ["eligible"],
+                     "description": "🔴 값이 하나다. 기계 판정은 「제외 / 추천」 둘인데 제외된 건은 애초에 상세로 오지 않는다(목록에서 걸러진다). 여기 온 건은 전부 eligible이다. 🔴 「조건부」는 만들지 않는다 — 해커톤 범위에서 뺐다" },
+        "unverified": { "type": "integer", "description": "🔴 문서에서 못 읽어 판정 못 한 자격 항목 수. 0이 아니면 화면에 「미확인 N건」을 단다. 🔴 이것은 제외 사유가 아니다 — 못 읽어서 기회를 지우는 쪽이 더 나쁘다" },
+        "decision":{ "type": "string", "enum": ["pending", "go", "skip"], "default": "pending",
+                     "description": "🚪 사람 게이트의 결과. 「이건 하겠다(응찰)=go / 이건 안 하겠다=skip」. go를 찍은 건만 S5 이후가 돈다. 🔴 기계는 이 값을 쓰지 않는다. 데모에서는 프론트 로컬 상태로 두어도 된다 — 서버 저장은 범위 밖" },
+        "headline":{ "type": "string", "description": "한 문장 이유" },
+        "reasons": { "type": "array", "items": { "type": "object", "properties": {
+          "text":       { "type": "string" },
+          "page":       { "type": "integer", "description": "근거 쪽. 모르면 0" },
+          "docId":      { "type": "string", "description": "어느 첨부에서 나왔나 (fileSeq)" },
+          "confidence": { "type": "string", "enum": ["high", "low", "unknown"] } } } }
+      }
+    },
+    "tabs": {
+      "type": "array",
+      "description": "🔴 화면④ 탭. 프론트는 columns/rows를 범용 표로 렌더한다 — 탭이 늘거나 열이 바뀌어도 화면 코드가 안 바뀐다. 🔴 v1.2: kind가 checklist인 탭은 행마다 체크박스를 붙인다(조견표 · 제출 체크리스트)",
+      "items": { "type": "object", "required": ["id", "title", "columns", "rows"], "properties": {
+        "id":      { "type": "string", "description": "compliance | wbs | criticalpath | cost | risk | checklist | questions | coverage" },
+        "kind":    { "type": "string", "enum": ["table", "checklist"], "default": "table",
+                     "description": "🔴 checklist = 웹 안에서 사람이 한 행씩 체크한다. compliance(조견표)는 checklist — xlsx가 없다. checklist(S8 제출 준비)도 checklist이고 「보완요청」 열이 붙는다. 체크 상태는 데모에서 프론트 로컬 상태로 둬도 된다" },
+        "title":   { "type": "string" },
+        "columns": { "type": "array", "items": { "type": "string" } },
+        "rows":    { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+        "warnings":{ "type": "array", "items": { "type": "string" }, "description": "검산 실패·불일치. 표 위에 붉게 뜬다" },
+        "summary": { "type": "string", "description": "예: '전체 151건 중 미대응 0건'" } } }
+    },
+    "downloads": {
+      "type": "array", "description": "🔴 v1.2: 조견표(compliance)는 여기 없다 — 웹 체크리스트다. WBS·임계경로만 xlsx",
+      "items": { "type": "object", "required": ["id", "label", "url"], "properties": {
+        "id":    { "type": "string" },
+        "label": { "type": "string", "description": "예: 'WBS.xlsx' (조견표는 없다 — 웹 체크리스트)" },
+        "url":   { "type": "string" },
+        "bytes": { "type": "integer" } } }
+    },
+    "meta": {
+      "type": "object", "properties": {
+        "cached":       { "type": "boolean", "description": "🔴 사전 실행 결과면 true. 화면 구석에 표시한다 — 들키는 것보다 먼저 말하는 쪽이 싸다" },
+        "agentId":      { "type": "string" },
+        "configVersion":{ "type": "string" },
+        "elapsedMs":    { "type": "integer" },
+        "attachments":  { "type": "array", "items": { "type": "object", "properties": {
+          "fileSeq":  { "type": "integer" },
+          "filename": { "type": "string" },
+          "docClass": { "type": "string" },
+          "bytes":    { "type": "integer" } } } }
+      }
+    },
+    "error": { "type": "object", "properties": {
+      "code":    { "type": "string" },
+      "message": { "type": "string", "description": "사람이 읽는 문장. 무엇이 잘못됐고 어떻게 고치나" } } }
+  }
+}

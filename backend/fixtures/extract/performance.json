@@ -1,0 +1,184 @@
+{
+  "summary_table_company_name": "주식회사 다온피엠씨",
+  "summary_table_business_registration_number": "120-86-01230",
+  "summary_table_representative_name": "강민서",
+  "summary_table_prepared_date": "2026-08-21",
+  "summary_table_recent_three_year_period_start_date": "2023-08-22",
+  "summary_table_recent_three_year_period_end_date": "2026-08-21",
+  "summary_table_total_case_count": 15,
+  "summary_table_total_amount": 4037000000,
+  "summary_table_service_performance_records": [
+    {
+      "serial_number": 1,
+      "service_category": "PMO",
+      "ordering_organization": "누리정보자원공단",
+      "project_name": "차세대 통합정보시스템 구축 PMO",
+      "contract_amount": 612000000,
+      "contract_period_start_date": "2023-09-01",
+      "contract_period_end_date": "2024-08-31",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 2,
+      "service_category": "PMO",
+      "ordering_organization": "가온광역시",
+      "project_name": "스마트도시 통합플랫폼 구축 PMO",
+      "contract_amount": 348000000,
+      "contract_period_start_date": "2023-11-06",
+      "contract_period_end_date": "2024-06-30",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 3,
+      "service_category": "PMO",
+      "ordering_organization": "국립한빛연구원",
+      "project_name": "연구관리시스템 재구축 PMO",
+      "contract_amount": 425000000,
+      "contract_period_start_date": "2024-01-15",
+      "contract_period_end_date": "2024-12-14",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 4,
+      "service_category": "PMO",
+      "ordering_organization": "새롬산업진흥원",
+      "project_name": "정보시스템 클라우드 전환 PMO",
+      "contract_amount": 286000000,
+      "contract_period_start_date": "2024-03-04",
+      "contract_period_end_date": "2024-11-30",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 5,
+      "service_category": "PMO",
+      "ordering_organization": "나래도교육청",
+      "project_name": "교육행정정보 고도화 PMO",
+      "contract_amount": 517000000,
+      "contract_period_start_date": "2024-07-01",
+      "contract_period_end_date": "2025-06-30",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 6,
+      "service_category": "PMO",
+      "ordering_organization": "한국미르데이터원",
+      "project_name": "데이터 통합관리체계 구축 PMO",
+      "contract_amount": 394000000,
+      "contract_period_start_date": "2025-02-10",
+      "contract_period_end_date": "2025-10-31",
+      "participation_form": "구성원 40%"
+    },
+    {
+      "serial_number": 7,
+      "service_category": "PMO",
+      "ordering_organization": "가온시설공단",
+      "project_name": "시설운영 통합관제 PMO",
+      "contract_amount": 233000000,
+      "contract_period_start_date": "2025-04-01",
+      "contract_period_end_date": "2026-01-31",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 8,
+      "service_category": "PMO",
+      "ordering_organization": "아라공사",
+      "project_name": "업무포털 전면 재구축 PMO",
+      "contract_amount": 468000000,
+      "contract_period_start_date": "2025-09-01",
+      "contract_period_end_date": "2026-07-31",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 9,
+      "service_category": "감리",
+      "ordering_organization": "미르군",
+      "project_name": "통합민원시스템 구축 감리",
+      "contract_amount": 96000000,
+      "contract_period_start_date": "2023-10-16",
+      "contract_period_end_date": "2024-03-15",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 10,
+      "service_category": "감리",
+      "ordering_organization": "마루재단",
+      "project_name": "회원관리시스템 재구축 감리",
+      "contract_amount": 74000000,
+      "contract_period_start_date": "2024-05-02",
+      "contract_period_end_date": "2024-10-31",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 11,
+      "service_category": "감리",
+      "ordering_organization": "도담특별자치도",
+      "project_name": "지역화폐 플랫폼 감리",
+      "contract_amount": 118000000,
+      "contract_period_start_date": "2025-06-01",
+      "contract_period_end_date": "2025-12-31",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 12,
+      "service_category": "ISP",
+      "ordering_organization": "한빛정책연구원",
+      "project_name": "정보화전략계획(ISP) 수립",
+      "contract_amount": 189000000,
+      "contract_period_start_date": "2024-02-05",
+      "contract_period_end_date": "2024-08-04",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 13,
+      "service_category": "ISP",
+      "ordering_organization": "아라구",
+      "project_name": "스마트행정 ISP 수립",
+      "contract_amount": 152000000,
+      "contract_period_start_date": "2025-03-10",
+      "contract_period_end_date": "2025-09-09",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 14,
+      "service_category": "영향평가",
+      "ordering_organization": "도담도",
+      "project_name": "통합복지시스템 개인정보 영향평 가",
+      "contract_amount": 58000000,
+      "contract_period_start_date": "2024-09-02",
+      "contract_period_end_date": "2024-12-31",
+      "participation_form": "주관"
+    },
+    {
+      "serial_number": 15,
+      "service_category": "영향평가",
+      "ordering_organization": "누리건강공단",
+      "project_name": "건강관리시스템 개인정보 영향평 가",
+      "contract_amount": 67000000,
+      "contract_period_start_date": "2025-08-01",
+      "contract_period_end_date": "2025-11-30",
+      "participation_form": "주관"
+    }
+  ],
+  "summary_table_category_subtotals": [
+    {
+      "subtotal_category_name": "PMO",
+      "subtotal_case_count": 8,
+      "subtotal_amount": 3283000000
+    },
+    {
+      "subtotal_category_name": "감리",
+      "subtotal_case_count": 3,
+      "subtotal_amount": 288000000
+    },
+    {
+      "subtotal_category_name": "ISP",
+      "subtotal_case_count": 2,
+      "subtotal_amount": 341000000
+    },
+    {
+      "subtotal_category_name": "개인정보 영향평가",
+      "subtotal_case_count": 2,
+      "subtotal_amount": 125000000
+    }
+  ]
+}

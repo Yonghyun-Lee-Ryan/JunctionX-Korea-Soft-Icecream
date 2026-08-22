@@ -1,0 +1,213 @@
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Apple SD Gothic Neo","AppleGothic","Noto Sans KR",sans-serif;
+         color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 12mm 15mm 9mm; position: relative;
+          display: flex; flex-direction: column; break-after: page; }
+  .page:last-child { break-after: auto; }
+  .wm { position: absolute; inset: 0; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 32mm; pointer-events: none; z-index: 0; }
+  .wm span { transform: rotate(-28deg); font-size: 27pt; font-weight: 800; letter-spacing: 6px;
+             color: rgba(190,40,40,.11); white-space: nowrap; }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+  .formno { font-size: 7.5pt; color: #333; border: 1px solid #333; display: inline-block;
+            padding: 1.3mm 2.3mm; margin-bottom: 4mm; align-self: flex-start; }
+  h1 { font-size: 19pt; font-weight: 800; letter-spacing: 10px; text-align: center; margin: 0 0 1.5mm; }
+  .periods { text-align: center; font-size: 8.8pt; line-height: 1.45; color: #222; margin-bottom: 2.5mm; }
+  .co { display: flex; justify-content: space-between; align-items: flex-end;
+        font-size: 9.5pt; font-weight: 700; margin-bottom: 1.5mm; }
+  .co .unit { font-weight: 500; font-size: 8.5pt; }
+  .sect { font-size: 10.5pt; font-weight: 800; margin: 4mm 0 1.8mm; }
+
+  table.t { border-collapse: collapse; width: 100%; }
+  table.t th, table.t td { border: 1px solid #555; padding: 1.1mm 1.6mm; font-size: 7.8pt; }
+  table.t th { background: #ececec; text-align: center; font-weight: 700; }
+  table.t td.c { text-align: center; }
+  table.t td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  table.t tr.tot td { background: #e4e4e4; font-weight: 800; }
+  table.roster th, table.roster td { padding: 0.62mm 1.3mm; font-size: 6.9pt; }
+
+  .note { font-size: 7.6pt; color: #333; line-height: 1.55; margin-top: 2.5mm; }
+  .note b { font-weight: 700; }
+  .disclaimer { margin-top: 3mm; border: 1.2px dashed #b02828; background: #fdf3f3;
+                padding: 2.4mm 3.2mm; font-size: 7.6pt; line-height: 1.45; color: #7a1d1d; }
+  .disclaimer b { font-weight: 800; }
+  .footline { margin-top: auto; padding-top: 3mm; font-size: 7.5pt; color: #b02828; text-align: center;
+              border-top: 1px dashed #d9a0a0; }
+</style>
+
+<div class="page" id="p1"></div>
+<div class="page" id="p2"></div>
+<div class="page" id="p3"></div>
+
+<script>
+const WM = `<div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>`;
+
+/* ── 명부 생성 : 등급 분포 기술사6·특급24·고급19·중급15·초급4 = 68, 정규직 50 / 계약직 18 ── */
+const SUR = ["김","이","박","최","정","강","조","윤","장","임","한","오","서","신","권","황","안","송","전","홍","고","문","손","양","배","백","허","유","남","심"];
+const GIV = ["지훈","서연","도현","민준","예린","하람","윤재","수빈","다은","지호","현우","가온","서진","은우","채원","태윤","소율","준서","나연","시우",
+             "예준","하윤","건우","지아","우진","서아","동현","유진","성민","혜인","재현","보라","승우","다올","형준","윤슬","경민","아린","태호","시연",
+             "규리","민석","해준","윤아","정우","라온","기범","세아","도윤","한별","진호","여울","상현","시현","의진","슬기","찬우","루아","석진","고은",
+             "우빈","나래","성호","다인","현서","가람","준영","예솔"];
+let FIELDS = [];
+
+const GRADES = [
+  { g:"기술사",  n:6,  reg:6,  yrs:[19,26], cert:"정보관리기술사" },
+  { g:"특급",    n:24, reg:18, yrs:[13,21], cert:"" },
+  { g:"고급",    n:19, reg:15, yrs:[9,13],  cert:"" },
+  { g:"중급",    n:15, reg:9,  yrs:[5,9],   cert:"" },
+  { g:"초급",    n:4,  reg:2,  yrs:[1,3],   cert:"" },
+];
+/* 담당분야 인원 — 매출 구성(PMO 73% · 감리 12% · ISP 12% · 영향평가 3%)에 맞춘다 */
+const FIELD_Q = [["사업관리(PMO)",34],["정보시스템 감리",9],["ISP·컨설팅",9],
+                 ["개인정보 영향평가",6],["품질·형상관리",5],["아키텍처·기술지원",5]];
+const POS = { "기술사":"수석컨설턴트", "특급":"책임컨설턴트", "고급":"선임컨설턴트", "중급":"컨설턴트", "초급":"주임컨설턴트" };
+
+/* 자격증 배분 — 총괄표와 반드시 일치해야 한다 */
+const CERT_PLAN = [
+  ["정보관리기술사", 6], ["정보시스템감리사", 5], ["PMP", 14], ["CISA", 4],
+  ["CPPG", 8], ["정보처리기사", 22], ["ISO 27001 심사원", 3],
+];
+
+let seed = 20260822;
+setTimeout(()=>{},0);
+function rnd(){ seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+function pick(a){ return a[Math.floor(rnd()*a.length)]; }
+
+FIELDS = FIELD_Q.map(q => q[0]);
+const used = new Set(); const roster = []; let idx = 0;
+GRADES.forEach(G => {
+  for (let i = 0; i < G.n; i++) {
+    let nm; do { nm = pick(SUR) + pick(GIV); } while (used.has(nm)); used.add(nm);
+    const yrs = G.yrs[0] + Math.floor(rnd() * (G.yrs[1] - G.yrs[0] + 1));
+    roster.push({ no: ++idx, name: nm, grade: G.g, pos: POS[G.g], yrs,
+                  field: "", certs: G.cert ? [G.cert] : [],
+                  emp: i < G.reg ? "정규직" : "계약직", join: "" });
+  }
+});
+
+/* 자격증 부여 — 기술사는 이미 정보관리기술사 보유 */
+let cursor = 6;
+CERT_PLAN.slice(1).forEach(([c, n]) => {
+  for (let k = 0; k < n; k++) {
+    const t = roster[cursor % roster.length];
+    if (!t.certs.includes(c)) t.certs.push(c);
+    cursor += 3;
+  }
+});
+
+/* 담당분야 : 쿼터를 결정적으로 섞어 등급이 고루 섞이게 배정 */
+const fieldPool = [];
+FIELD_Q.forEach(([f, n]) => { for (let k = 0; k < n; k++) fieldPool.push(f); });
+for (let i = fieldPool.length - 1; i > 0; i--) {
+  const j = Math.floor(rnd() * (i + 1));
+  [fieldPool[i], fieldPool[j]] = [fieldPool[j], fieldPool[i]];
+}
+roster.forEach((r, i) => { r.field = fieldPool[i]; });
+/* 입사일 : 경력이 길수록 오래 */
+roster.forEach(r => {
+  const y = 2026 - Math.min(r.yrs, 16) + Math.floor(rnd() * 2);
+  const m = 1 + Math.floor(rnd() * 12);
+  r.join = `${Math.min(y, 2026)}.${String(m).padStart(2, "0")}`;
+});
+
+const cnt = g => roster.filter(r => r.grade === g).length;
+const cntEmp = (g, e) => roster.filter(r => r.grade === g && r.emp === e).length;
+const certCount = c => roster.filter(r => r.certs.includes(c)).length;
+
+/* ─────── p.1 총괄 ─────── */
+const gradeRows = GRADES.map(G => `
+  <tr><td class="c">${G.g}</td><td class="n">${cntEmp(G.g,"정규직")}</td><td class="n">${cntEmp(G.g,"계약직")}</td>
+      <td class="n">${cnt(G.g)}</td><td class="n">${(cnt(G.g)/roster.length*100).toFixed(1)}</td>
+      <td class="c">${Math.min(...roster.filter(r=>r.grade===G.g).map(r=>r.yrs))} ~ ${Math.max(...roster.filter(r=>r.grade===G.g).map(r=>r.yrs))}년</td></tr>`).join("");
+
+const certRows = CERT_PLAN.map(([c]) => `
+  <tr><td>${c}</td><td class="n">${certCount(c)}</td></tr>`).join("");
+
+document.getElementById("p1").innerHTML = WM + `
+<div class="content">
+  <div class="formno">[서식 제7호] 기술인력 보유현황</div>
+  <h1>기 술 인 력 보 유 현 황</h1>
+  <div class="periods">기준일 : 2026년 08월 21일</div>
+  <div class="co"><span>주식회사 다온피엠씨</span><span class="unit">(단위 : 명, %)</span></div>
+
+  <div class="sect">1. 기술등급별 보유현황</div>
+  <table class="t">
+    <tr><th style="width:30mm">기술등급</th><th style="width:26mm">정규직</th><th style="width:26mm">계약직</th>
+        <th style="width:26mm">계</th><th style="width:24mm">구성비</th><th>총경력 범위</th></tr>
+    ${gradeRows}
+    <tr class="tot"><td class="c">합 계</td>
+      <td class="n">${roster.filter(r=>r.emp==="정규직").length}</td>
+      <td class="n">${roster.filter(r=>r.emp==="계약직").length}</td>
+      <td class="n">${roster.length}</td><td class="n">100.0</td><td></td></tr>
+  </table>
+  <div class="note">
+    ※ 기술등급 구분은 소프트웨어사업 기술자 등급 표기를 따랐으며, 「총경력 범위」는 <b>본 명부에 기재된 실제 경력의 최소~최대</b>입니다.
+    ※ <b>정규직 비율 ${(roster.filter(r=>r.emp==="정규직").length/roster.length*100).toFixed(1)}%</b> (정규직 ${roster.filter(r=>r.emp==="정규직").length}명 ÷ 총 ${roster.length}명)
+  </div>
+
+  <div class="sect">2. 보유 자격 현황</div>
+  <table class="t">
+    <tr><th>자 격</th><th style="width:26mm">보유 인원</th></tr>
+    ${certRows}
+  </table>
+  <div class="note">※ 1인이 2개 이상을 보유한 경우가 있어 <b>자격 합계와 총 인원은 일치하지 않습니다.</b></div>
+
+  <div class="sect">3. 담당분야별 배치현황</div>
+  <table class="t">
+    <tr><th>담당분야</th><th style="width:22mm">기술사</th><th style="width:22mm">특급</th><th style="width:22mm">고급</th>
+        <th style="width:22mm">중급</th><th style="width:22mm">초급</th><th style="width:22mm">계</th></tr>
+    ${FIELDS.map(f => {
+      const c = g => roster.filter(r => r.field===f && r.grade===g).length;
+      const tot = roster.filter(r => r.field===f).length;
+      return `<tr><td>${f}</td><td class="n">${c("기술사")}</td><td class="n">${c("특급")}</td><td class="n">${c("고급")}</td>
+              <td class="n">${c("중급")}</td><td class="n">${c("초급")}</td><td class="n">${tot}</td></tr>`;
+    }).join("")}
+    <tr class="tot"><td>합 계</td>
+      ${GRADES.map(G=>`<td class="n">${cnt(G.g)}</td>`).join("")}
+      <td class="n">${roster.length}</td></tr>
+  </table>
+
+  <div class="note">
+    ※ 개인별 명부는 <b>2~3쪽</b>에 첨부합니다. 재직증명서 및 자격증 사본은 발주기관 요청 시 별도 제출합니다.<br>
+    ※ 🔴 개인정보 보호를 위해 <b>생년월일·연락처·주소는 기재하지 않았습니다.</b>
+  </div>
+
+  <div class="disclaimer">
+    <b>🔴 데모용 견본 문서입니다 — 실제 기술인력 보유현황이 아닙니다.</b><br>
+    이 문서는 JunctionX Korea 해커톤 프로젝트 <b>Solar for Bid</b>의 문서 처리 파이프라인 시연을 위해 만든 <b>가상 회사</b>의 견본입니다.
+    ㈜다온피엠씨는 실존하지 않으며, <b>명부에 기재된 성명은 프로그램이 무작위로 조합한 문자열</b>로 실존 인물과 무관합니다.
+    어떠한 증명·제출 용도로도 사용할 수 없습니다.
+  </div>
+</div>`;
+
+/* ─────── p.2~3 명부 ─────── */
+function rosterPage(rows, part, total) {
+  return WM + `
+  <div class="content">
+    <div class="formno">[서식 제7호] 기술인력 보유현황 — 개인별 명부 (${part}/${total})</div>
+    <h1>기 술 인 력 명 부</h1>
+    <div class="periods">기준일 : 2026년 08월 21일 · 총 ${roster.length}명</div>
+    <div class="co"><span>주식회사 다온피엠씨</span><span class="unit">(연번 ${rows[0].no} ~ ${rows[rows.length-1].no})</span></div>
+    <table class="t roster">
+      <tr><th style="width:10mm">연번</th><th style="width:20mm">성명</th><th style="width:24mm">직위</th>
+          <th style="width:17mm">기술등급</th><th style="width:16mm">총경력</th>
+          <th>보유 자격</th><th style="width:36mm">담당분야</th>
+          <th style="width:17mm">고용형태</th><th style="width:17mm">입사년월</th></tr>
+      ${rows.map(r => `<tr>
+        <td class="c">${r.no}</td><td class="c">${r.name}</td><td>${r.pos}</td>
+        <td class="c">${r.grade}</td><td class="c">${r.yrs}년</td>
+        <td>${r.certs.join(", ") || "—"}</td><td>${r.field}</td>
+        <td class="c">${r.emp}</td><td class="c">${r.join}</td></tr>`).join("")}
+    </table>
+    <div class="footline">
+      🔴 데모용 견본 — 가상 회사(㈜다온피엠씨)의 견본 문서입니다. 기재된 성명은 무작위 조합 문자열이며 실존 인물과 무관합니다.
+    </div>
+  </div>`;
+}
+document.getElementById("p2").innerHTML = rosterPage(roster.slice(0, 34), 1, 2);
+document.getElementById("p3").innerHTML = rosterPage(roster.slice(34), 2, 2);
+</script>

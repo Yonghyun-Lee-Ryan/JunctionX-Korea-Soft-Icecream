@@ -1,0 +1,14 @@
+# 개발용 오버레이 — 소스를 마운트하고 --watch로 돈다
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  api:
+    build:
+      target: deps
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    command: ["npm", "run", "dev"]
+    volumes:
+      - ./src:/app/src
+      - ./fixtures:/app/fixtures
+      - ./data:/app/data

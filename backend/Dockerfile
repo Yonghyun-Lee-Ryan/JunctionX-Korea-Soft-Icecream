@@ -1,35 +1,36 @@
-FROM node:24-bookworm-slim AS base
+# ─────────────────────────────────────────────────────────────
+# Solar for Bid — backend
+# 🔴 better-sqlite3는 네이티브 모듈이다. prebuild가 없는 플랫폼을 대비해
+#    builder 단계에만 빌드 도구를 넣고, 런타임 이미지에는 넣지 않는다.
+# ─────────────────────────────────────────────────────────────
+FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl \
-  && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json* ./
+RUN npm install --omit=dev --no-audit --no-fund
 
-FROM base AS development
-ENV NODE_ENV=development
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
-COPY . .
-RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm run db:generate
-EXPOSE 3000
-CMD ["npm", "run", "dev"]
-
-FROM base AS build
-ENV NODE_ENV=development
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
-COPY . .
-RUN DATABASE_URL=postgresql://build:build@localhost:5432/build npm run db:generate && npm run build
-
-FROM base AS production
+FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
-COPY --chown=node:node package.json package-lock.json ./
-COPY --chown=node:node --from=build /app/node_modules ./node_modules
-RUN npm prune --omit=dev --no-audit --no-fund && npm cache clean --force
-COPY --chown=node:node --from=build /app/dist ./dist
-COPY --chown=node:node --from=build /app/prisma ./prisma
-COPY --chown=node:node --from=build /app/prisma.config.ts ./prisma.config.ts
+WORKDIR /app
+
+# 헬스체크용
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
+COPY src ./src
+COPY fixtures ./fixtures
+
+# SQLite 파일이 사는 곳. compose에서 볼륨으로 잡는다
+RUN mkdir -p /app/data && chown -R node:node /app
 USER node
+
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3000/health/live').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
-CMD ["node", "dist/src/server.js"]
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -fsS http://localhost:3000/health || exit 1
+
+CMD ["node", "src/server.js"]

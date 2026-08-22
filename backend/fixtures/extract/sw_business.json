@@ -1,0 +1,75 @@
+{
+  "certificate_title": "소프트웨어사업자 신 고 확 인 서",
+  "report_number": "제 2009-00000 호",
+  "applicant_company_name": "주식회사 다온피엠씨",
+  "applicant_business_registration_number": "120-86-01230",
+  "applicant_representative_name": "강민서",
+  "applicant_corporate_registration_number": "110111-0000000",
+  "applicant_address": "서울특별시 강남구 테헤란로 501, 11층 (삼성동)",
+  "applicant_establishment_date": "2009-03-16",
+  "applicant_technical_staff_count": 68,
+  "reported_business_field": "소프트웨어사업",
+  "initial_report_date": "2009-05-21",
+  "change_report_date": "2026-02-09",
+  "technical_staff_detail_reference_date": "2026-08-21",
+  "certificate_statement_date": "2026-02-09",
+  "issuing_authority_name": "한국소프트웨어산업협회장",
+  "reported_business_types": [
+    {
+      "serial_number": 1,
+      "business_type": "소프트웨어 개발 및 공급",
+      "major_work_content": "정보시스템 구축·재구축, 응용 소프트웨어 개발",
+      "business_classification": "주된 사업"
+    },
+    {
+      "serial_number": 2,
+      "business_type": "소프트웨어 사업관리(PMO)",
+      "major_work_content": "공공 정보화사업 사업관리 위탁 용역",
+      "business_classification": "주된 사업"
+    },
+    {
+      "serial_number": 3,
+      "business_type": "정보시스템 감리",
+      "major_work_content": "정보시스템 구축사업 감리",
+      "business_classification": "부수 사업"
+    },
+    {
+      "serial_number": 4,
+      "business_type": "소프트웨어 컨설팅",
+      "major_work_content": "정보화전략계획(ISP) 수립, 업무·정보 재설계",
+      "business_classification": "부수 사업"
+    },
+    {
+      "serial_number": 5,
+      "business_type": "소프트웨어 유지 및 관리",
+      "major_work_content": "운영·유지관리, 안정화 지원",
+      "business_classification": "부수 사업"
+    }
+  ],
+  "technical_staff_status_by_grade": [
+    {
+      "technical_grade": "기술사",
+      "personnel_count": 6
+    },
+    {
+      "technical_grade": "특급",
+      "personnel_count": 24
+    },
+    {
+      "technical_grade": "고급",
+      "personnel_count": 19
+    },
+    {
+      "technical_grade": "중급",
+      "personnel_count": 15
+    },
+    {
+      "technical_grade": "초급",
+      "personnel_count": 4
+    },
+    {
+      "technical_grade": "계",
+      "personnel_count": 68
+    }
+  ]
+}

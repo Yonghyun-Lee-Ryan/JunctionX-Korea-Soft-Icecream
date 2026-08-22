@@ -1,0 +1,79 @@
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Apple SD Gothic Neo","AppleGothic","Noto Sans KR",sans-serif;
+         color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 12mm 18mm 9mm; position: relative;
+          display: flex; flex-direction: column; }
+  .wm { position: absolute; inset: 0; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 30mm; pointer-events: none; z-index: 0; }
+  .wm span { transform: rotate(-28deg); font-size: 29pt; font-weight: 800; letter-spacing: 6px;
+             color: rgba(190,40,40,.12); white-space: nowrap; }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+  .formno { font-size: 7.5pt; color: #333; border: 1px solid #333; display: inline-block;
+            padding: 1.3mm 2.3mm; margin-bottom: 5mm; align-self: flex-start; }
+  .frame { border: 2.2px solid #111; padding: 7mm 9mm 6mm; flex: 1; display: flex; flex-direction: column; }
+  h1 { font-size: 21pt; font-weight: 800; letter-spacing: 11px; text-align: center; margin: 2mm 0 2mm; }
+  .docno { text-align: center; font-size: 10.5pt; font-weight: 700; letter-spacing: 2px; margin-bottom: 6mm; }
+  .sect { font-size: 10.5pt; font-weight: 800; margin: 4.5mm 0 1.8mm; }
+  table { border-collapse: collapse; width: 100%; }
+  .kv th, .kv td { border: 1px solid #444; padding: 2.1mm 2.8mm; font-size: 9.5pt; }
+  .kv th { background: #ececec; width: 34mm; font-weight: 700; text-align: center; }
+  .grid th, .grid td { border: 1px solid #444; padding: 1.4mm 2mm; font-size: 8.2pt; }
+  .grid th { background: #ececec; font-weight: 700; text-align: center; }
+  .grid td.c { text-align: center; }
+  .big { font-size: 15pt; font-weight: 900; letter-spacing: 2px; }
+  .attest { margin-top: 6mm; font-size: 10.5pt; line-height: 1.9; text-align: center; }
+  .issue { text-align: center; margin-top: auto; padding-top: 7mm; }
+  .issue .date { font-size: 11.5pt; letter-spacing: 3px; margin-bottom: 8mm; }
+  .issue .org { font-size: 16pt; font-weight: 800; letter-spacing: 8px; position: relative; display: inline-block; }
+  .stamp { position: absolute; right: -23mm; top: 50%; transform: translateY(-50%) rotate(-9deg);
+           width: 18mm; height: 18mm; border: 2.2px solid rgba(190,40,40,.6); border-radius: 50%;
+           color: rgba(190,40,40,.6); font-size: 7pt; font-weight: 800; letter-spacing: 0;
+           display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; }
+  .note { font-size: 7.8pt; color: #333; line-height: 1.6; margin-top: 3mm; }
+  .note b { font-weight: 700; }
+  .disclaimer { margin-top: 4mm; border: 1.2px dashed #b02828; background: #fdf3f3;
+                padding: 2.5mm 3.4mm; font-size: 7.8pt; line-height: 1.5; color: #7a1d1d; }
+  .disclaimer b { font-weight: 800; }
+</style>
+
+<div class="page">
+  <div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>
+  <div class="content">
+    <div class="formno">[첨부 3] 입찰참가자격 경영상태 평가 제출용</div>
+    <div class="frame">
+      <h1>신용평가등급확인서</h1>
+      <div class="docno">확인서번호 : 제 2026-0000000 호</div>
+      <div class="sect">1. 평가대상 기업</div>
+      <table class="kv">
+      <tr><th>상 호</th><td>주식회사 다온피엠씨</td><th>사업자등록번호</th><td>120-86-01230</td></tr>
+      <tr><th>대 표 자</th><td>강민서</td><th>법인등록번호</th><td>110111-0000000</td></tr>
+      <tr><th>소 재 지</th><td colspan="3">서울특별시 강남구 테헤란로 501, 11층 (삼성동)</td></tr>
+    </table>
+      <div class="sect">2. 평가 결과</div>
+      <table class="kv">
+        <tr><th>기업신용등급</th><td class="big">A0</td><th>평가 기준</th><td>제17기 (2025.12.31) 결산 재무제표</td></tr>
+        <tr><th>평 가 일</th><td>2026. 03. 02.</td><th>유 효 기 간</th><td>2026. 03. 02. ~ 2027. 03. 01.</td></tr>
+        <tr><th>등급 정의</th><td colspan="3">상거래 신용도가 우수하고 채무이행 능력이 높으나,<br>급격한 환경변화에 다소 영향을 받을 수 있음</td></tr>
+      </table>
+      <div class="sect">3. 등급 체계</div>
+      <table class="grid">
+        <tr><th style="width:44mm">등 급</th><th>정 의</th></tr>
+        <tr><td class="c">AAA</td><td>채무이행 능력이 최고 수준이며 환경변화에 영향을 받지 않음</td></tr><tr><td class="c">AA+ · AA0 · AA-</td><td>채무이행 능력이 매우 우수하며 환경변화에 거의 영향을 받지 않음</td></tr><tr><td class="c">A+ · <b>A0</b> · A-</td><td>채무이행 능력이 우수하나 급격한 환경변화에 다소 영향을 받을 수 있음</td></tr><tr><td class="c">BBB+ · BBB0 · BBB-</td><td>채무이행 능력이 양호하나 환경변화에 따라 저하 가능성이 있음</td></tr><tr><td class="c">BB+ · BB0 · BB-</td><td>채무이행 능력에 당면 문제는 없으나 장래 안정성은 미흡함</td></tr><tr><td class="c">B+ · B0 · B-</td><td>채무이행 능력이 있으나 환경 악화 시 저하 가능성이 큼</td></tr><tr><td class="c">CCC · CC · C</td><td>현재 채무불이행 발생 가능성을 내포하고 있음</td></tr><tr><td class="c">D</td><td>현재 채무불이행 상태에 있음</td></tr>
+      </table>
+      <div class="note">
+        ※ 본 확인서는 <b>국가를 당사자로 하는 계약</b>의 입찰참가자격 경영상태 평가 제출용으로 발급되었습니다.<br>
+        ※ 유효기간이 지난 확인서는 효력이 없으며, 유효기간 중이라도 재무상태 변동 시 등급이 조정될 수 있습니다.<br>
+        ※ 평가 대상 기업이 <b>외부감사 대상이 아닌 경우</b> 법인세 신고 재무제표를 기준으로 평가합니다.
+      </div>
+      <div class="attest">위와 같이 기업신용등급을 확인합니다.</div>
+      <div class="issue">
+        <div class="date">2026 년 03 월 02 일</div>
+        <div class="org">마루신용평가정보 주식회사 대표이사<span class="stamp">마루신용<br>평가정보<br>印</span></div>
+      </div>
+    </div>
+    <div class="disclaimer"><b>🔴 데모용 견본 문서입니다 — 실제 신용평가등급확인서가 아닙니다.</b><br>이 문서는 JunctionX Korea 해커톤 프로젝트 <b>Solar for Bid</b>의 문서 처리 파이프라인 시연을 위해 만든 <b>가상 회사</b>의 견본입니다. ㈜다온피엠씨는 실존하지 않으며, 기재된 번호·등급·수치는 모두 <b>허구</b>입니다. <b>마루신용평가정보 주식회사는 실존하지 않는 가상의 신용평가기관</b>이며, 어떤 신용평가기관도 이 회사를 평가한 사실이 없습니다. 어떠한 증명·제출 용도로도 사용할 수 없습니다.</div>
+  </div>
+</div>

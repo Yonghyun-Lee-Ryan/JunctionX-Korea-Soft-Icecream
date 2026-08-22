@@ -1,0 +1,233 @@
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Apple SD Gothic Neo","AppleGothic","Noto Sans KR",sans-serif;
+         color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 12mm 17mm 9mm; position: relative;
+          display: flex; flex-direction: column; break-after: page; }
+  .page:last-child { break-after: auto; }
+
+  .wm { position: absolute; inset: 0; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 32mm; pointer-events: none; z-index: 0; }
+  .wm span { transform: rotate(-28deg); font-size: 27pt; font-weight: 800; letter-spacing: 6px;
+             color: rgba(190,40,40,.11); white-space: nowrap; }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+  .formno { font-size: 7.5pt; color: #333; border: 1px solid #333; display: inline-block;
+            padding: 1.3mm 2.3mm; margin-bottom: 4mm; align-self: flex-start; }
+  h1 { font-size: 18.5pt; font-weight: 800; letter-spacing: 9px; text-align: center; margin: 0 0 1.5mm; }
+  .periods { text-align: center; font-size: 8.8pt; line-height: 1.45; color: #222; margin-bottom: 2mm; }
+  .co { display: flex; justify-content: space-between; align-items: flex-end;
+        font-size: 9.5pt; font-weight: 700; margin-bottom: 1.5mm; }
+  .co .unit { font-weight: 500; font-size: 8.5pt; }
+
+  table.fs { border-collapse: collapse; width: 100%; }
+  table.fs th, table.fs td { border: 1px solid #555; padding: 0.62mm 2mm; font-size: 7.5pt; }
+  table.fs th { background: #ececec; text-align: center; font-weight: 700; }
+  table.fs td.n { text-align: right; font-variant-numeric: tabular-nums; width: 33mm; }
+  table.fs td.acc { text-align: left; }
+  .lv1 { font-weight: 800; background: #f4f4f4; }
+  .lv2 { font-weight: 700; padding-left: 4mm !important; }
+  .lv3 { padding-left: 9mm !important; }
+  .lv4 { padding-left: 14mm !important; color: #333; }
+  .tot { font-weight: 800; background: #e4e4e4; }
+
+  .note { font-size: 7.6pt; color: #333; line-height: 1.55; margin-top: 2.5mm; }
+  .note b { font-weight: 700; }
+  .disclaimer { margin-top: 3mm; border: 1.2px dashed #b02828; background: #fdf3f3;
+                padding: 2.4mm 3.2mm; font-size: 7.6pt; line-height: 1.45; color: #7a1d1d; }
+  .disclaimer b { font-weight: 800; }
+  .footline { margin-top: auto; padding-top: 3mm; font-size: 7.5pt; color: #b02828; text-align: center;
+              border-top: 1px dashed #d9a0a0; }
+  .sect { font-size: 11pt; font-weight: 800; margin: 5mm 0 2mm; }
+</style>
+
+<!-- ─────────────── p.1 재무상태표 ─────────────── -->
+<div class="page">
+  <div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>
+  <div class="content">
+    <div class="formno">[첨부 1] 최근 2개 사업연도 재무제표 — 일반기업회계기준</div>
+    <h1>재 무 상 태 표</h1>
+    <div class="periods">
+      제17(당)기 &nbsp; 2025년 12월 31일 현재<br>
+      제16(전)기 &nbsp; 2024년 12월 31일 현재
+    </div>
+    <div class="co"><span>주식회사 다온피엠씨</span><span class="unit">(단위 : 원)</span></div>
+
+    <table class="fs">
+      <tr><th style="width:auto">과 목</th><th style="width:33mm">제 17 (당) 기</th><th style="width:33mm">제 16 (전) 기</th></tr>
+
+      <tr class="lv1"><td class="acc">자 산</td><td class="n"></td><td class="n"></td></tr>
+      <tr><td class="acc lv2">Ⅰ. 유동자산</td><td class="n">5,329,800,000</td><td class="n">4,474,400,000</td></tr>
+      <tr><td class="acc lv3">현금및현금성자산</td><td class="n">1,842,000,000</td><td class="n">1,506,000,000</td></tr>
+      <tr><td class="acc lv3">단기금융상품</td><td class="n">900,000,000</td><td class="n">700,000,000</td></tr>
+      <tr><td class="acc lv3">매출채권</td><td class="n">2,156,000,000</td><td class="n">1,932,000,000</td></tr>
+      <tr><td class="acc lv4">대손충당금</td><td class="n">(43,100,000)</td><td class="n">(38,600,000)</td></tr>
+      <tr><td class="acc lv3">미청구공사</td><td class="n">384,000,000</td><td class="n">296,000,000</td></tr>
+      <tr><td class="acc lv3">선급금</td><td class="n">62,500,000</td><td class="n">54,200,000</td></tr>
+      <tr><td class="acc lv3">선급비용</td><td class="n">28,400,000</td><td class="n">24,800,000</td></tr>
+
+      <tr><td class="acc lv2">Ⅱ. 비유동자산</td><td class="n">1,142,100,000</td><td class="n">1,152,200,000</td></tr>
+      <tr><td class="acc lv3">장기금융상품</td><td class="n">300,000,000</td><td class="n">300,000,000</td></tr>
+      <tr><td class="acc lv3">비품</td><td class="n">210,000,000</td><td class="n">186,000,000</td></tr>
+      <tr><td class="acc lv4">감가상각누계액</td><td class="n">(128,400,000)</td><td class="n">(111,800,000)</td></tr>
+      <tr><td class="acc lv3">차량운반구</td><td class="n">96,000,000</td><td class="n">96,000,000</td></tr>
+      <tr><td class="acc lv4">감가상각누계액</td><td class="n">(61,200,000)</td><td class="n">(50,400,000)</td></tr>
+      <tr><td class="acc lv3">소프트웨어</td><td class="n">148,000,000</td><td class="n">148,000,000</td></tr>
+      <tr><td class="acc lv4">상각누계액</td><td class="n">(89,300,000)</td><td class="n">(76,600,000)</td></tr>
+      <tr><td class="acc lv3">임차보증금</td><td class="n">620,000,000</td><td class="n">620,000,000</td></tr>
+      <tr><td class="acc lv3">이연법인세자산</td><td class="n">47,000,000</td><td class="n">41,000,000</td></tr>
+      <tr class="tot"><td class="acc">자 산 총 계</td><td class="n">6,471,900,000</td><td class="n">5,626,600,000</td></tr>
+
+      <tr class="lv1"><td class="acc">부 채</td><td class="n"></td><td class="n"></td></tr>
+      <tr><td class="acc lv2">Ⅰ. 유동부채</td><td class="n">2,725,800,000</td><td class="n">2,534,900,000</td></tr>
+      <tr><td class="acc lv3">매입채무</td><td class="n">1,048,000,000</td><td class="n">912,300,000</td></tr>
+      <tr><td class="acc lv3">미지급금</td><td class="n">386,400,000</td><td class="n">341,000,000</td></tr>
+      <tr><td class="acc lv3">미지급비용</td><td class="n">274,500,000</td><td class="n">248,700,000</td></tr>
+      <tr><td class="acc lv3">선수금</td><td class="n">312,000,000</td><td class="n">268,000,000</td></tr>
+      <tr><td class="acc lv3">예수금</td><td class="n">68,900,000</td><td class="n">61,400,000</td></tr>
+      <tr><td class="acc lv3">단기차입금</td><td class="n">500,000,000</td><td class="n">600,000,000</td></tr>
+      <tr><td class="acc lv3">미지급법인세</td><td class="n">136,000,000</td><td class="n">103,500,000</td></tr>
+      <tr><td class="acc lv2">Ⅱ. 비유동부채</td><td class="n">1,012,300,000</td><td class="n">869,200,000</td></tr>
+      <tr><td class="acc lv3">장기차입금</td><td class="n">400,000,000</td><td class="n">350,000,000</td></tr>
+      <tr><td class="acc lv3">퇴직급여충당부채</td><td class="n">612,300,000</td><td class="n">519,200,000</td></tr>
+      <tr class="tot"><td class="acc">부 채 총 계</td><td class="n">3,738,100,000</td><td class="n">3,404,100,000</td></tr>
+
+      <tr class="lv1"><td class="acc">자 본</td><td class="n"></td><td class="n"></td></tr>
+      <tr><td class="acc lv2">Ⅰ. 자본금</td><td class="n">500,000,000</td><td class="n">500,000,000</td></tr>
+      <tr><td class="acc lv3">보통주자본금 (100,000주 × @5,000)</td><td class="n">500,000,000</td><td class="n">500,000,000</td></tr>
+      <tr><td class="acc lv2">Ⅱ. 자본잉여금</td><td class="n">180,000,000</td><td class="n">180,000,000</td></tr>
+      <tr><td class="acc lv2">Ⅲ. 이익잉여금</td><td class="n">2,053,800,000</td><td class="n">1,542,500,000</td></tr>
+      <tr><td class="acc lv3">미처분이익잉여금</td><td class="n">2,053,800,000</td><td class="n">1,542,500,000</td></tr>
+      <tr class="tot"><td class="acc">자 본 총 계</td><td class="n">2,733,800,000</td><td class="n">2,222,500,000</td></tr>
+      <tr class="tot"><td class="acc">부 채 와 자 본 총 계</td><td class="n">6,471,900,000</td><td class="n">5,626,600,000</td></tr>
+    </table>
+
+    <div class="note">
+      ※ 「주식회사 등의 외부감사에 관한 법률」상 <b>외부감사 대상이 아닙니다</b> (자산 120억 원 미만 · 부채 70억 원 미만 · 매출 100억 원 미만 · 종업원 100명 미만).<br>
+      ※ 본 재무제표는 <b>일반기업회계기준</b>에 따라 작성되었으며, 법인세 신고 시 제출한 세무조정계산서 첨부 재무제표와 동일합니다.
+    </div>
+
+    <div class="disclaimer">
+      <b>🔴 데모용 견본 문서입니다 — 실제 재무제표가 아닙니다.</b><br>
+      이 문서는 JunctionX Korea 해커톤 프로젝트 <b>Solar for Bid</b>의 문서 처리 파이프라인 시연을 위해 만든 <b>가상 회사</b>의 견본입니다.
+      ㈜다온피엠씨는 실존하지 않으며, 기재된 모든 계정과목 금액·재무비율은 <b>임의로 만든 허구의 수치</b>입니다.
+      회계감사·세무신고를 거친 사실이 없습니다. 어떠한 증명·제출·신용판단 용도로도 사용할 수 없습니다.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── p.2 손익계산서 ─────────────── -->
+<div class="page">
+  <div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>
+  <div class="content">
+    <div class="formno">[첨부 1] 최근 2개 사업연도 재무제표 — 일반기업회계기준</div>
+    <h1>손 익 계 산 서</h1>
+    <div class="periods">
+      제17(당)기 &nbsp; 2025년 1월 1일부터 2025년 12월 31일까지<br>
+      제16(전)기 &nbsp; 2024년 1월 1일부터 2024년 12월 31일까지
+    </div>
+    <div class="co"><span>주식회사 다온피엠씨</span><span class="unit">(단위 : 원)</span></div>
+
+    <table class="fs">
+      <tr><th style="width:auto">과 목</th><th style="width:33mm">제 17 (당) 기</th><th style="width:33mm">제 16 (전) 기</th></tr>
+      <tr class="lv1"><td class="acc">Ⅰ. 매출액</td><td class="n">8,420,000,000</td><td class="n">7,634,000,000</td></tr>
+      <tr><td class="acc lv3">용역매출 — 사업관리(PMO)</td><td class="n">6,142,000,000</td><td class="n">5,480,000,000</td></tr>
+      <tr><td class="acc lv3">용역매출 — 정보시스템 감리</td><td class="n">1,038,000,000</td><td class="n">974,000,000</td></tr>
+      <tr><td class="acc lv3">용역매출 — ISP·컨설팅</td><td class="n">986,000,000</td><td class="n">918,000,000</td></tr>
+      <tr><td class="acc lv3">용역매출 — 개인정보 영향평가</td><td class="n">254,000,000</td><td class="n">262,000,000</td></tr>
+
+      <tr class="lv1"><td class="acc">Ⅱ. 매출원가</td><td class="n">6,148,600,000</td><td class="n">5,637,500,000</td></tr>
+      <tr><td class="acc lv3">용역원가 — 인건비</td><td class="n">5,236,400,000</td><td class="n">4,802,100,000</td></tr>
+      <tr><td class="acc lv3">용역원가 — 외주비</td><td class="n">648,200,000</td><td class="n">602,300,000</td></tr>
+      <tr><td class="acc lv3">용역원가 — 경비</td><td class="n">264,000,000</td><td class="n">233,100,000</td></tr>
+      <tr class="tot"><td class="acc">Ⅲ. 매출총이익</td><td class="n">2,271,400,000</td><td class="n">1,996,500,000</td></tr>
+
+      <tr class="lv1"><td class="acc">Ⅳ. 판매비와관리비</td><td class="n">1,608,300,000</td><td class="n">1,472,900,000</td></tr>
+      <tr><td class="acc lv3">급여</td><td class="n">742,600,000</td><td class="n">681,400,000</td></tr>
+      <tr><td class="acc lv3">퇴직급여</td><td class="n">146,800,000</td><td class="n">132,500,000</td></tr>
+      <tr><td class="acc lv3">복리후생비</td><td class="n">168,400,000</td><td class="n">154,200,000</td></tr>
+      <tr><td class="acc lv3">지급임차료</td><td class="n">204,000,000</td><td class="n">198,000,000</td></tr>
+      <tr><td class="acc lv3">감가상각비 및 무형자산상각비</td><td class="n">40,100,000</td><td class="n">38,700,000</td></tr>
+      <tr><td class="acc lv3">대손상각비</td><td class="n">4,500,000</td><td class="n">6,200,000</td></tr>
+      <tr><td class="acc lv3">교육훈련비</td><td class="n">62,300,000</td><td class="n">48,900,000</td></tr>
+      <tr><td class="acc lv3">지급수수료</td><td class="n">128,700,000</td><td class="n">114,600,000</td></tr>
+      <tr><td class="acc lv3">기타 판매관리비</td><td class="n">110,900,000</td><td class="n">98,400,000</td></tr>
+      <tr class="tot"><td class="acc">Ⅴ. 영업이익</td><td class="n">663,100,000</td><td class="n">523,600,000</td></tr>
+
+      <tr class="lv1"><td class="acc">Ⅵ. 영업외수익</td><td class="n">42,800,000</td><td class="n">31,500,000</td></tr>
+      <tr><td class="acc lv3">이자수익</td><td class="n">38,200,000</td><td class="n">27,900,000</td></tr>
+      <tr><td class="acc lv3">잡이익</td><td class="n">4,600,000</td><td class="n">3,600,000</td></tr>
+      <tr class="lv1"><td class="acc">Ⅶ. 영업외비용</td><td class="n">58,600,000</td><td class="n">62,400,000</td></tr>
+      <tr><td class="acc lv3">이자비용</td><td class="n">56,300,000</td><td class="n">60,100,000</td></tr>
+      <tr><td class="acc lv3">잡손실</td><td class="n">2,300,000</td><td class="n">2,300,000</td></tr>
+
+      <tr class="tot"><td class="acc">Ⅷ. 법인세비용차감전순이익</td><td class="n">647,300,000</td><td class="n">492,700,000</td></tr>
+      <tr><td class="acc lv2">Ⅸ. 법인세비용</td><td class="n">136,000,000</td><td class="n">103,500,000</td></tr>
+      <tr class="tot"><td class="acc">Ⅹ. 당기순이익</td><td class="n">511,300,000</td><td class="n">389,200,000</td></tr>
+    </table>
+
+    <div class="note">
+      ※ 매출액은 <b>용역 제공 진행률</b>에 따라 인식하였습니다.<br>
+      ※ 당기 중 <b>배당은 없습니다.</b> 당기순이익 511,300,000원 전액이 미처분이익잉여금에 가산되었습니다.
+    </div>
+
+    <div class="footline">
+      🔴 데모용 견본 — 가상 회사(㈜다온피엠씨)의 견본 문서이며 실제 재무제표가 아닙니다. 모든 금액은 허구입니다.
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────── p.3 재무비율 ─────────────── -->
+<div class="page">
+  <div class="wm"><span>데모용 견본 · 실제 효력 없음</span><span>가 상 의 회 사 · SPECIMEN</span><span>데모용 견본 · 실제 효력 없음</span></div>
+  <div class="content">
+    <div class="formno">[첨부 2] 경영상태 평가자료 — 주요 재무비율</div>
+    <h1>주 요 재 무 비 율</h1>
+    <div class="periods">입찰참가자격 경영상태 평가 대응 자료</div>
+    <div class="co"><span>주식회사 다온피엠씨</span><span class="unit">(단위 : 원, %)</span></div>
+
+    <div class="sect">1. 최근 3개 사업연도 매출액</div>
+    <table class="fs">
+      <tr><th style="width:40mm">사업연도</th><th>기 간</th><th style="width:33mm">매 출 액</th><th style="width:24mm">증감률</th></tr>
+      <tr><td class="acc">제15기 (2023)</td><td class="acc">2023.01.01 ~ 2023.12.31</td><td class="n">6,981,000,000</td><td class="n">—</td></tr>
+      <tr><td class="acc">제16기 (2024)</td><td class="acc">2024.01.01 ~ 2024.12.31</td><td class="n">7,634,000,000</td><td class="n">9.4</td></tr>
+      <tr><td class="acc">제17기 (2025)</td><td class="acc">2025.01.01 ~ 2025.12.31</td><td class="n">8,420,000,000</td><td class="n">10.3</td></tr>
+      <tr class="tot"><td class="acc" colspan="2">3개년 합계</td><td class="n">23,035,000,000</td><td class="n">연평균 9.9</td></tr>
+    </table>
+
+    <div class="sect">2. 주요 재무비율</div>
+    <table class="fs">
+      <tr><th style="width:44mm">비 율</th><th>산 식</th><th style="width:26mm">제17기 (2025)</th><th style="width:26mm">제16기 (2024)</th></tr>
+      <tr><td class="acc">부채비율</td><td class="acc">부채총계 ÷ 자본총계 × 100</td><td class="n">136.7</td><td class="n">153.2</td></tr>
+      <tr><td class="acc">유동비율</td><td class="acc">유동자산 ÷ 유동부채 × 100</td><td class="n">195.5</td><td class="n">176.5</td></tr>
+      <tr><td class="acc">자기자본비율</td><td class="acc">자본총계 ÷ 자산총계 × 100</td><td class="n">42.2</td><td class="n">39.5</td></tr>
+      <tr><td class="acc">영업이익률</td><td class="acc">영업이익 ÷ 매출액 × 100</td><td class="n">7.9</td><td class="n">6.9</td></tr>
+      <tr><td class="acc">당기순이익률</td><td class="acc">당기순이익 ÷ 매출액 × 100</td><td class="n">6.1</td><td class="n">5.1</td></tr>
+      <tr><td class="acc">총자산회전율 (회)</td><td class="acc">매출액 ÷ 평균 자산총계</td><td class="n">1.39</td><td class="n">1.37</td></tr>
+      <tr><td class="acc">이자보상배율 (배)</td><td class="acc">영업이익 ÷ 이자비용</td><td class="n">11.78</td><td class="n">8.71</td></tr>
+    </table>
+
+    <div class="sect">3. 신용평가</div>
+    <table class="fs">
+      <tr><th style="width:44mm">항 목</th><th>내 용</th></tr>
+      <tr><td class="acc">기업신용평가등급</td><td class="acc"><b>A0</b> (회사채 기준 환산등급)</td></tr>
+      <tr><td class="acc">평가 유효기간</td><td class="acc">2026.03.02 ~ 2027.03.01</td></tr>
+      <tr><td class="acc">나라장터 등록 여부</td><td class="acc">등록 완료</td></tr>
+      <tr><td class="acc">부정당업자 제재</td><td class="acc">해당 없음</td></tr>
+    </table>
+
+    <div class="note">
+      ※ 당사는 <b>외부감사 대상이 아니므로</b>, 입찰참가자격 경영상태 평가는 「신용평가등급확인서」로 갈음합니다.<br>
+      ※ 신용평가등급확인서 원본은 <b>별도 첨부</b>합니다. 본 자료는 재무제표에서 산출한 참고 수치입니다.<br>
+      ※ 재무비율은 위 산식으로 계산하였으며, 소수점 둘째 자리에서 반올림하였습니다.
+    </div>
+
+    <div class="disclaimer">
+      <b>🔴 데모용 견본 문서입니다 — 실제 재무자료가 아닙니다.</b><br>
+      ㈜다온피엠씨는 실존하지 않는 가상 회사이며, 기재된 매출액·재무비율·신용평가등급은 모두 <b>허구</b>입니다.
+      어떤 신용평가기관도 이 회사를 평가한 사실이 없습니다. 어떠한 증명·제출·신용판단 용도로도 사용할 수 없습니다.
+    </div>
+  </div>
+</div>
