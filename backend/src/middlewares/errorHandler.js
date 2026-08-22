@@ -13,5 +13,8 @@ export function errorHandler(err, req, res, _next) {
     stack: err?.stack?.split('\n').slice(0, 4).join(' | '),
   });
 
-  res.status(e.status).json({ error: e.toEnvelope() });
+  const envelope = e.toEnvelope();
+  // 🔴 무엇이 빠졌는지를 코드가 아니라 목록으로 같이 준다 — 프론트가 문장을 짓지 않아도 되게
+  if (err?.missing) envelope.missing = err.missing;
+  res.status(e.status).json({ error: envelope });
 }
