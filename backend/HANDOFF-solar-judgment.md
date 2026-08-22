@@ -431,3 +431,20 @@ BASE_DATE: 2025-11-12
 - `agent/*.json` 을 손으로 고치지 않는다 — `python3 agent/build_agents.py` 로 다시 뽑는다
 - `*.hwp` 는 레포에 넣지 않는다 (`.gitignore` 51행)
 - 커밋·PR은 팀이 직접
+
+---
+
+## 10. 2026-08-23 실호출(정운 계정 키)로 바뀐 것
+
+데모 공고 `R25BK00645031`(체육진흥투표권 온라인발매 결제서비스(PG) 대행 용역 · 첨부 5건)로 전체 파이프라인을 실제로 돌렸다. 결과: **요구사항 145 · 참가자격 12 · 제출물 28 · WBS 9 · 체크리스트 24**, 자격 판정은 `추천`(전자금융업자 등록 등 `[확인필요]`), Studio 1회 + Solar 6회 · 251초.
+
+| 실측 | 고친 것 |
+|---|---|
+| 01·02·03·05 의 Classify 가 용역 RFP 를 전부 `OTHER_REVIEW_REQUIRED` 로 보냈다 (갈래가 「직접 구축」·「PMO/PIA」 둘뿐) | 갈래 `SERVICE_OPERATION_RFP` 추가(`agent/build_agents.py ANNOUNCEMENT_BRANCHES`). **Agent 5종을 새로 임포트해 ID 가 바뀌었다**(v2 · `.env.example` 참조 · 무료 실행 10회 새로 시작) |
+| 03 이 용역 RFP 에서 요구사항 0건 (요구사항 총괄표 전제) | 용역 전용 추출 노드 `extract_service_requirements`(`REQ_SERVICE_PROMPT`) — 과업 내용을 SVR-001… 로 센다. 03 v2 의 **Config #3** 로 `POST /v2/agents/{id}/configs` 에 올렸다(아래) |
+| 판정 입력이 공고 전체 91KB(약 7.7만 토큰)라 Solar 가 120초 안에 못 냈다 | `announcementFor(kind, announcement)` — 자격·계획·제출 판정마다 필요한 필드만. `SOLAR_TIMEOUT_MS` 기본 300000 |
+| 6 job 이 폴링 예산 300초를 넘겨 통째로 실패 → 재시도가 전부 다시 샀다 | `studio_result` 캐시(파일 sha256 + Agent ID). 시작만 한 job 은 `job_id` 를 남겨 **다음 실행이 이어서 기다린다**. 분류만 한 결과는 캐시하지 않는다 |
+| 테스트의 `clearStudioResults()` 가 개발 DB 의 실제 캐시를 지웠다 | `npm test` 는 `tests/setup.js` 로 `data/test.sqlite` 를 쓴다 |
+| Studio UI 가 느리거나 안 뜰 때 | **Agents API 가 있다** — `GET /v2/agents`, `GET /v2/agents/{id}/configs`, `PATCH /v2/agents/{id}` (이름), `POST /v2/agents/{id}/configs` (런타임 모양 `steps[]` 그대로 올리면 새 설정이 기본값이 된다). 키는 `UPSTAGE_AGENT_API_KEY` |
+
+🔴 남은 것: 임계경로가 0건으로 온다(공고가 처리기간을 명시하지 않으면 프롬프트가 비운다 — 규율대로지만 화면이 비어 보인다). WBS 첫 패키지가 요구사항 50개를 한 행에 묶는다(프롬프트 개선 여지).
