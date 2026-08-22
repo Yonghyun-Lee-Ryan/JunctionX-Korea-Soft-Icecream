@@ -345,3 +345,15 @@ test('🔴 guardWbs — 기간이 비어 있어도 문서에 사업기간이 있
   const none = guardWbs({ work_packages: [{ wbs_id: '1.1', name: '운영 대행', requirement_refs: [], effort_mm: [] }] }, { requirements: [] });
   assert.equal(none.work_packages[0].duration, '미 명시');
 });
+
+test('guardWbs — 나눈 조각의 M/M 이 반올림으로 0 이 되면 그 등급 칸을 비운다 (「중급 0」을 그리지 않는다)', () => {
+  const ann = { requirements: [
+    ...Array.from({ length: 20 }, (_, i) => ({ requirement_id: svr(i + 1), requirement_category: 'A' })),
+    { requirement_id: svr(21), requirement_category: 'B' },
+  ] };
+  const out = guardWbs({ work_packages: [{ wbs_id: '1.1', name: '묶음', requirement_refs: Array.from({ length: 21 }, (_, i) => svr(i + 1)), effort_mm: [{ grade: '중급', mm: 0.5 }] }] }, ann);
+  const pieces = out.work_packages.filter((p) => p.split_from === '1.1');
+  assert.equal(pieces.length, 2);
+  assert.deepEqual(pieces[0].effort_mm, [{ grade: '중급', mm: 0.5 }]);
+  assert.deepEqual(pieces[1].effort_mm, [], '0.5 × 1/21 → 0.0 → 비운다');
+});

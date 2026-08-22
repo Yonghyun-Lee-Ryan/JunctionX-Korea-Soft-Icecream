@@ -269,7 +269,8 @@ function splitOversized(packages, categoryOf, pageOf) {
         wbs_id: ids[i],
         name: cat ? `${p.name} — ${cat}` : p.name,
         requirement_refs: refs,
-        effort_mm,
+        effort_mm: effort_mm.filter((e) => e.mm > 0),   // 반올림 잔여 0.0 은 칸을 비운다 — 「중급 0」(실측)
+
         predecessors: i === 0 ? p.predecessors : [ids[i - 1]],
         source_page: pageOf.get(refs[0]) || p.source_page,
         split_from: p.wbs_id,
