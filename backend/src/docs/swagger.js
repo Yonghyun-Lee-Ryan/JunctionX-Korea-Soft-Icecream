@@ -28,6 +28,7 @@ export const openapiSpec = swaggerJsdoc({
       { name: 'companies', description: 'S1 회사 서류 → 카드, S2~S4 스크리닝' },
       { name: 'cases', description: 'S1 수집 · S2~S5 팩트시트 · 산출물' },
       { name: 'docs', description: '회사 서류 PDF 1장 → 8갈래 판정 → 에이전트 추출' },
+      { name: 'company-card', description: 'S2 회사 카드 — 서류 묶음 → COMPANY_CARD_V1 (갈래·실적 집계는 백엔드가)' },
       { name: 'announcements', description: 'S3 공고 해부 — 제안요청서·입찰공고서 → ANNOUNCEMENT_CORE_V1' },
       { name: 'judge', description: 'S4~S8 판정 층 — 회사 카드·공고 해부 JSON을 Solar로 맞댄다' },
     ],

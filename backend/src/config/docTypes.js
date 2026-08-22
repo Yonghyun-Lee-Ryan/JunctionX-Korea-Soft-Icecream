@@ -58,6 +58,15 @@ export const DOC_TYPES = [
     deny: [],
   },
   {
+    // 🆕 KISTI 공고 참가자격이 요구한다 (세부품명 8111159801) — Studio 갈래 CO_DIRECT_PRODUCTION
+    key: 'direct_production',
+    label: '직접생산확인증명서',
+    agentEnv: 'STUDIO_AGENT_DIRECT_PRODUCTION',
+    title: ['직접생산확인증명서', '직접생산확인증명'],
+    support: ['중소벤처기업부', '중소기업중앙회', '세부품명', '직접생산', '판로지원법', '8111159801'],
+    deny: [],
+  },
+  {
     key: 'performance',
     label: '실적증명서',
     agentEnv: 'STUDIO_AGENT_PERFORMANCE',

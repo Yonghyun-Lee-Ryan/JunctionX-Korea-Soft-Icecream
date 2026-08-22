@@ -5,6 +5,7 @@ import { companiesRouter } from './companies.routes.js';
 import { docsRouter } from './docs.routes.js';
 import { judgeRouter } from './judge.routes.js';
 import { announcementsRouter } from './announcements.routes.js';
+import { companyCardRouter } from './companyCard.routes.js';
 
 export const router = Router();
 
@@ -18,3 +19,5 @@ router.use('/api', docsRouter);
 router.use('/api', judgeRouter);
 // 🔴 공고 해부 — 제안요청서·입찰공고서를 Studio 5 Agent 에 돌리고 병합 (S3)
 router.use('/api', announcementsRouter);
+// 🔴 회사 카드 — 서류 묶음을 Company Card Builder 1개에 돌리고 갈래·실적 집계 (S2)
+router.use('/api', companyCardRouter);
