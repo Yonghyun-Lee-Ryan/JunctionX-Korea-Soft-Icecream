@@ -7,7 +7,7 @@ import { AppError } from '../errors/AppError.js';
 import { DOC_TYPE_MAP } from '../config/docTypes.js';
 import * as caseRepo from '../repositories/case.repo.js';
 import { insertCaseFile, listCaseFiles } from '../repositories/caseFile.repo.js';
-import { looksLikePdf, extractPdfText } from './pdfText.service.js';
+import { looksLikePdf, extractPdfText, extractPdfPages } from './pdfText.service.js';
 import { classifyByRules } from './classify.service.js';
 import { rejudge } from './casePipeline.service.js';
 
@@ -91,13 +91,14 @@ export async function addProposal(caseId, { buffer, filename, mimeType }) {
   if (!looksLikePdf(buffer)) {
     throw new AppError('E_UNSUPPORTED_FILE', '제안서 원고는 텍스트가 있는 PDF 로 올려 주세요. HWP·스캔 이미지는 아직 글자를 읽지 못합니다.', { filename, mimeType });
   }
-  const { text, chars } = await extractPdfText(buffer);   // 손상된 PDF 면 여기서 E_UNSUPPORTED_FILE
+  const { pages, chars } = await extractPdfPages(buffer);   // 손상된 PDF 면 여기서 E_UNSUPPORTED_FILE
+  const text = pages.join('\n');
   if (chars < MIN_TEXT_CHARS) {
     throw new AppError('E_UNSUPPORTED_FILE', '이 PDF 에서 글자를 찾지 못했습니다. 스캔 이미지로만 된 원고는 검사하지 못합니다 — 텍스트가 있는 PDF 로 다시 올려 주세요.', { filename, chars });
   }
 
   const { id, storagePath } = storeFile(caseId, { buffer, filename });
-  const saved = insertCaseFile({ id, caseId, kind: 'proposal', filename, bytes: buffer.length, storagePath, textChars: chars, text });
+  const saved = insertCaseFile({ id, caseId, kind: 'proposal', filename, bytes: buffer.length, storagePath, textChars: chars, text, pages });
   logger.info('case_proposal_added', { caseId, id, filename, chars });
 
   if (row.status === 'done') await rejudge(caseId, { parts: ['submission'] });

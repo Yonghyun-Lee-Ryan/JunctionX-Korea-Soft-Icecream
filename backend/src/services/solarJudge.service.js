@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { env, ROOT } from '../config/env.js';
+import { scanForbidden, forbiddenFromRules } from './proposalScan.service.js';
 import { logger } from '../config/logger.js';
 import { AppError } from '../errors/AppError.js';
 
@@ -439,7 +440,7 @@ export function guardCriticalPath(out, wbs, announcement) {
  * @param rules   이미 뽑아 둔 SUBMISSION_RULES_V2 — 있으면 규칙 호출을 건너뛴다 (서류를 올릴 때마다 공고 규칙을 다시 살 이유가 없다)
  * @param uploads 이 케이스에 올린 제출 파일 — 검사가 파일을 빠뜨려도 가드가 requirement 이름으로 연결한다
  */
-export async function judgeSubmission({ announcement, companyCard, proposalText, rules: givenRules, uploads = [], fetchImpl }) {
+export async function judgeSubmission({ announcement, companyCard, proposalText, proposalPages, rules: givenRules, uploads = [], fetchImpl }) {
   const started = Date.now();
   const hasProposal = typeof proposalText === 'string' && proposalText.trim().length > 0;
   const reuseRules = Boolean(givenRules && typeof givenRules === 'object');
@@ -468,7 +469,12 @@ export async function judgeSubmission({ announcement, companyCard, proposalText,
       ['COMPANY_DOCUMENT_SUMMARY_V2', Array.isArray(companyCard?.documents) ? companyCard.documents : companyCard],
     ]),
     fetchImpl,
-  }), { proposalScan, uploads });
+  }), {
+    proposalScan,
+    uploads,
+    // 🔴 모델이 놓친 자리를 백엔드 전수 검색이 보탠다 — 쪽 단위 텍스트가 있으면 쪽, 없으면 본문 전체를 1쪽으로
+    localHits: hasProposal ? scanForbidden(Array.isArray(proposalPages) && proposalPages.length ? proposalPages : [proposalText], forbiddenFromRules(rules)) : [],
+  });
 
   return { rules, proposalScan, audit, meta: { ...runMeta(started), calls: (reuseRules ? 0 : 1) + (hasProposal ? 1 : 0) + 1, rulesReused: reuseRules } };
 }
@@ -481,7 +487,7 @@ const text = (v) => (v === null || v === undefined ? '' : String(v));
  * 🔴 개수·보완요청·overall_status 는 documents[] 에서 다시 만든다.
  * 🔴 금지 표현은 제안서 스캔의 실제 적중으로 다시 센다. 제안서가 없으면 0건 + 미제출 사유 — 통과가 아니다.
  */
-export function guardSubmissionAudit(out, { proposalScan, uploads = [] } = {}) {
+export function guardSubmissionAudit(out, { proposalScan, uploads = [], localHits = [] } = {}) {
   const result = { ...(out ?? {}) };
   // 🔴 사람이 「이 서류용」이라고 올린 파일은 검사가 빠뜨려도 연결한다 — 상태(준비됨/보완 필요/미확인)는 검사의 판단 그대로 둔다
   const squash = (v) => text(v).replace(/\s+/g, '');
@@ -528,7 +534,21 @@ export function guardSubmissionAudit(out, { proposalScan, uploads = [] } = {}) {
 
   const fe = result.forbidden_expressions ?? {};
   const ruleItems = Array.isArray(fe.items) ? fe.items : [];
-  const hits = Array.isArray(proposalScan?.forbidden_expression_hits) ? proposalScan.forbidden_expression_hits : null;
+  const scanHits = Array.isArray(proposalScan?.forbidden_expression_hits) ? proposalScan.forbidden_expression_hits : null;
+  const extra = Array.isArray(localHits) ? localHits : [];
+  // 🔴 백엔드 전수 검색(localHits)을 Solar 스캔에 합친다 — 같은 문장(공백 무시)은 한 번만. 모델이 놓친 자리를 숨기지 않는다 (실측: hits 0)
+  let hits = scanHits ? [...scanHits] : (extra.length ? [] : null);
+  if (hits) {
+    const squashSentence = (s) => text(s).replace(/\s+/g, '');
+    // 같은 자리인지는 문장 포함 관계로 본다 — 모델은 「외부 LLM…가능합니다.」, 우리는 「당사는 외부 LLM…가능합니다.」처럼 경계가 다를 수 있다
+    const seen = hits.map((h) => squashSentence(h?.sentence)).filter(Boolean);
+    for (const h of extra) {
+      const k = squashSentence(h?.sentence);
+      if (!k || seen.some((s) => s === k || s.includes(k) || k.includes(s))) continue;
+      seen.push(k);
+      hits.push({ expression: h.expression, sentence: h.sentence, page: h.page });
+    }
+  }
   const forbidden_expressions = hits
     ? {
       count: hits.length,

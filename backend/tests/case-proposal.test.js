@@ -22,8 +22,10 @@ const SAMPLE_PROPOSAL = path.resolve(ROOT, '..', 'plan', 'Solar_for_Bid', '06_�
 // ── Solar mock — 스캔·검사만 온다 (규칙은 저장본) ──
 const nativeFetch = globalThis.fetch;
 let calls;
-function mockSolar() {
+let solarMisses = false;
+function mockSolar({ misses = false } = {}) {
   calls = [];
+  solarMisses = misses;
   globalThis.fetch = async (url, init = {}) => {
     if (!String(url).startsWith(env.solar.chatUrl)) return nativeFetch(url, init);
     const body = JSON.parse(init.body);
@@ -33,7 +35,8 @@ function mockSolar() {
     const reply = key === 'PROPOSAL_SCAN_V1'
       ? {
         agent: 'PROPOSAL_SCAN_V1', source_file: '제안서.pdf', page_count: 5,
-        forbidden_expression_hits: [
+        // 🔴 실측: Solar 가 원고의 금지 표현을 하나도 못 찾았다 — 백엔드 전수 검색이 보태야 한다
+        forbidden_expression_hits: solarMisses ? [] : [
           { expression: '가능합니다', sentence: '외부 LLM 서비스와의 연계도 가능합니다.', page: 3 },
           { expression: '고려할 수 있다', sentence: '정기 점검은 추가로 고려할 수 있습니다.', page: 4 },
         ],
@@ -98,10 +101,12 @@ test('🔴 POST /api/cases/{id}/proposal — PDF 원고를 올리면 스캔+검�
   assert.equal(res.status, 200);
   const f = await res.json();
   const note = phrasesOf(f).note;
-  assert.equal(note.emphasis, '2곳');
-  assert.ok(note.body.includes('2곳'));
-  assert.equal(note.items.length, 2);
-  assert.deepEqual(note.items[0], { expression: '가능합니다', sentence: '외부 LLM 서비스와의 연계도 가능합니다.', page: 3 });
+  // Solar 가 준 2곳 + 원고 전수 검색이 찾은 자리(견본 원고에 심긴 「지원 가능」 등) — 같은 문장은 한 번만
+  assert.ok(note.items.length >= 3, JSON.stringify(note.items));
+  assert.equal(note.emphasis, `${note.items.length}곳`);
+  assert.ok(note.body.includes(`${note.items.length}곳`));
+  assert.ok(note.items.some((i) => i.expression === '가능합니다' && i.sentence === '외부 LLM 서비스와의 연계도 가능합니다.'));
+  assert.ok(note.items.some((i) => i.expression === '지원 가능' && i.page >= 1), '백엔드가 찾은 자리에도 쪽이 붙는다');
   assert.equal(note.proposal_file, '제안서_다온피엠씨_가상.pdf', '어느 원고를 검사했는지 말한다');
   assert.deepEqual(note.action, { label: '다른 원고로 다시 검사', kind: 'upload' });
 
@@ -115,7 +120,7 @@ test('🔴 POST /api/cases/{id}/proposal — PDF 원고를 올리면 스캔+검�
 
   // 저장된 봉투도 같다
   const again = await nativeFetch(`${base}/api/cases/${CASE}`).then((r) => r.json());
-  assert.equal(phrasesOf(again).note.emphasis, '2곳');
+  assert.equal(phrasesOf(again).note.emphasis, note.emphasis);
 });
 
 test('POST proposal — 텍스트가 없는 파일(HWP·스캔본)은 415 로 이유를 말한다, 원고는 남기지 않는다', async () => {
@@ -146,4 +151,16 @@ test('GET /api/cases/{id}/files — 원고도 kind=proposal 로 목록에 (본�
   assert.ok(p);
   assert.equal(p.filename, '제안서_다온피엠씨_가상.pdf');
   assert.equal('text' in p, false);
+});
+
+test('🔴 Solar 스캔이 아무것도 못 찾아도 원고에 심긴 금지 표현은 카드에 나온다 (백엔드 전수 검색)', async () => {
+  seedCase();
+  mockSolar({ misses: true });
+  const res = await upload(CASE, { buffer: fs.readFileSync(SAMPLE_PROPOSAL), filename: '제안서_다온피엠씨_가상.pdf' });
+  assert.equal(res.status, 200);
+  const note = phrasesOf(await res.json()).note;
+  assert.ok(note.items.length >= 3, JSON.stringify(note.items));
+  for (const e of ['가능합니다', '고려할 수', '지원 가능']) assert.ok(note.items.some((i) => i.sentence.includes(e)), e);
+  assert.ok(note.items.every((i) => i.page >= 1 && i.page <= 5));
+  assert.equal(note.emphasis, `${note.items.length}곳`);
 });

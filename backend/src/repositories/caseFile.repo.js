@@ -4,14 +4,16 @@ import { getDb } from '../db/index.js';
 const row = (r) => (!r ? null : {
   id: r.id, caseId: r.case_id, kind: r.kind, filename: r.filename, bytes: r.bytes ?? null,
   storagePath: r.storage_path ?? null, requirementName: r.requirement_name ?? null,
-  docTypeKey: r.doc_type_key ?? null, textChars: r.text_chars ?? null, text: r.text ?? null, createdAt: r.created_at,
+  docTypeKey: r.doc_type_key ?? null, textChars: r.text_chars ?? null, text: r.text ?? null,
+  pages: (() => { try { const v = r.pages_json ? JSON.parse(r.pages_json) : null; return Array.isArray(v) ? v : null; } catch { return null; } })(),
+  createdAt: r.created_at,
 });
 
-export function insertCaseFile({ id, caseId, kind, filename, bytes, storagePath, requirementName, docTypeKey, textChars, text }) {
+export function insertCaseFile({ id, caseId, kind, filename, bytes, storagePath, requirementName, docTypeKey, textChars, text, pages }) {
   getDb().prepare(`
-    INSERT INTO case_file (id, case_id, kind, filename, bytes, storage_path, requirement_name, doc_type_key, text_chars, text)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, caseId, kind, filename, bytes ?? null, storagePath ?? null, requirementName ?? null, docTypeKey ?? null, textChars ?? null, text ?? null);
+    INSERT INTO case_file (id, case_id, kind, filename, bytes, storage_path, requirement_name, doc_type_key, text_chars, text, pages_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, caseId, kind, filename, bytes ?? null, storagePath ?? null, requirementName ?? null, docTypeKey ?? null, textChars ?? null, text ?? null, Array.isArray(pages) ? JSON.stringify(pages) : null);
   return findCaseFile(id);
 }
 
