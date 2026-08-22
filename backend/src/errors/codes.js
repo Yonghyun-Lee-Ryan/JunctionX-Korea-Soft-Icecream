@@ -20,5 +20,7 @@ export const ERROR_CODES = {
   E_AGENT_NOT_SET:     { status: 503, message: '이 문서 종류를 처리할 분석기가 아직 연결되지 않았습니다.' },
   E_CARD_INCOMPLETE:   { status: 422, message: '회사 카드를 만들기에 서류가 부족합니다.' },
   E_NOT_CONFIGURED:    { status: 503, message: '실시간 분석 설정이 없어 저장된 결과를 보여 드립니다.' },
+  E_UPSTREAM_SOLAR:    { status: 502, message: '판정 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' },
+  E_JUDGE_OUTPUT_INVALID: { status: 502, message: '판정 결과를 읽지 못했습니다. 잠시 후 다시 시도해 주세요.' },
   E_INTERNAL:          { status: 500, message: '처리 중 오류가 발생했습니다.' },
 };

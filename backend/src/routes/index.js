@@ -3,6 +3,7 @@ import { healthRouter } from './health.routes.js';
 import { casesRouter } from './cases.routes.js';
 import { companiesRouter } from './companies.routes.js';
 import { docsRouter } from './docs.routes.js';
+import { judgeRouter } from './judge.routes.js';
 
 export const router = Router();
 
@@ -12,3 +13,5 @@ router.use('/', healthRouter);
 router.use('/api', casesRouter);
 router.use('/api', companiesRouter);
 router.use('/api', docsRouter);
+// 🔴 판정 층 — Studio Instruct 대신 Solar Chat API (backend/HANDOFF-solar-judgment.md)
+router.use('/api', judgeRouter);

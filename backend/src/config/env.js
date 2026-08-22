@@ -33,6 +33,16 @@ export const env = {
     pollTimeoutMs: int('STUDIO_POLL_TIMEOUT_MS', 300000),
   },
 
+  // 🔴 Solar 판정 층 — Studio Instruct 노드가 프롬프트를 안 타서(agent/README.md 3-1) 백엔드가
+  //    Chat API를 직접 부른다. 키는 console 키 하나(UPSTAGE_API_KEY). backend/HANDOFF-solar-judgment.md
+  solar: {
+    apiKey: str('UPSTAGE_API_KEY'),
+    chatUrl: str('SOLAR_CHAT_URL', 'https://api.upstage.ai/v1/chat/completions'),
+    model: str('SOLAR_MODEL', 'solar-pro3'),
+    reasoningEffort: str('SOLAR_REASONING_EFFORT', 'medium'),
+    timeoutMs: Math.max(1000, int('SOLAR_TIMEOUT_MS', 120000)),
+  },
+
   g2b: {
     downloadUrl: str('G2B_DOWNLOAD_URL', 'https://www.g2b.go.kr/pn/pnp/pnpe/UntyAtchFile/downloadFile.do'),
     // 🔴 UA가 없으면 G2B가 HTTP 500을 준다. 빈 문자열로 두지 않는다
@@ -60,6 +70,7 @@ export function envReport() {
   return {
     hasApiKey: Boolean(env.studio.apiKey),
     studioReady: Boolean(env.studio.apiKey),
+    solarReady: Boolean(env.solar.apiKey),
     listSourceReady: Boolean(env.g2b.serviceKey),
     databaseFile: env.databaseFile,
   };
