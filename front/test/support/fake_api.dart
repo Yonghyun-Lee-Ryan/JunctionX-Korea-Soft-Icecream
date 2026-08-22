@@ -147,14 +147,11 @@ Factsheet sampleFactsheet(String caseId) => Factsheet.fromJson({
           {'id': 'wbs', 'label': 'WBS', 'columnFlex': [1080, 710], 'tabs': [
             {'id': 'wbs', 'column': 0}, {'id': 'criticalpath', 'column': 1}, {'id': 'cost', 'column': 1},
           ]},
-          {'id': 'criticalpath', 'label': '임계경로', 'tabs': [{'id': 'criticalpath', 'column': 0}]},
           {'id': 'submit', 'label': '제출준비', 'tabs': [
             {'id': 'checklist', 'column': 0}, {'id': 'rework', 'column': 0},
           ]},
         ],
-        'kitPrimaryAction': {
-          'compliance': 'WBS로', 'wbs': '제출준비', 'criticalpath': '제출준비', 'submit': '제출하기',
-        },
+        'kitPrimaryAction': {'compliance': 'WBS로', 'wbs': '제출준비', 'submit': '제출하기'},
       },
     });
 

@@ -34,10 +34,9 @@ void main() {
     expect(api.decisions['R25BK00645031-000'], 'go');
     expect(api.createdCases.single, 'R25BK00645031-000');
 
-    // 탭 4개가 서버가 준 순서대로
+    // 🔴 탭은 서버가 준 3개다 — 임계경로는 별도 탭이 아니라 WBS 탭 안 패널이다
     expect(find.text('요구사항 체크리스트'), findsOneWidget);
     expect(find.text('WBS'), findsWidgets);
-    expect(find.text('임계경로'), findsWidgets);
     expect(find.text('제출준비'), findsWidgets);
   });
 
@@ -52,12 +51,17 @@ void main() {
     expect(find.textContaining('총괄표 151건'), findsOneWidget);
   });
 
-  testWidgets('WBS 탭은 WBS·임계경로·원가를 한 장에 모은다 (서버가 준 배치)', (t) async {
+  testWidgets('🔴 임계경로는 별도 탭이 아니라 WBS 탭 안에 있다', (t) async {
     addTearDown(t.view.reset);
     await _toKit(t);
+    // 탭 바에 「임계경로」라는 탭이 없다
+    expect(find.text('임계경로'), findsNothing);
+
     await t.tap(find.text('WBS').first);
     await t.pumpAndSettle();
 
+    // 그러나 패널로는 보인다
+    expect(find.text('임계경로'), findsOneWidget);
     expect(find.text('입찰참가자격 등록 확인'), findsOneWidget);
     expect(find.text('M/M 예상 원가 (추천)'), findsOneWidget);
     expect(find.text('4.0'), findsOneWidget);
@@ -109,7 +113,7 @@ void main() {
     for (final (w, h) in <(double, double)>[(1920, 1080), (1440, 900), (1100, 900), (820, 900), (600, 900), (375, 812)]) {
       await t.pumpWidget(const SizedBox.shrink());
       await _toKit(t, w: w, h: h);
-      for (final label in ['WBS', '임계경로', '제출준비']) {
+      for (final label in ['WBS', '제출준비']) {
         await t.tap(find.text(label).first);
         await t.pumpAndSettle();
       }

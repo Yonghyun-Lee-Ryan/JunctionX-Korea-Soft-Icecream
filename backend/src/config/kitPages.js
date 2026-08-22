@@ -18,17 +18,13 @@ export const KIT_PAGES = [
     id: 'wbs',
     label: 'WBS',
     // 좌 WBS · 우 임계경로 + M/M 원가 (Figma 58:4886)
+    // 🔴 임계경로는 별도 탭을 두지 않는다 — 이 탭 안 우측 패널로 이미 보인다
     tabs: [
       { id: 'wbs', column: 0 },
       { id: 'criticalpath', column: 1 },
       { id: 'cost', column: 1 },
     ],
     columnFlex: [1080, 710],
-  },
-  {
-    id: 'criticalpath',
-    label: '임계경로',
-    tabs: [{ id: 'criticalpath', column: 0 }],
   },
   {
     id: 'submit',
@@ -44,6 +40,5 @@ export const KIT_PAGES = [
 export const KIT_PRIMARY_ACTION = {
   compliance: 'WBS로',
   wbs: '제출준비',
-  criticalpath: '제출준비',
   submit: '제출하기',
 };
