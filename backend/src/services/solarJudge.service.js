@@ -48,7 +48,8 @@ export function loadPrompt(key) {
  */
 export function buildUserMessage(sections) {
   return sections
-    .map(([label, value]) => `===== ${label} =====\n${JSON.stringify(value, null, 2)}`)
+    // 🔴 문자열(제안서 본문 등)은 따옴표 없이 원문 그대로, 객체는 JSON 문자열로
+    .map(([label, value]) => `===== ${label} =====\n${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}`)
     .join('\n\n');
 }
 
@@ -276,4 +277,114 @@ export function guardCriticalPath(out, wbs) {
     references: Array.isArray(cost.references) ? cost.references : [],
   };
   return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 판정 5 — 제출 검사 (화면⑨). Studio 의 4노드 체인을 3호출로:
+//   규칙(공고) ∥ 스캔(제안서 원고) → 검사(규칙 + 스캔 + 회사 카드 documents[])
+//   🔴 summarize-company-document 노드는 건너뛴다 — 회사 카드가 같은 사실을 갖고 있다
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function judgeSubmission({ announcement, companyCard, proposalText, fetchImpl }) {
+  const started = Date.now();
+  const hasProposal = typeof proposalText === 'string' && proposalText.trim().length > 0;
+
+  const [rules, proposalScan] = await Promise.all([
+    callSolar({
+      system: loadPrompt('submissionRules'),
+      user: buildUserMessage([['DOCUMENT_INFO', announcement]]),
+      fetchImpl,
+    }),
+    hasProposal
+      ? callSolar({
+        system: loadPrompt('proposalScan'),
+        user: buildUserMessage([['PROPOSAL_TEXT', proposalText]]),
+        fetchImpl,
+      })
+      : Promise.resolve(null),
+  ]);
+
+  const audit = guardSubmissionAudit(await callSolar({
+    system: loadPrompt('submissionAudit'),
+    user: buildUserMessage([
+      ['SUBMISSION_RULES_V2', rules],
+      // 🔴 없는 것을 통과로 바꾸지 않는다 — 없다는 사실을 그대로 넣는다
+      ['PROPOSAL_SCAN_V1', proposalScan ?? { absent: true, reason: '제안서 원고 미제출' }],
+      ['COMPANY_DOCUMENT_SUMMARY_V2', Array.isArray(companyCard?.documents) ? companyCard.documents : companyCard],
+    ]),
+    fetchImpl,
+  }), { proposalScan });
+
+  return { rules, proposalScan, audit, meta: { ...runMeta(started), calls: hasProposal ? 3 : 2 } };
+}
+
+const DOC_STATUS = new Set(['준비됨', '보완 필요', '미확인']);
+const text = (v) => (v === null || v === undefined ? '' : String(v));
+
+/**
+ * 🔴 상태는 셋뿐 — 준비됨 / 보완 필요 / 미확인. 모르는 값(UNKNOWN 등)은 미확인이지 보완 필요가 아니다.
+ * 🔴 개수·보완요청·overall_status 는 documents[] 에서 다시 만든다.
+ * 🔴 금지 표현은 제안서 스캔의 실제 적중으로 다시 센다. 제안서가 없으면 0건 + 미제출 사유 — 통과가 아니다.
+ */
+export function guardSubmissionAudit(out, { proposalScan } = {}) {
+  const result = { ...(out ?? {}) };
+
+  const documents = (Array.isArray(result.documents) ? result.documents : []).map((d) => {
+    const status = DOC_STATUS.has(d?.status) ? d.status : '미확인';
+    return {
+      ...d,
+      name: text(d?.name),
+      copies: text(d?.copies),
+      validity: text(d?.validity),
+      status,
+      rework_note: status === '보완 필요' ? text(d?.rework_note) : '',
+      lead_time: text(d?.lead_time),
+      matched_file: text(d?.matched_file),
+      source_page: Number(d?.source_page) || 0,
+    };
+  });
+
+  const count = (s) => documents.filter((d) => d.status === s).length;
+  const summary = {
+    ...(result.summary ?? {}),
+    required_document_count: documents.length,
+    ready_count: count('준비됨'),
+    rework_count: count('보완 필요'),
+    unverified_count: count('미확인'),
+  };
+
+  const previous = Array.isArray(result.rework_requests) ? result.rework_requests : [];
+  const rework_requests = documents
+    .filter((d) => d.status === '보완 필요')
+    .map((d) => ({
+      document: d.name,
+      reason: d.rework_note,
+      action: text(previous.find((r) => r?.document === d.name)?.action) || '보완 자료 올리기',
+    }));
+
+  const fe = result.forbidden_expressions ?? {};
+  const ruleItems = Array.isArray(fe.items) ? fe.items : [];
+  const hits = Array.isArray(proposalScan?.forbidden_expression_hits) ? proposalScan.forbidden_expression_hits : null;
+  const forbidden_expressions = hits
+    ? {
+      count: hits.length,
+      rule_note: text(fe.rule_note),
+      items: hits.map((h) => ({
+        expression: text(h?.expression),
+        sentence: text(h?.sentence),
+        proposal_page: Number(h?.page) || 0,
+        rule_source_page: Number(ruleItems.find((i) => i?.expression === h?.expression)?.rule_source_page) || 0,
+      })),
+    }
+    : { count: 0, rule_note: '제안서 원고 미제출', items: [] };
+
+  return {
+    ...result,
+    documents,
+    summary,
+    rework_requests,
+    forbidden_expressions,
+    uncovered_requirement_ids: Array.isArray(result.uncovered_requirement_ids) ? result.uncovered_requirement_ids : [],
+    overall_status: summary.rework_count > 0 ? 'NEEDS_REWORK' : summary.unverified_count > 0 ? 'NEEDS_REVIEW' : 'READY',
+  };
 }

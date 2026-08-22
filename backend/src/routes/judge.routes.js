@@ -59,3 +59,33 @@ judgeRouter.post('/judge/eligibility', asyncHandler(ctrl.eligibility));
  *       503: { $ref: '#/components/responses/Error' }
  */
 judgeRouter.post('/judge/plan', asyncHandler(ctrl.plan));
+
+/**
+ * @openapi
+ * /api/judge/submission:
+ *   post:
+ *     tags: [judge]
+ *     summary: 제출 검사 — 공고 규칙 · 제안서 금지 표현 · 서류 상태/보완요청 (S8 · 화면⑨)
+ *     description: |
+ *       규칙(공고) ∥ 스캔(제안서 원고) → 검사(규칙 + 스캔 + 회사 카드 `documents[]`). 제안서가 있으면 3호출, 없으면 2호출.
+ *       🔴 서류 상태는 **준비됨 / 보완 필요 / 미확인** 셋뿐. 모르는 값은 미확인이지 보완 필요가 아니다.
+ *       🔴 금지 표현은 제안서 스캔의 실제 적중으로 센다. 제안서가 없으면 0건 + 「제안서 원고 미제출」— 통과가 아니다.
+ *       🔴 문장을 고쳐 주지 않는다 — 걸린 자리만 짚는다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [announcement, companyCard]
+ *             properties:
+ *               announcement: { type: object, description: 'ANNOUNCEMENT_CORE_V1 (submission_requirements · constraint_* 포함)' }
+ *               companyCard:  { type: object, description: 'COMPANY_CARD_V1 — documents[] 가 회사서류 요약으로 쓰인다' }
+ *               proposalText: { type: string, description: '우리 제안서 본문 텍스트. 없으면 생략 (Document Parse 로 읽은 text)' }
+ *     responses:
+ *       200: { description: '{ rules: SUBMISSION_RULES_V2, proposalScan: PROPOSAL_SCAN_V1 | null, audit: SUBMISSION_AUDIT_V1, meta }' }
+ *       400: { $ref: '#/components/responses/Error' }
+ *       502: { $ref: '#/components/responses/Error' }
+ *       503: { $ref: '#/components/responses/Error' }
+ */
+judgeRouter.post('/judge/submission', asyncHandler(ctrl.submission));
