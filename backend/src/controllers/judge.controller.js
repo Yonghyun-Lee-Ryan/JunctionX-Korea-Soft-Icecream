@@ -1,5 +1,5 @@
 import { AppError } from '../errors/AppError.js';
-import { judgeEligibility } from '../services/solarJudge.service.js';
+import { judgeEligibility, judgePlan } from '../services/solarJudge.service.js';
 
 /** 🔴 판정 입력은 앞 단계 JSON **객체**다. 문자열·배열·빈 값은 400 완성문으로 돌려보낸다 */
 function requireObject(value, name, hint) {
@@ -14,4 +14,10 @@ export async function eligibility(req, res) {
   requireObject(companyCard, 'companyCard', '회사 카드');
   requireObject(announcement, 'announcement', '공고 해부 결과');
   res.json(await judgeEligibility({ companyCard, announcement }));
+}
+
+export async function plan(req, res) {
+  const { announcement } = req.body ?? {};
+  requireObject(announcement, 'announcement', '공고 해부 결과');
+  res.json(await judgePlan({ announcement }));
 }

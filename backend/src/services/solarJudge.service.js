@@ -166,3 +166,114 @@ export function guardEligibility(out, announcement) {
 
   return { ...result, checks };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 판정 2·3·4 — 계획: WPS/CP 분해 → WBS → 임계경로·M/M 원가 (화면⑧)
+//   🔴 순서가 있다. 앞 판정의 **가드를 거친** 결과가 다음 입력이 된다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function judgePlan({ announcement, fetchImpl }) {
+  const started = Date.now();
+  const wpsCp = await callSolar({
+    system: loadPrompt('wpsCp'),
+    user: buildUserMessage([['DOCUMENT_INFO', announcement]]),
+    fetchImpl,
+  });
+  const wbs = guardWbs(await callSolar({
+    system: loadPrompt('wbs'),
+    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', announcement]]),
+    fetchImpl,
+  }), announcement);
+  const criticalPath = guardCriticalPath(await callSolar({
+    system: loadPrompt('criticalPath'),
+    user: buildUserMessage([['WBS_V1', wbs], ['DOCUMENT_INFO', announcement]]),
+    fetchImpl,
+  }), wbs);
+  return { wpsCp, wbs, criticalPath, meta: { ...runMeta(started), calls: 3 } };
+}
+
+const round1 = (x) => Math.round(x * 10) / 10;
+const idOf = (r) => String(r?.requirement_id ?? '').trim();
+
+/**
+ * 🔴 기간은 문서가 말한 것만 — 비어 있으면 정확히 「미 명시」. M/M 은 전부 추천값.
+ * 🔴 검산은 공고 요구사항으로 다시 센다. 공고에 없는 요구사항 ID 는 지어낸 것이라 따로 낸다.
+ */
+export function guardWbs(out, announcement) {
+  const result = { ...(out ?? {}) };
+  const reqs = Array.isArray(announcement?.requirements) ? announcement.requirements : [];
+  const known = new Set(reqs.map(idOf).filter(Boolean));
+  const primaryIds = reqs
+    .filter((r) => !r.scope_role || r.scope_role === 'PRIMARY_CONTRACT')
+    .map(idOf).filter(Boolean);
+
+  const packages = (Array.isArray(result.work_packages) ? result.work_packages : []).map((p) => ({
+    ...p,
+    duration: typeof p?.duration === 'string' && p.duration.trim() ? p.duration.trim() : '미 명시',
+    effort_mm: (Array.isArray(p?.effort_mm) ? p.effort_mm : [])
+      .map((e) => ({ grade: String(e?.grade ?? '').trim(), mm: round1(Number(e?.mm) || 0) }))
+      .filter((e) => e.grade),
+    predecessors: Array.isArray(p?.predecessors) ? p.predecessors : [],
+    requirement_refs: (Array.isArray(p?.requirement_refs) ? p.requirement_refs : []).map((x) => String(x).trim()).filter(Boolean),
+    is_recommendation: true,
+    source_page: Number(p?.source_page) || 0,
+  }));
+
+  const linked = new Set();
+  const unknown = new Set();
+  for (const p of packages) for (const r of p.requirement_refs) (known.has(r) ? linked : unknown).add(r);
+
+  result.work_packages = packages;
+  result.validation = {
+    ...(result.validation ?? {}),
+    primary_requirement_count: primaryIds.length,
+    linked_requirement_count: primaryIds.filter((id) => linked.has(id)).length,
+    unlinked_requirement_ids: primaryIds.filter((id) => !linked.has(id)),
+    packages_without_requirement: packages
+      .filter((p) => !p.requirement_refs.some((r) => known.has(r)))
+      .map((p) => p.wbs_id),
+    unknown_requirement_refs: [...unknown],
+  };
+  return result;
+}
+
+/**
+ * 🔴 임계경로는 «마감 전에 끝나 있어야 하는 준비»다. 리드타임을 지어내지 않는다 — 0 이면 [확인필요].
+ * 🔴 severity 는 화면 tone 어휘(danger/warn/default)로, 리드타임에서 결정한다 — 모델의 낱말을 믿지 않는다.
+ * 🔴 원가는 WBS 의 effort_mm 을 합산한 M/M 이다. 투찰가가 아니고, 단가 없이 금액으로 바꾸지 않는다.
+ */
+export function guardCriticalPath(out, wbs) {
+  const result = { ...(out ?? {}) };
+
+  result.critical_path = (Array.isArray(result.critical_path) ? result.critical_path : [])
+    .map((c) => {
+      const lead = Math.max(0, Math.round(Number(c?.lead_time_days) || 0));
+      return {
+        ...c,
+        lead_time_days: lead,
+        due_label: lead > 0 ? `${lead}일 전` : '[확인필요]',
+        severity: lead >= 7 ? 'danger' : lead >= 3 ? 'warn' : 'default',
+        source_page: Number(c?.source_page) || 0,
+      };
+    })
+    .sort((a, b) => b.lead_time_days - a.lead_time_days);
+
+  const byGrade = new Map();
+  for (const p of wbs?.work_packages ?? []) {
+    for (const e of p.effort_mm ?? []) byGrade.set(e.grade, round1((byGrade.get(e.grade) ?? 0) + (Number(e.mm) || 0)));
+  }
+  const by_grade = [...byGrade].map(([grade, mm]) => ({ grade, mm }));
+  const cost = result.cost_estimate ?? {};
+  result.cost_estimate = {
+    ...cost,
+    total_mm: round1(by_grade.reduce((s, g) => s + g.mm, 0)),
+    by_grade,
+    is_recommendation: true,
+    not_a_bid_price: true,
+    amount_convertible: false,
+    amount_note: typeof cost.amount_note === 'string' && cost.amount_note.trim()
+      ? cost.amount_note : '단가 미입력 — 회사 카드에 등급별 단가가 있을 때만 환산한다',
+    references: Array.isArray(cost.references) ? cost.references : [],
+  };
+  return result;
+}

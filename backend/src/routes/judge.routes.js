@@ -32,3 +32,30 @@ export const judgeRouter = Router();
  *       503: { $ref: '#/components/responses/Error' }
  */
 judgeRouter.post('/judge/eligibility', asyncHandler(ctrl.eligibility));
+
+/**
+ * @openapi
+ * /api/judge/plan:
+ *   post:
+ *     tags: [judge]
+ *     summary: 계획 — WPS/CP 분해 → WBS → 임계경로·M/M 원가 (S6 · 화면⑧)
+ *     description: |
+ *       Solar 3호출을 순서대로 잇는다. 앞 판정의 **가드를 거친** 결과가 다음 입력이 된다.
+ *       🔴 기간은 문서가 말한 것만 — 없으면 「미 명시」. M/M 은 전부 추천값(`is_recommendation`).
+ *       🔴 임계경로의 리드타임을 지어내지 않는다 — 0 이면 「[확인필요]」. 원가는 WBS 합산 M/M 이고 **투찰가가 아니다**.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [announcement]
+ *             properties:
+ *               announcement: { type: object, description: 'ANNOUNCEMENT_CORE_V1 — requirements·scope_items 가 있어야 한다' }
+ *     responses:
+ *       200: { description: '{ wpsCp: WPS_CP_V1, wbs: WBS_V1, criticalPath: CRITICAL_PATH_COST_V1, meta }' }
+ *       400: { $ref: '#/components/responses/Error' }
+ *       502: { $ref: '#/components/responses/Error' }
+ *       503: { $ref: '#/components/responses/Error' }
+ */
+judgeRouter.post('/judge/plan', asyncHandler(ctrl.plan));
