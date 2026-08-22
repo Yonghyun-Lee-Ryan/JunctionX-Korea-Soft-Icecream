@@ -298,7 +298,7 @@ export function guardWbs(out, announcement) {
     duration: typeof p?.duration === 'string' && p.duration.trim() ? p.duration.trim() : '미 명시',
     effort_mm: (Array.isArray(p?.effort_mm) ? p.effort_mm : [])
       .map((e) => ({ grade: String(e?.grade ?? '').trim(), mm: round1(Number(e?.mm) || 0) }))
-      .filter((e) => e.grade),
+      .filter((e) => e.grade && e.mm > 0),   // 0.0 M/M 은 칸을 비운다 — 합산에도 영향 없다
     predecessors: Array.isArray(p?.predecessors) ? p.predecessors : [],
     requirement_refs: (Array.isArray(p?.requirement_refs) ? p.requirement_refs : []).map((x) => String(x).trim()).filter(Boolean),
     is_recommendation: true,
