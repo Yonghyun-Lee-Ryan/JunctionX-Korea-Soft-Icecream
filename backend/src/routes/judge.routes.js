@@ -89,3 +89,32 @@ judgeRouter.post('/judge/plan', asyncHandler(ctrl.plan));
  *       503: { $ref: '#/components/responses/Error' }
  */
 judgeRouter.post('/judge/submission', asyncHandler(ctrl.submission));
+
+/**
+ * @openapi
+ * /api/judge/kit:
+ *   post:
+ *     tags: [judge]
+ *     summary: 판정 결과 → 응찰 준비 탭 봉투 (kitPages 9탭 · 화면⑥~⑨)
+ *     description: |
+ *       Solar 를 부르지 않는 순수 매핑. 🔴 **있는 것만 그린다** — 공고만 주면 compliance·constraints·submitfiles,
+ *       plan 을 주면 wbs·criticalpath·cost, submission 을 주면 checklist·rework·phrases 가 더해진다.
+ *       색(tone)은 서버가 정한다 — 상태 칩·※ 단서(proviso)·임계경로(danger/warn).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [announcement]
+ *             properties:
+ *               announcement: { type: object }
+ *               eligibility:  { type: object, description: '/api/judge/eligibility 응답' }
+ *               plan:         { type: object, description: '/api/judge/plan 응답' }
+ *               submission:   { type: object, description: '/api/judge/submission 응답' }
+ *               caseId:       { type: string, description: '있으면 downloads[] 의 xlsx URL 을 만든다' }
+ *     responses:
+ *       200: { description: '{ verdict?, tabs[], kitPages, kitPrimaryAction, kitSecondaryAction, downloads? }' }
+ *       400: { $ref: '#/components/responses/Error' }
+ */
+judgeRouter.post('/judge/kit', asyncHandler(ctrl.kit));
