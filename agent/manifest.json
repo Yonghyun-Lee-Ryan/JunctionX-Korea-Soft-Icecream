@@ -1,0 +1,134 @@
+{
+  "_주의": "🔴 Studio 계정 정운의 Studio 계정 에 2026-08-22 실제로 만들어진 에이전트 11종. 설정 원본은 이 폴더의 JSON이고 build_agents.py 로 다시 뽑는다.",
+  "_임포트": "Studio → 「에이전트 만들기」 옆 ⌄ → 「에이전트 설정 일괄 가져오기」. 🔴 한 번에 파일 하나만 받는다. agent_name은 따라오지 않으므로 올린 뒤 목록에서 ⋮ → 이름 편집으로 고친다.",
+  "_실행비용": "🔴 이 계정의 무료 실행은 10회다. 이후 실행마다 과금된다. 에이전트 하나당 1회씩만 써도 소진되므로 순서를 정해 쓴다.",
+  "account": "정운의 Studio 계정",
+  "generatedAt": "2026-08-22",
+  "stages": [
+    {
+      "stage": "S3 공고 해부",
+      "input": "제안요청서.hwp · 입찰공고서(재공고).hwp 원본을 그대로. 🔴 .gitignore가 *.hwp를 막으므로 레포에 두지 않는다 — 로컬 경로로 올린다",
+      "note": "다섯 Agent가 같은 원본을 각자 읽고 결과를 합쳐 ANNOUNCEMENT_CORE_V1을 만든다",
+      "agents": [
+        {
+          "studioName": "01-Overview",
+          "agentId": "agt_2z8o3Lvz9oSuJDPz8hwAiK",
+          "file": "announcement_agents/01-overview.json",
+          "screen": "-"
+        },
+        {
+          "studioName": "02-Scope-Context",
+          "agentId": "agt_YkBxZFFfQ5pAqgDY2Tpkte",
+          "file": "announcement_agents/02-scope_context.json",
+          "screen": "-"
+        },
+        {
+          "studioName": "03-Requirements",
+          "agentId": "agt_Vk8s7vQCevFqy37QrchgFC",
+          "file": "announcement_agents/03-requirements.json",
+          "screen": "⑦ 요구사항 체크리스트"
+        },
+        {
+          "studioName": "04-Eligibility-Submission",
+          "agentId": "agt_n7LXMmk3fmANEWKsSAQ9aU",
+          "file": "announcement_agents/04-eligibility_submission.json",
+          "screen": "⑥ 파일제출 · ⑨ 제출준비",
+          "configVer": 3,
+          "note": "config 3 = BID_NOTICE 갈래 + constraint_* 평탄화 (fixture 기준). config 4 초안 = 부수 오귀속 수정본 — 한 번 실행하면 #4로 확정"
+        },
+        {
+          "studioName": "05-Conditions-Evaluation",
+          "agentId": "agt_BL4wbrGbHM5SaUcJHHQ4Qn",
+          "file": "announcement_agents/05-conditions_evaluation.json",
+          "screen": "배점"
+        }
+      ]
+    },
+    {
+      "stage": "S1 회사 등록",
+      "input": "회사 서류 한 건 (사업자등록증 · 중소기업확인서 · 신용평가등급확인서 · 영향평가기관 지정서 · SW사업자 신고확인서 · 직접생산확인증명서 · 실적증명서 · 재무제표 · 기술인력 보유현황)",
+      "note": "🔴 backend/.env.example 의 STUDIO_AGENT_BIZ_REG 등 서류별 8개를 갈래 9개(+미확정 1)로 합친 것이다. 직접생산확인증명서 갈래는 이 Agent에만 있다",
+      "agents": [
+        {
+          "studioName": "Company Card Builder",
+          "agentId": "agt_iixJqRpLkzbUxUsB4kudho",
+          "file": "Company Card Builder.json",
+          "screen": "① 회사 등록 · ② 회사 카드",
+          "outputs": "COMPANY_CARD 조각"
+        }
+      ]
+    },
+    {
+      "stage": "S4 참여 추천",
+      "input": "COMPANY_CARD + ANNOUNCEMENT_CORE_V1 을 이어 붙인 파일 하나",
+      "note": "🔴 Studio Instruct 노드는 소스를 하나만 받는다. 두 문서를 맞대는 판정은 호출하는 쪽이 한 파일로 이어 붙여 올린다",
+      "agents": [
+        {
+          "studioName": "Eligibility Screener",
+          "agentId": "agt_ayktgUpfvDaWXBSeZDLRjZ",
+          "file": "Eligibility Screener.json",
+          "screen": "③④ 공고 탐색",
+          "outputs": "ELIGIBILITY_SCREENING_V1",
+          "replaces": "Company Bid Fit Assessment",
+          "blocked": "Studio Instruct 스텁 — 백엔드 Solar로 대체 (backend/HANDOFF-solar-judgment.md)"
+        }
+      ]
+    },
+    {
+      "stage": "S6 계획",
+      "input": "WPS CP ← ANNOUNCEMENT_CORE_V1 · WBS ← WPS_CP_V1 + ANNOUNCEMENT_CORE_V1 · 임계경로 ← WBS_V1 + ANNOUNCEMENT_CORE_V1",
+      "note": "세 Agent가 순서대로 물린다. WBS가 틀리면 임계경로만 다시 돌리면 된다",
+      "agents": [
+        {
+          "studioName": "WPS CP Decomposer",
+          "agentId": "agt_222C9gAVuQwVxub3H5k8XV",
+          "file": "WPS CP Decomposer.json",
+          "screen": "-",
+          "outputs": "WPS_CP_V1"
+        },
+        {
+          "studioName": "WBS Planner",
+          "agentId": "agt_TZvaDSbHeNXMcrPXkkAojp",
+          "file": "WBS Planner.json",
+          "screen": "⑧ WBS 좌측 표",
+          "outputs": "WBS_V1"
+        },
+        {
+          "studioName": "Critical Path and Cost",
+          "agentId": "agt_KqBuyQ2aQxhMsRUUkdmBxi",
+          "file": "Critical Path and Cost.json",
+          "screen": "⑧ 임계경로 · M/M 예상 원가",
+          "outputs": "CRITICAL_PATH_COST_V1"
+        }
+      ]
+    },
+    {
+      "stage": "S8 제출 준비",
+      "input": "회사서류 + ANNOUNCEMENT_CORE_V1 + 우리 제안서 원고를 함께 올린다 (Classify가 갈래를 가른다)",
+      "note": "🔴 제안서 원고가 없으면 금지 표현 검사는 count 0 + 「제안서 원고 미제출」로 남는다 — 통과로 바꾸지 않는다",
+      "agents": [
+        {
+          "studioName": "Submission Auditor",
+          "agentId": "agt_oQSZzqe2Pe2cA9jGEqqWkZ",
+          "file": "Submission Auditor.json",
+          "screen": "⑨ 제출준비",
+          "outputs": "SUBMISSION_AUDIT_V1",
+          "replaces": "Submission Package Compliance"
+        }
+      ]
+    }
+  ],
+  "superseded": [
+    {
+      "file": "Company Bid Fit Assessment.json",
+      "replacedBy": "Eligibility Screener",
+      "why": "GO/NO-GO 한 단어라 화면③④의 항목별 충족·근거 쪽을 못 그린다"
+    },
+    {
+      "file": "Submission Package Compliance.json",
+      "replacedBy": "Submission Auditor",
+      "why": "부수·유효기간·리드타임·보완요청 문장과 금지 표현 검사가 없다"
+    }
+  ],
+  "fixtures": "backend/fixtures/studio/ — 2026-08-22~23 실물 출력"
+}

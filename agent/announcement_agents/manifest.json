@@ -1,9 +1,11 @@
 {
-  "source": "Announcement Structure and WPS CP Decomposition.json",
+  "source": "agent/build_agents.py (03·04 생성) · 팀 원본 (01·02·05)",
   "agents": [
     {
       "order": 1,
       "name": "Announcement 1 - Project Overview",
+      "studioName": "01-Overview",
+      "agentId": "agt_2z8o3Lvz9oSuJDPz8hwAiK",
       "file": "01-overview.json",
       "fields": [
         "schema_version",
@@ -25,6 +27,8 @@
     {
       "order": 2,
       "name": "Announcement 2 - Scope and Context",
+      "studioName": "02-Scope-Context",
+      "agentId": "agt_YkBxZFFfQ5pAqgDY2Tpkte",
       "file": "02-scope_context.json",
       "fields": [
         "scope_items",
@@ -36,7 +40,11 @@
     {
       "order": 3,
       "name": "Announcement 3 - Requirements",
+      "studioName": "03-Requirements",
+      "agentId": "agt_Vk8s7vQCevFqy37QrchgFC",
       "file": "03-requirements.json",
+      "screen": "⑦ 요구사항 체크리스트",
+      "revised": "note_clause(※ 단서)와 source_page(근거 쪽·정수)를 열로 분리했다",
       "fields": [
         "requirement_count",
         "requirement_summary",
@@ -48,10 +56,15 @@
     {
       "order": 4,
       "name": "Announcement 4 - Eligibility and Submission",
+      "studioName": "04-Eligibility-Submission",
+      "agentId": "agt_n7LXMmk3fmANEWKsSAQ9aU",
       "file": "04-eligibility_submission.json",
+      "screen": "⑥ 파일제출 · ⑨ 제출준비",
+      "revised": "copies(부수)·validity_basis(유효기간)·submission_method를 열로 분리하고 submission_constraints를 더했다",
       "fields": [
         "eligibility_rules",
-        "submission_requirements"
+        "submission_requirements",
+        "submission_constraints"
       ],
       "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_ID",
       "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_CONFIG"
@@ -59,6 +72,8 @@
     {
       "order": 5,
       "name": "Announcement 5 - Conditions and Evaluation",
+      "studioName": "05-Conditions-Evaluation",
+      "agentId": "agt_BL4wbrGbHM5SaUcJHHQ4Qn",
       "file": "05-conditions_evaluation.json",
       "fields": [
         "execution_conditions",
@@ -67,5 +82,6 @@
       "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_ID",
       "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_CONFIG"
     }
-  ]
+  ],
+  "_주의": "🔴 공고 해부 5종의 목록. 전체 11종은 ../manifest.json 을 본다."
 }

@@ -14,9 +14,12 @@
       "coordinates": false,
       "mergeMultipageTables": true,
       "outputFormats": [
-        "html"
+        "html",
+        "text"
       ],
-      "base64Encoding": []
+      "base64Encoding": [
+        "figure"
+      ]
     },
     "documentClassifyConfiguration": {
       "schema": {
@@ -87,19 +90,23 @@
                     "properties": {
                       "requirement_id": {
                         "type": "string",
-                        "description": "인쇄된 고유번호"
+                        "description": "인쇄된 고유번호. 예: SFR-001, PMR-003"
                       },
                       "requirement_category": {
                         "type": "string",
-                        "description": "요구사항 분류"
+                        "description": "요구사항 분류. 화면의 「분류」열에 그대로 쓰인다"
                       },
                       "requirement_name": {
                         "type": "string",
-                        "description": "요구사항 명칭"
+                        "description": "요구사항 명칭. 한 줄로 끝나는 짧은 이름"
                       },
                       "detailed_content": {
                         "type": "string",
-                        "description": "세부내용 전체. 하위 불릿, 수치, 기한, ※, 단, 다만, 예외와 금지를 생략하지 않는다."
+                        "description": "세부내용 전체. 하위 불릿, 수치, 기한, 단, 다만, 예외와 금지를 생략하지 않는다."
+                      },
+                      "note_clause": {
+                        "type": "string",
+                        "description": "🔴 이 요구사항에 붙은 ※ 단서만 원문 그대로 옮긴다. ※ 기호로 시작하는 문장, 「단」·「다만」으로 시작하는 제한, 적용 범위를 좁히거나 뒤집는 조건이 대상이다. 예: 「※신규 도입장비에 한함」. 여러 개면 줄바꿈으로 잇는다. 없으면 빈 문자열. 🔴 요약하거나 바꿔 쓰지 않는다 — 이 문장은 뜻을 뒤집는 자리라 원문이 그대로 필요하다."
                       },
                       "scope_role": {
                         "type": "string",
@@ -111,7 +118,11 @@
                       },
                       "source_reference": {
                         "type": "string",
-                        "description": "쪽 또는 절 제목"
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 요구사항이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                       }
                     }
                   },
@@ -163,6 +174,11 @@
                 "groupTableKey": "requirements"
               },
               {
+                "name": "note_clause",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
                 "name": "scope_role",
                 "source": "group_table",
                 "groupTableKey": "requirements"
@@ -176,13 +192,18 @@
                 "name": "source_reference",
                 "source": "group_table",
                 "groupTableKey": "requirements"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "requirements"
               }
             ]
           },
           "mode": "standard",
           "modelName": "",
           "nodeMode": "extract",
-          "userSystemPrompt": "입력은 정보시스템을 직접 개발·구축·도입하는 사업의 제안요청서 또는 과업문서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[현재 계약]\n표지와 사업일반의 현재 입찰사업만 PRIMARY_CONTRACT로 둔다. 대상·관련·선행사업은 TARGET_PROJECT 또는 RELATED_PROJECT로 분리한다. document_type은 SYSTEM_BUILD, service_component는 주로 BUILD로 기록한다.\n\n[누락 금지]\n사업명·기관·기간·예산·입찰/계약방식, 목표, 범위, 요구사항 총괄표와 상세 요구사항, 인력·산출물·품질·보안·개인정보·시험·전환·교육·검수·지재권·하도급·비용 조건, 참가자격, 평가, 제출서류, 제안서 지정 목차·형식·금지표현·일정까지 문서 끝까지 확인한다. 상세 요구사항의 하위 불릿, 숫자, 기한, 각주, ※, 단, 다만, 승인·협의, 예외와 금지를 detailed_content에서 줄이지 않는다.\n\n[시각자료]\nHTML의 figurecaption과 도식 설명을 읽는다. 사업추진·운영체계도는 execution_context의 GOVERNANCE, 추진일정은 SCHEDULE, 목표시스템개념도는 TARGET_SYSTEM, 프로세스·데이터 흐름은 PROCESS·DATA_FLOW로 저장한다. 구성요소, 주체, 단계, 화살표 방향과 관계를 각각 행으로 구조화한다. 로고·장식·서명·빈 양식 이미지는 제외한다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n같은 사실을 여러 배열에 반복하지 않는다. 자격은 eligibility_rules, 평가기준은 evaluation_items, 입찰 제출과 제안서 작성 규칙은 submission_requirements, 계약 수행 조건은 execution_conditions에 둔다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식, 후속 제안 문구는 제외한다. source_reference는 좌표 대신 쪽 또는 절 제목만 기록한다.\n\n[이 Agent 전용 출력 범위]\n요구사항 총괄표의 건수와 분류를 확인하고 현재 계약의 상세 요구사항을 고유번호별로 빠짐없이 추출한다.\n허용된 최상위 필드: requirement_count, requirement_summary, requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+          "userSystemPrompt": "입력은 정보시스템을 직접 개발·구축·도입하는 사업의 제안요청서 또는 과업문서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[현재 계약]\n표지와 사업일반의 현재 입찰사업만 PRIMARY_CONTRACT로 둔다. 대상·관련·선행사업은 TARGET_PROJECT 또는 RELATED_PROJECT로 분리한다. service_component는 주로 BUILD다.\n\n[누락 금지]\n요구사항 총괄표와 상세 요구사항을 문서 끝까지 확인한다. 기능(SFR)·성능(PFR)·데이터(DAR)·인터페이스(INR)·보안(SER)·품질(QUR)·제약(COR)·사업관리(PMR)·시스템장비(ECR)·테스트(TER) 등 접두어를 가리지 않고 현재 계약의 요구사항이면 모두 넣는다. 상세 요구사항의 하위 불릿, 숫자, 기한, 각주, 승인·협의, 예외와 금지를 detailed_content에서 줄이지 않는다.\n\n[※ 단서 분리]\n🔴 ※ 로 시작하는 문장과 「단」·「다만」 제한은 detailed_content에 남기면서 note_clause에도 원문 그대로 옮긴다. 이 문장들은 요구사항의 적용 범위를 좁히거나 뜻을 뒤집기 때문에 화면에서 따로 보여야 한다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n자격은 이 Agent가 다루지 않는다. 평가기준·제출서류·계약조건도 넣지 않는다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식은 제외한다.\n\n[이 Agent 전용 출력 범위]\n요구사항 총괄표의 건수와 분류를 확인하고 현재 계약의 상세 요구사항을 고유번호별로 빠짐없이 추출한다.\n허용된 최상위 필드: requirement_count, requirement_summary, requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다.\n\n[검산]\nrequirement_count와 requirements 배열 길이를 대조한다. 총괄표가 선언한 분류별 건수와 실제 추출된 건수가 다르면 값을 맞추려고 행을 지어내거나 지우지 않는다 — 있는 그대로 둔다."
         },
         {
           "type": "json_schema",
@@ -223,19 +244,23 @@
                     "properties": {
                       "requirement_id": {
                         "type": "string",
-                        "description": "인쇄된 고유번호"
+                        "description": "인쇄된 고유번호. 예: SFR-001, PMR-003"
                       },
                       "requirement_category": {
                         "type": "string",
-                        "description": "요구사항 분류"
+                        "description": "요구사항 분류. 화면의 「분류」열에 그대로 쓰인다"
                       },
                       "requirement_name": {
                         "type": "string",
-                        "description": "요구사항 명칭"
+                        "description": "요구사항 명칭. 한 줄로 끝나는 짧은 이름"
                       },
                       "detailed_content": {
                         "type": "string",
-                        "description": "세부내용 전체. 하위 불릿, 수치, 기한, ※, 단, 다만, 예외와 금지를 생략하지 않는다."
+                        "description": "세부내용 전체. 하위 불릿, 수치, 기한, 단, 다만, 예외와 금지를 생략하지 않는다."
+                      },
+                      "note_clause": {
+                        "type": "string",
+                        "description": "🔴 이 요구사항에 붙은 ※ 단서만 원문 그대로 옮긴다. ※ 기호로 시작하는 문장, 「단」·「다만」으로 시작하는 제한, 적용 범위를 좁히거나 뒤집는 조건이 대상이다. 예: 「※신규 도입장비에 한함」. 여러 개면 줄바꿈으로 잇는다. 없으면 빈 문자열. 🔴 요약하거나 바꿔 쓰지 않는다 — 이 문장은 뜻을 뒤집는 자리라 원문이 그대로 필요하다."
                       },
                       "scope_role": {
                         "type": "string",
@@ -247,7 +272,11 @@
                       },
                       "source_reference": {
                         "type": "string",
-                        "description": "쪽 또는 절 제목"
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 요구사항이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                       }
                     }
                   },
@@ -299,6 +328,11 @@
                 "groupTableKey": "requirements"
               },
               {
+                "name": "note_clause",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
                 "name": "scope_role",
                 "source": "group_table",
                 "groupTableKey": "requirements"
@@ -312,13 +346,18 @@
                 "name": "source_reference",
                 "source": "group_table",
                 "groupTableKey": "requirements"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "requirements"
               }
             ]
           },
           "mode": "standard",
           "modelName": "",
           "nodeMode": "extract",
-          "userSystemPrompt": "입력은 PMO·전자정부사업관리·개인정보 영향평가 용역의 과업설명서 또는 제안요청서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[계약 경계]\n표지와 사업일반의 PMO·PIA 용역이 PRIMARY_CONTRACT이며 document_type은 PMO_PIA다. 관리·평가 대상 정보시스템 구축사업은 TARGET_PROJECT다. 대상사업의 앱·웹·서버·스토리지·네트워크·플랫폼·DB·보안솔루션 개발·도입을 현재 수행사의 업무로 바꾸지 않는다. 현재 수행사가 검토·조정·점검·감독하도록 명시된 활동만 PRIMARY_CONTRACT로 둔다. service_component는 PMO, PIA, COMMON, OTHER로 구분한다.\n\n[누락 금지]\n현재 용역의 사업명·기관·기간·예산·입찰/계약방식, 목표, 대상사업 경계, PMO·PIA 범위와 방법, 요구사항 총괄표와 현재 용역 상세 요구사항, 인력·상주·산출물·보고·품질·보안·개인정보·검수·비용 조건, 참가자격, 평가, 제출서류, 제안서 작성 규칙과 일정을 문서 끝까지 확인한다. 현재 용역의 CSR·PAR·SER·QUR·COR·PMR·PSR 등만 requirements에 넣고 대상 구축사업의 ECR·SFR·PER·SIR·UIR·DAR·TER는 넣지 않는다. 상세내용의 불릿, 숫자, 기한, 각주, ※, 단, 다만, 승인·협의, 예외와 금지를 줄이지 않는다.\n\n[시각자료]\nHTML의 figurecaption과 도식 설명을 읽는다. 추진·운영체계는 GOVERNANCE, 용역·대상사업 일정은 SCHEDULE, 대상시스템 개념도는 TARGET_SYSTEM, 영향평가 절차는 PROCESS 또는 DATA_FLOW로 execution_context에 저장한다. 구성요소, 주체, 단계, 화살표 방향·관계와 scope_role을 각각 구조화한다. 로고·장식·서명·빈 양식 이미지는 제외한다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n같은 사실을 반복하지 않는다. 자격은 eligibility_rules, 평가는 evaluation_items, 입찰 제출과 제안서 작성 규칙은 submission_requirements, 계약 수행 조건은 execution_conditions에 둔다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식, 후속 제안 문구는 제외한다. source_reference는 좌표 대신 쪽 또는 절 제목만 기록한다.\n\n[이 Agent 전용 출력 범위]\n요구사항 총괄표의 건수와 분류를 확인하고 현재 계약의 상세 요구사항을 고유번호별로 빠짐없이 추출한다.\n허용된 최상위 필드: requirement_count, requirement_summary, requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+          "userSystemPrompt": "입력은 PMO·전자정부사업관리·개인정보 영향평가 용역의 과업설명서 또는 제안요청서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[계약 경계]\n표지와 사업일반의 PMO·PIA 용역이 PRIMARY_CONTRACT다. 관리·평가 대상 정보시스템 구축사업은 TARGET_PROJECT다. 대상사업의 앱·웹·서버·플랫폼·DB·보안솔루션 개발·도입을 현재 수행사의 업무로 바꾸지 않는다. 현재 수행사가 검토·조정·점검·감독하도록 명시된 활동만 PRIMARY_CONTRACT로 둔다.\n\n[누락 금지]\n현재 용역의 CSR·PAR·SER·QUR·COR·PMR·PSR 등만 requirements에 넣고 대상 구축사업의 ECR·SFR·PER·SIR·UIR·DAR·TER는 넣지 않는다. 상세내용의 불릿, 숫자, 기한, 각주, 승인·협의, 예외와 금지를 줄이지 않는다.\n\n[※ 단서 분리]\n🔴 ※ 로 시작하는 문장과 「단」·「다만」 제한은 detailed_content에 남기면서 note_clause에도 원문 그대로 옮긴다. PMO 문서의 ※ 는 「대상사업 일정에 종속되는 구간은 제외」처럼 책임 경계를 가르는 자리라 특히 중요하다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n자격·평가·제출서류·계약조건은 이 Agent가 다루지 않는다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식은 제외한다.\n\n[이 Agent 전용 출력 범위]\n요구사항 총괄표의 건수와 분류를 확인하고 현재 계약의 상세 요구사항을 고유번호별로 빠짐없이 추출한다.\n허용된 최상위 필드: requirement_count, requirement_summary, requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다.\n\n[검산]\nrequirement_count와 requirements 배열 길이를 대조한다. 총괄표가 선언한 분류별 건수와 실제 추출된 건수가 다르면 값을 맞추려고 행을 지어내거나 지우지 않는다 — 있는 그대로 둔다."
         }
       ],
       "categorySchemaMapping": {
@@ -326,7 +365,6 @@
         "PMO_PIA_SERVICE_SPEC": "extract_pmo_requirements"
       },
       "location": false,
-      "confidenceThreshold": 0.8,
       "manyRows": true,
       "manyRowsThreshold": 20,
       "manyRowsMaxRowsPerBatch": 40,
@@ -340,14 +378,14 @@
         },
         "target": {
           "nodeType": "classify",
-          "name": "분류-1"
+          "name": "Classify-1"
         }
       },
       {
         "id": "e1",
         "source": {
           "nodeType": "classify",
-          "name": "분류-1"
+          "name": "Classify-1"
         },
         "target": {
           "nodeType": "extract",
@@ -361,7 +399,7 @@
         "id": "e2",
         "source": {
           "nodeType": "classify",
-          "name": "분류-1"
+          "name": "Classify-1"
         },
         "target": {
           "nodeType": "extract",

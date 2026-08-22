@@ -14,9 +14,12 @@
       "coordinates": false,
       "mergeMultipageTables": true,
       "outputFormats": [
-        "html"
+        "html",
+        "text"
       ],
-      "base64Encoding": []
+      "base64Encoding": [
+        "figure"
+      ]
     },
     "documentClassifyConfiguration": {
       "schema": {
@@ -35,6 +38,10 @@
                 "description": "현재 입찰 대상이 다른 구축사업을 관리·감독하는 PMO, 전자정부사업관리 또는 개인정보 영향평가 용역인 과업설명서·제안요청서"
               },
               {
+                "const": "BID_NOTICE",
+                "description": "입찰공고서·재공고·용역 입찰공고. 관리번호, 수요기관, 입찰명, 추정가격, 입찰방법, 낙찰자선정방법, 전자입찰서 접수기간, 입찰참가자격, 공동수급 허용 여부가 목록으로 적혀 있고 상세 요구사항 표는 없는 문서"
+              },
+              {
                 "const": "OTHER_REVIEW_REQUIRED",
                 "description": "두 유형에 명확히 해당하지 않거나 표지·사업범위·상세 요구사항이 불충분한 문서"
               }
@@ -43,7 +50,7 @@
         }
       },
       "modelName": "",
-      "userSystemPrompt": "표지의 현재 사업명, 현재 계약의 주요 범위, 요구사항 접두어, 입찰참가자격 순으로 판단한다. PMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
+      "userSystemPrompt": "이 Agent는 참가자격과 제출 규칙을 뽑는다. 입력 문서가 넷 중 무엇인지 가른다.\n🔴 표제를 먼저 본다. 「입찰공고서」·「용역 입찰공고」·「재공고」로 시작하고 관리번호·추정가격·접수기간이 목록으로 적혀 있으면 BID_NOTICE다. 쪽수가 10쪽 안팎으로 짧고 상세 요구사항 표가 없는 것도 신호다.\n「제안요청서」·「과업내용서」·「과업설명서」이고 상세 요구사항 표가 있으면 BUILD_IMPLEMENTATION_RFP 또는 PMO_PIA_SERVICE_SPEC이다. 현재 계약이 다른 구축사업을 관리·감독하는 PMO·전자정부사업관리·개인정보 영향평가면 PMO_PIA_SERVICE_SPEC, 직접 개발·구축·도입하면 BUILD_IMPLEMENTATION_RFP다.\nPMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
     },
     "informationExtractConfiguration": {
       "modelName": "",
@@ -62,39 +69,47 @@
                     "properties": {
                       "rule_id": {
                         "type": "string",
-                        "description": "문서 ID가 없으면 ELIG-001부터 문서 순서대로 부여"
+                        "description": "문서에 번호가 있으면 그대로, 없으면 문서 순서대로 ELIG_001 형식"
                       },
                       "eligibility_type": {
                         "type": "string",
-                        "description": "REGISTRATION, BUSINESS_TYPE, SIZE, REGION, TRACK_RECORD, FINANCIAL, PERSONNEL, CERTIFICATION, CONSORTIUM, PRESENTATION, SANCTION, OTHER 중 하나"
+                        "description": "REGISTRATION(등록·신고·지정), CERTIFICATE(확인서·증명서), PERFORMANCE(실적), FINANCIAL(재무·신용), RESTRICTION(참여 제한·배제), STAFF(인력), JOINT(공동수급·하도급), OTHER 중 하나"
                       },
                       "condition": {
                         "type": "string",
-                        "description": "자격 조건 원문 의미를 보존한다."
+                        "description": "자격 조건 원문. 수치·업종코드·품명번호·기한을 줄이지 않는다"
                       },
                       "required_evidence": {
                         "type": "string",
-                        "description": "요구되는 증빙"
+                        "description": "이 조건을 증명하는 서류 이름. 문서에 적힌 대로"
                       },
                       "gate_level": {
                         "type": "string",
-                        "description": "HARD_GATE, RESTRICTION, PREFERENCE, INFORMATION 중 하나"
+                        "description": "HARD_GATE(못 갖추면 입찰 무효) 또는 PREFERENCE(가점·우대)"
                       },
                       "mandatory": {
                         "type": "string",
-                        "description": "YES, NO, UNKNOWN 중 하나"
+                        "description": "YES 또는 NO. 문서가 정하지 않았으면 빈 문자열"
                       },
                       "joint_fulfillment_allowed": {
                         "type": "string",
-                        "description": "YES, NO, UNKNOWN 중 하나"
+                        "description": "공동수급체 구성원 중 하나만 갖춰도 되면 YES, 각자 모두 갖춰야 하면 NO, 문서가 말하지 않으면 빈 문자열"
+                      },
+                      "valid_until_rule": {
+                        "type": "string",
+                        "description": "유효기간 기준 원문. 예: 「제안서 마감일 전일까지 발행되고 유효기간 내」. 없으면 빈 문자열"
                       },
                       "source_reference": {
                         "type": "string",
-                        "description": "쪽 또는 절 제목"
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 조항이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                       }
                     }
                   },
-                  "description": "입찰 참가자격과 제한·우대 조건"
+                  "description": "입찰참가자격 조항을 한 줄에 하나씩 모두 추출한다. 🔴 이 배열이 참여 판정의 유일한 근거다."
                 },
                 "submission_requirements": {
                   "type": "array",
@@ -103,59 +118,107 @@
                     "properties": {
                       "item_type": {
                         "type": "string",
-                        "description": "EVENT, DOCUMENT, ELIGIBILITY_EVIDENCE, PROPOSAL_SECTION, FORMAT, PROHIBITION 중 하나"
+                        "description": "DOCUMENT(증빙서류), FORM(지정서식), PROPOSAL_SECTION(제안서 항목), OTHER"
                       },
                       "item_id": {
                         "type": "string",
-                        "description": "문서 ID가 없으면 SUB-001부터 문서 순서대로 부여"
+                        "description": "서식 번호나 항목 번호. 없으면 빈 문자열"
                       },
                       "name": {
                         "type": "string",
-                        "description": "제출물·행사·제안서 절·규칙명"
+                        "description": "서류 이름. 화면의 「서류」열에 그대로 쓰인다"
                       },
                       "requirement": {
                         "type": "string",
-                        "description": "요구 내용. 유효기간과 조건을 포함한다."
+                        "description": "무엇을 어떻게 갖춰야 하는지 원문"
                       },
-                      "deadline_or_validity": {
+                      "copies": {
                         "type": "string",
-                        "description": "마감일시 또는 발급·유효기간 기준"
+                        "description": "🔴 제출 부수만 숫자로. 예: 「5」. 문서가 부수를 정하지 않았으면 빈 문자열. 「1부」면 「1」로 적는다. 부수가 아닌 쪽수·매수를 여기 넣지 않는다"
+                      },
+                      "validity_basis": {
+                        "type": "string",
+                        "description": "🔴 유효기간 기준만. 예: 「발급 30일 내」, 「2026-11-30」, 「제안서 마감일 전일까지 발급」. 기간 제한이 없으면 빈 문자열"
                       },
                       "submission_stage": {
                         "type": "string",
-                        "description": "BID, CONTRACT, KICKOFF, DURING_PROJECT, COMPLETION 중 하나"
+                        "description": "BID(입찰 제출), CONTRACT, KICKOFF, DURING_PROJECT, COMPLETION 중 하나"
+                      },
+                      "submission_method": {
+                        "type": "string",
+                        "description": "🔴 제출 수단만. 전자입찰, 나라장터, 인편, 방문, 우편, 이메일 중 문서가 말한 것. 없으면 빈 문자열"
                       },
                       "method_or_format": {
                         "type": "string",
-                        "description": "제출 채널·장소·파일 형식·매체"
+                        "description": "파일 형식·용지·규격 등 형식 요건. 없으면 빈 문자열"
                       },
                       "quantity_or_limit": {
                         "type": "string",
-                        "description": "부수·쪽수·파일 크기 등 수량 제한"
+                        "description": "분량 상한·용량 상한 등 수량 제한. 없으면 빈 문자열"
                       },
                       "condition_or_note": {
                         "type": "string",
-                        "description": "예외, 순서, 익명처리, 비용, 기타 주석"
+                        "description": "단서·예외·주의. ※ 문장이 있으면 원문 그대로"
                       },
                       "template_id": {
                         "type": "string",
-                        "description": "지정 서식 번호. 없으면 빈 문자열"
+                        "description": "지정 서식 번호. 예: 「붙임2 가」. 없으면 빈 문자열"
                       },
                       "signature_or_seal": {
                         "type": "string",
-                        "description": "서명·날인 요구"
+                        "description": "서명·날인·직인 요구. 문서가 말하지 않으면 빈 문자열"
                       },
                       "mandatory": {
                         "type": "string",
-                        "description": "YES, NO, UNKNOWN 중 하나"
+                        "description": "YES 또는 NO. 문서가 정하지 않았으면 빈 문자열"
                       },
                       "source_reference": {
                         "type": "string",
-                        "description": "쪽 또는 절 제목"
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 제출 항목이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                       }
                     }
                   },
-                  "description": "입찰 제출·제안서 작성·행사·형식 규칙을 한 표로 추출한다."
+                  "description": "제출해야 하는 서류·서식·제안서 항목을 한 줄에 하나씩 추출한다."
+                },
+                "constraint_method": {
+                  "type": "string",
+                  "description": "🔴 제출 전체에 걸리는 방식. 예: 「전자입찰(나라장터)」, 「인편 제출」. 없으면 빈 문자열"
+                },
+                "constraint_deadline": {
+                  "type": "string",
+                  "description": "🔴 입찰서·제안서 접수 마감 일시 원문. 예: 「2026. 08. 24(월) 10:30」. 요일과 분까지 남긴다"
+                },
+                "constraint_opens_at": {
+                  "type": "string",
+                  "description": "접수 시작 일시 원문. 없으면 빈 문자열"
+                },
+                "constraint_proposal_copies": {
+                  "type": "string",
+                  "description": "🔴 «제안서·입찰서류»를 몇 부 제출하라는 문장에서만 숫자를 옮긴다. 최종보고서·착수계획서·산출물·매뉴얼의 부수(계약 후 납품물)는 제안서 부수가 아니다 — 그 숫자를 여기 넣지 않는다. 전자입찰이면 보통 부수가 없으므로 빈 문자열. 없으면 빈 문자열"
+                },
+                "constraint_page_limit": {
+                  "type": "string",
+                  "description": "제안서 본문 분량 상한. 예: 「100쪽 이내 권고」. 없으면 빈 문자열"
+                },
+                "constraint_summary_page_limit": {
+                  "type": "string",
+                  "description": "제안 요약본 분량 상한. 없으면 빈 문자열"
+                },
+                "constraint_price_sealed": {
+                  "type": "string",
+                  "description": "가격제안서를 별도 밀봉·별도 제출하라는 요구가 있으면 그 원문. 없으면 빈 문자열"
+                },
+                "constraint_place": {
+                  "type": "string",
+                  "description": "제출 장소 또는 접수처. 없으면 빈 문자열"
+                },
+                "constraint_source_page": {
+                  "type": "integer",
+                  "description": "이 제약이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                 }
               }
             }
@@ -163,6 +226,42 @@
           "schemaLayout": {
             "version": 1,
             "columns": [
+              {
+                "name": "constraint_method",
+                "source": "root"
+              },
+              {
+                "name": "constraint_deadline",
+                "source": "root"
+              },
+              {
+                "name": "constraint_opens_at",
+                "source": "root"
+              },
+              {
+                "name": "constraint_proposal_copies",
+                "source": "root"
+              },
+              {
+                "name": "constraint_page_limit",
+                "source": "root"
+              },
+              {
+                "name": "constraint_summary_page_limit",
+                "source": "root"
+              },
+              {
+                "name": "constraint_price_sealed",
+                "source": "root"
+              },
+              {
+                "name": "constraint_place",
+                "source": "root"
+              },
+              {
+                "name": "constraint_source_page",
+                "source": "root"
+              },
               {
                 "name": "rule_id",
                 "source": "group_table",
@@ -199,7 +298,17 @@
                 "groupTableKey": "eligibility_rules"
               },
               {
+                "name": "valid_until_rule",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
                 "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "source_page",
                 "source": "group_table",
                 "groupTableKey": "eligibility_rules"
               },
@@ -224,12 +333,22 @@
                 "groupTableKey": "submission_requirements"
               },
               {
-                "name": "deadline_or_validity",
+                "name": "copies",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "validity_basis",
                 "source": "group_table",
                 "groupTableKey": "submission_requirements"
               },
               {
                 "name": "submission_stage",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "submission_method",
                 "source": "group_table",
                 "groupTableKey": "submission_requirements"
               },
@@ -267,13 +386,18 @@
                 "name": "source_reference",
                 "source": "group_table",
                 "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
               }
             ]
           },
           "mode": "standard",
           "modelName": "",
           "nodeMode": "extract",
-          "userSystemPrompt": "입력은 정보시스템을 직접 개발·구축·도입하는 사업의 제안요청서 또는 과업문서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[현재 계약]\n표지와 사업일반의 현재 입찰사업만 PRIMARY_CONTRACT로 둔다. 대상·관련·선행사업은 TARGET_PROJECT 또는 RELATED_PROJECT로 분리한다. document_type은 SYSTEM_BUILD, service_component는 주로 BUILD로 기록한다.\n\n[누락 금지]\n사업명·기관·기간·예산·입찰/계약방식, 목표, 범위, 요구사항 총괄표와 상세 요구사항, 인력·산출물·품질·보안·개인정보·시험·전환·교육·검수·지재권·하도급·비용 조건, 참가자격, 평가, 제출서류, 제안서 지정 목차·형식·금지표현·일정까지 문서 끝까지 확인한다. 상세 요구사항의 하위 불릿, 숫자, 기한, 각주, ※, 단, 다만, 승인·협의, 예외와 금지를 detailed_content에서 줄이지 않는다.\n\n[시각자료]\nHTML의 figurecaption과 도식 설명을 읽는다. 사업추진·운영체계도는 execution_context의 GOVERNANCE, 추진일정은 SCHEDULE, 목표시스템개념도는 TARGET_SYSTEM, 프로세스·데이터 흐름은 PROCESS·DATA_FLOW로 저장한다. 구성요소, 주체, 단계, 화살표 방향과 관계를 각각 행으로 구조화한다. 로고·장식·서명·빈 양식 이미지는 제외한다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n같은 사실을 여러 배열에 반복하지 않는다. 자격은 eligibility_rules, 평가기준은 evaluation_items, 입찰 제출과 제안서 작성 규칙은 submission_requirements, 계약 수행 조건은 execution_conditions에 둔다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식, 후속 제안 문구는 제외한다. source_reference는 좌표 대신 쪽 또는 절 제목만 기록한다.\n\n[이 Agent 전용 출력 범위]\n입찰 참가자격·필수 증빙과 입찰/계약/착수/수행/완료 단계별 제출서류 및 제안서 작성 규칙을 추출한다.\n허용된 최상위 필드: eligibility_rules, submission_requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+          "userSystemPrompt": "입력은 정보시스템을 직접 개발·구축·도입하는 사업의 제안요청서, 과업문서 또는 입찰공고서다. 문서에 명시된 사실만 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[문서 종류]\n입찰공고서와 제안요청서가 같은 사업을 다르게 적을 수 있다. 지금 읽고 있는 문서의 값만 적고 다른 문서의 값을 상상해 채우지 않는다. 🔴 공고서에만 있는 마감일시·전자입찰 여부는 공고서를 읽을 때만 나온다 — 제안요청서에서 못 찾으면 빈 문자열이다.\n\n[자격 조항 — 가장 중요한 배열]\n🔴 eligibility_rules가 이 사업에 낼 수 있는지를 가르는 유일한 근거다. 참가자격 절을 한 줄씩 훑어 조건을 쪼갠다. 한 불릿에 조건이 둘 이상이면 행을 나눈다. 업종코드·세부품명번호·법령 조문 번호·금액 기준·기간 기준을 숫자 그대로 옮긴다.\n제한(RESTRICTION)도 자격이다 — 「대기업·중견기업 참여 불가」, 「상호출자제한기업집단 제외」, 「부정당업자 제한을 받지 않은 자」를 빠뜨리지 않는다.\n공동수급 허용 여부, 구성원 수 상한, 최소 지분율, 하도급 허용 여부는 JOINT 유형으로 넣는다.\n\n[부수 — 2026-08-22 실측에서 잡힌 오귀속]\n🔴 제안요청서에서 「최종보고서 5부」(계약 후 산출물, submission_stage=COMPLETION)의 5를 constraint_proposal_copies에 넣은 사례가 있었다. 부수는 «그 문장이 무엇을 제출하라는 것인지» 주어를 확인하고 옮긴다. 제안서·제안요약서·입찰서류가 주어일 때만이다. 산출물 부수는 submission_requirements의 해당 행(copies)에만 남기고 constraint_*로 올리지 않는다.\n\n[부수·유효기간·제출방법을 가른다]\n🔴 「제안서 5부를 인편으로 마감일까지」 같은 한 문장을 그대로 두지 말고 copies=5, submission_method=인편, 마감은 constraint_deadline으로 나눈다. 화면이 이 셋을 다른 칸에 그린다.\n🔴 부수를 모르면 빈 문자열이다. 「1부」라고 지어내지 않는다.\n\n[법령 해석 금지]\n조문 이름과 번호만 그대로 옮긴다. 그 조문이 무슨 뜻인지 풀어 쓰거나, 문서에 없는 자격 요건을 일반적인 조달 관행으로 보충하지 않는다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n상세 요구사항·평가배점·계약 수행조건은 이 Agent가 다루지 않는다.\n\n[이 Agent 전용 출력 범위]\n입찰참가자격과 제출물 규칙만 추출한다.\n허용된 최상위 필드: eligibility_rules, submission_requirements, constraint_method, constraint_deadline, constraint_opens_at, constraint_proposal_copies, constraint_page_limit, constraint_summary_page_limit, constraint_price_sealed, constraint_place, constraint_source_page\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
         },
         {
           "type": "json_schema",
@@ -289,39 +413,47 @@
                     "properties": {
                       "rule_id": {
                         "type": "string",
-                        "description": "문서 ID가 없으면 ELIG-001부터 문서 순서대로 부여"
+                        "description": "문서에 번호가 있으면 그대로, 없으면 문서 순서대로 ELIG_001 형식"
                       },
                       "eligibility_type": {
                         "type": "string",
-                        "description": "REGISTRATION, BUSINESS_TYPE, SIZE, REGION, TRACK_RECORD, FINANCIAL, PERSONNEL, CERTIFICATION, CONSORTIUM, PRESENTATION, SANCTION, OTHER 중 하나"
+                        "description": "REGISTRATION(등록·신고·지정), CERTIFICATE(확인서·증명서), PERFORMANCE(실적), FINANCIAL(재무·신용), RESTRICTION(참여 제한·배제), STAFF(인력), JOINT(공동수급·하도급), OTHER 중 하나"
                       },
                       "condition": {
                         "type": "string",
-                        "description": "자격 조건 원문 의미를 보존한다."
+                        "description": "자격 조건 원문. 수치·업종코드·품명번호·기한을 줄이지 않는다"
                       },
                       "required_evidence": {
                         "type": "string",
-                        "description": "요구되는 증빙"
+                        "description": "이 조건을 증명하는 서류 이름. 문서에 적힌 대로"
                       },
                       "gate_level": {
                         "type": "string",
-                        "description": "HARD_GATE, RESTRICTION, PREFERENCE, INFORMATION 중 하나"
+                        "description": "HARD_GATE(못 갖추면 입찰 무효) 또는 PREFERENCE(가점·우대)"
                       },
                       "mandatory": {
                         "type": "string",
-                        "description": "YES, NO, UNKNOWN 중 하나"
+                        "description": "YES 또는 NO. 문서가 정하지 않았으면 빈 문자열"
                       },
                       "joint_fulfillment_allowed": {
                         "type": "string",
-                        "description": "YES, NO, UNKNOWN 중 하나"
+                        "description": "공동수급체 구성원 중 하나만 갖춰도 되면 YES, 각자 모두 갖춰야 하면 NO, 문서가 말하지 않으면 빈 문자열"
+                      },
+                      "valid_until_rule": {
+                        "type": "string",
+                        "description": "유효기간 기준 원문. 예: 「제안서 마감일 전일까지 발행되고 유효기간 내」. 없으면 빈 문자열"
                       },
                       "source_reference": {
                         "type": "string",
-                        "description": "쪽 또는 절 제목"
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 조항이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                       }
                     }
                   },
-                  "description": "입찰 참가자격과 제한·우대 조건"
+                  "description": "입찰참가자격 조항을 한 줄에 하나씩 모두 추출한다. 🔴 이 배열이 참여 판정의 유일한 근거다."
                 },
                 "submission_requirements": {
                   "type": "array",
@@ -330,59 +462,107 @@
                     "properties": {
                       "item_type": {
                         "type": "string",
-                        "description": "EVENT, DOCUMENT, ELIGIBILITY_EVIDENCE, PROPOSAL_SECTION, FORMAT, PROHIBITION 중 하나"
+                        "description": "DOCUMENT(증빙서류), FORM(지정서식), PROPOSAL_SECTION(제안서 항목), OTHER"
                       },
                       "item_id": {
                         "type": "string",
-                        "description": "문서 ID가 없으면 SUB-001부터 문서 순서대로 부여"
+                        "description": "서식 번호나 항목 번호. 없으면 빈 문자열"
                       },
                       "name": {
                         "type": "string",
-                        "description": "제출물·행사·제안서 절·규칙명"
+                        "description": "서류 이름. 화면의 「서류」열에 그대로 쓰인다"
                       },
                       "requirement": {
                         "type": "string",
-                        "description": "요구 내용. 유효기간과 조건을 포함한다."
+                        "description": "무엇을 어떻게 갖춰야 하는지 원문"
                       },
-                      "deadline_or_validity": {
+                      "copies": {
                         "type": "string",
-                        "description": "마감일시 또는 발급·유효기간 기준"
+                        "description": "🔴 제출 부수만 숫자로. 예: 「5」. 문서가 부수를 정하지 않았으면 빈 문자열. 「1부」면 「1」로 적는다. 부수가 아닌 쪽수·매수를 여기 넣지 않는다"
+                      },
+                      "validity_basis": {
+                        "type": "string",
+                        "description": "🔴 유효기간 기준만. 예: 「발급 30일 내」, 「2026-11-30」, 「제안서 마감일 전일까지 발급」. 기간 제한이 없으면 빈 문자열"
                       },
                       "submission_stage": {
                         "type": "string",
-                        "description": "BID, CONTRACT, KICKOFF, DURING_PROJECT, COMPLETION 중 하나"
+                        "description": "BID(입찰 제출), CONTRACT, KICKOFF, DURING_PROJECT, COMPLETION 중 하나"
+                      },
+                      "submission_method": {
+                        "type": "string",
+                        "description": "🔴 제출 수단만. 전자입찰, 나라장터, 인편, 방문, 우편, 이메일 중 문서가 말한 것. 없으면 빈 문자열"
                       },
                       "method_or_format": {
                         "type": "string",
-                        "description": "제출 채널·장소·파일 형식·매체"
+                        "description": "파일 형식·용지·규격 등 형식 요건. 없으면 빈 문자열"
                       },
                       "quantity_or_limit": {
                         "type": "string",
-                        "description": "부수·쪽수·파일 크기 등 수량 제한"
+                        "description": "분량 상한·용량 상한 등 수량 제한. 없으면 빈 문자열"
                       },
                       "condition_or_note": {
                         "type": "string",
-                        "description": "예외, 순서, 익명처리, 비용, 기타 주석"
+                        "description": "단서·예외·주의. ※ 문장이 있으면 원문 그대로"
                       },
                       "template_id": {
                         "type": "string",
-                        "description": "지정 서식 번호. 없으면 빈 문자열"
+                        "description": "지정 서식 번호. 예: 「붙임2 가」. 없으면 빈 문자열"
                       },
                       "signature_or_seal": {
                         "type": "string",
-                        "description": "서명·날인 요구"
+                        "description": "서명·날인·직인 요구. 문서가 말하지 않으면 빈 문자열"
                       },
                       "mandatory": {
                         "type": "string",
-                        "description": "YES, NO, UNKNOWN 중 하나"
+                        "description": "YES 또는 NO. 문서가 정하지 않았으면 빈 문자열"
                       },
                       "source_reference": {
                         "type": "string",
-                        "description": "쪽 또는 절 제목"
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 제출 항목이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                       }
                     }
                   },
-                  "description": "입찰 제출·제안서 작성·행사·형식 규칙을 한 표로 추출한다."
+                  "description": "제출해야 하는 서류·서식·제안서 항목을 한 줄에 하나씩 추출한다."
+                },
+                "constraint_method": {
+                  "type": "string",
+                  "description": "🔴 제출 전체에 걸리는 방식. 예: 「전자입찰(나라장터)」, 「인편 제출」. 없으면 빈 문자열"
+                },
+                "constraint_deadline": {
+                  "type": "string",
+                  "description": "🔴 입찰서·제안서 접수 마감 일시 원문. 예: 「2026. 08. 24(월) 10:30」. 요일과 분까지 남긴다"
+                },
+                "constraint_opens_at": {
+                  "type": "string",
+                  "description": "접수 시작 일시 원문. 없으면 빈 문자열"
+                },
+                "constraint_proposal_copies": {
+                  "type": "string",
+                  "description": "🔴 «제안서·입찰서류»를 몇 부 제출하라는 문장에서만 숫자를 옮긴다. 최종보고서·착수계획서·산출물·매뉴얼의 부수(계약 후 납품물)는 제안서 부수가 아니다 — 그 숫자를 여기 넣지 않는다. 전자입찰이면 보통 부수가 없으므로 빈 문자열. 없으면 빈 문자열"
+                },
+                "constraint_page_limit": {
+                  "type": "string",
+                  "description": "제안서 본문 분량 상한. 예: 「100쪽 이내 권고」. 없으면 빈 문자열"
+                },
+                "constraint_summary_page_limit": {
+                  "type": "string",
+                  "description": "제안 요약본 분량 상한. 없으면 빈 문자열"
+                },
+                "constraint_price_sealed": {
+                  "type": "string",
+                  "description": "가격제안서를 별도 밀봉·별도 제출하라는 요구가 있으면 그 원문. 없으면 빈 문자열"
+                },
+                "constraint_place": {
+                  "type": "string",
+                  "description": "제출 장소 또는 접수처. 없으면 빈 문자열"
+                },
+                "constraint_source_page": {
+                  "type": "integer",
+                  "description": "이 제약이 인쇄된 쪽 번호. 확정할 수 없으면 0"
                 }
               }
             }
@@ -390,6 +570,42 @@
           "schemaLayout": {
             "version": 1,
             "columns": [
+              {
+                "name": "constraint_method",
+                "source": "root"
+              },
+              {
+                "name": "constraint_deadline",
+                "source": "root"
+              },
+              {
+                "name": "constraint_opens_at",
+                "source": "root"
+              },
+              {
+                "name": "constraint_proposal_copies",
+                "source": "root"
+              },
+              {
+                "name": "constraint_page_limit",
+                "source": "root"
+              },
+              {
+                "name": "constraint_summary_page_limit",
+                "source": "root"
+              },
+              {
+                "name": "constraint_price_sealed",
+                "source": "root"
+              },
+              {
+                "name": "constraint_place",
+                "source": "root"
+              },
+              {
+                "name": "constraint_source_page",
+                "source": "root"
+              },
               {
                 "name": "rule_id",
                 "source": "group_table",
@@ -426,7 +642,17 @@
                 "groupTableKey": "eligibility_rules"
               },
               {
+                "name": "valid_until_rule",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
                 "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "source_page",
                 "source": "group_table",
                 "groupTableKey": "eligibility_rules"
               },
@@ -451,12 +677,22 @@
                 "groupTableKey": "submission_requirements"
               },
               {
-                "name": "deadline_or_validity",
+                "name": "copies",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "validity_basis",
                 "source": "group_table",
                 "groupTableKey": "submission_requirements"
               },
               {
                 "name": "submission_stage",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "submission_method",
                 "source": "group_table",
                 "groupTableKey": "submission_requirements"
               },
@@ -494,21 +730,370 @@
                 "name": "source_reference",
                 "source": "group_table",
                 "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
               }
             ]
           },
           "mode": "standard",
           "modelName": "",
           "nodeMode": "extract",
-          "userSystemPrompt": "입력은 PMO·전자정부사업관리·개인정보 영향평가 용역의 과업설명서 또는 제안요청서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[계약 경계]\n표지와 사업일반의 PMO·PIA 용역이 PRIMARY_CONTRACT이며 document_type은 PMO_PIA다. 관리·평가 대상 정보시스템 구축사업은 TARGET_PROJECT다. 대상사업의 앱·웹·서버·스토리지·네트워크·플랫폼·DB·보안솔루션 개발·도입을 현재 수행사의 업무로 바꾸지 않는다. 현재 수행사가 검토·조정·점검·감독하도록 명시된 활동만 PRIMARY_CONTRACT로 둔다. service_component는 PMO, PIA, COMMON, OTHER로 구분한다.\n\n[누락 금지]\n현재 용역의 사업명·기관·기간·예산·입찰/계약방식, 목표, 대상사업 경계, PMO·PIA 범위와 방법, 요구사항 총괄표와 현재 용역 상세 요구사항, 인력·상주·산출물·보고·품질·보안·개인정보·검수·비용 조건, 참가자격, 평가, 제출서류, 제안서 작성 규칙과 일정을 문서 끝까지 확인한다. 현재 용역의 CSR·PAR·SER·QUR·COR·PMR·PSR 등만 requirements에 넣고 대상 구축사업의 ECR·SFR·PER·SIR·UIR·DAR·TER는 넣지 않는다. 상세내용의 불릿, 숫자, 기한, 각주, ※, 단, 다만, 승인·협의, 예외와 금지를 줄이지 않는다.\n\n[시각자료]\nHTML의 figurecaption과 도식 설명을 읽는다. 추진·운영체계는 GOVERNANCE, 용역·대상사업 일정은 SCHEDULE, 대상시스템 개념도는 TARGET_SYSTEM, 영향평가 절차는 PROCESS 또는 DATA_FLOW로 execution_context에 저장한다. 구성요소, 주체, 단계, 화살표 방향·관계와 scope_role을 각각 구조화한다. 로고·장식·서명·빈 양식 이미지는 제외한다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n같은 사실을 반복하지 않는다. 자격은 eligibility_rules, 평가는 evaluation_items, 입찰 제출과 제안서 작성 규칙은 submission_requirements, 계약 수행 조건은 execution_conditions에 둔다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식, 후속 제안 문구는 제외한다. source_reference는 좌표 대신 쪽 또는 절 제목만 기록한다.\n\n[이 Agent 전용 출력 범위]\n입찰 참가자격·필수 증빙과 입찰/계약/착수/수행/완료 단계별 제출서류 및 제안서 작성 규칙을 추출한다.\n허용된 최상위 필드: eligibility_rules, submission_requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+          "userSystemPrompt": "입력은 PMO·전자정부사업관리·개인정보 영향평가 용역의 과업설명서, 제안요청서 또는 입찰공고서다. 문서에 명시된 사실만 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[계약 경계]\n현재 용역의 참가자격만 넣는다. 대상 구축사업 수행사에게 걸린 자격을 현재 용역의 자격으로 옮기지 않는다.\n\n[자격 조항 — 가장 중요한 배열]\n🔴 eligibility_rules가 이 사업에 낼 수 있는지를 가르는 유일한 근거다. 참가자격 절을 한 줄씩 훑어 조건을 쪼갠다. 한 불릿에 조건이 둘 이상이면 행을 나눈다. 업종코드·세부품명번호·법령 조문 번호·금액 기준·기간 기준을 숫자 그대로 옮긴다.\n제한(RESTRICTION)도 자격이다 — 「대기업·중견기업 참여 불가」, 「상호출자제한기업집단 제외」, 「부정당업자 제한을 받지 않은 자」를 빠뜨리지 않는다.\n공동수급 허용 여부, 구성원 수 상한, 최소 지분율, 하도급 허용 여부는 JOINT 유형으로 넣는다.\n\n[부수 — 2026-08-22 실측에서 잡힌 오귀속]\n🔴 제안요청서에서 「최종보고서 5부」(계약 후 산출물, submission_stage=COMPLETION)의 5를 constraint_proposal_copies에 넣은 사례가 있었다. 부수는 «그 문장이 무엇을 제출하라는 것인지» 주어를 확인하고 옮긴다. 제안서·제안요약서·입찰서류가 주어일 때만이다. 산출물 부수는 submission_requirements의 해당 행(copies)에만 남기고 constraint_*로 올리지 않는다.\n\n[부수·유효기간·제출방법을 가른다]\n🔴 「제안서 5부를 인편으로 마감일까지」 같은 한 문장을 그대로 두지 말고 copies=5, submission_method=인편, 마감은 constraint_deadline으로 나눈다. 화면이 이 셋을 다른 칸에 그린다.\n🔴 부수를 모르면 빈 문자열이다. 「1부」라고 지어내지 않는다.\n\n[법령 해석 금지]\n조문 이름과 번호만 그대로 옮긴다. 그 조문이 무슨 뜻인지 풀어 쓰거나, 문서에 없는 자격 요건을 일반적인 조달 관행으로 보충하지 않는다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n상세 요구사항·평가배점·계약 수행조건은 이 Agent가 다루지 않는다.\n\n[이 Agent 전용 출력 범위]\n입찰참가자격과 제출물 규칙만 추출한다.\n허용된 최상위 필드: eligibility_rules, submission_requirements, constraint_method, constraint_deadline, constraint_opens_at, constraint_proposal_copies, constraint_page_limit, constraint_summary_page_limit, constraint_price_sealed, constraint_place, constraint_source_page\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_notice_eligibility_submission",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "eligibility_rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rule_id": {
+                        "type": "string",
+                        "description": "문서에 번호가 있으면 그대로, 없으면 문서 순서대로 ELIG_001 형식"
+                      },
+                      "eligibility_type": {
+                        "type": "string",
+                        "description": "REGISTRATION(등록·신고·지정), CERTIFICATE(확인서·증명서), PERFORMANCE(실적), FINANCIAL(재무·신용), RESTRICTION(참여 제한·배제), STAFF(인력), JOINT(공동수급·하도급), OTHER 중 하나"
+                      },
+                      "condition": {
+                        "type": "string",
+                        "description": "자격 조건 원문. 수치·업종코드·품명번호·기한을 줄이지 않는다"
+                      },
+                      "required_evidence": {
+                        "type": "string",
+                        "description": "이 조건을 증명하는 서류 이름. 문서에 적힌 대로"
+                      },
+                      "gate_level": {
+                        "type": "string",
+                        "description": "HARD_GATE(못 갖추면 입찰 무효) 또는 PREFERENCE(가점·우대)"
+                      },
+                      "mandatory": {
+                        "type": "string",
+                        "description": "YES 또는 NO. 문서가 정하지 않았으면 빈 문자열"
+                      },
+                      "joint_fulfillment_allowed": {
+                        "type": "string",
+                        "description": "공동수급체 구성원 중 하나만 갖춰도 되면 YES, 각자 모두 갖춰야 하면 NO, 문서가 말하지 않으면 빈 문자열"
+                      },
+                      "valid_until_rule": {
+                        "type": "string",
+                        "description": "유효기간 기준 원문. 예: 「제안서 마감일 전일까지 발행되고 유효기간 내」. 없으면 빈 문자열"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 조항이 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                      }
+                    }
+                  },
+                  "description": "입찰참가자격 조항을 한 줄에 하나씩 모두 추출한다. 🔴 이 배열이 참여 판정의 유일한 근거다."
+                },
+                "submission_requirements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "item_type": {
+                        "type": "string",
+                        "description": "DOCUMENT(증빙서류), FORM(지정서식), PROPOSAL_SECTION(제안서 항목), OTHER"
+                      },
+                      "item_id": {
+                        "type": "string",
+                        "description": "서식 번호나 항목 번호. 없으면 빈 문자열"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "서류 이름. 화면의 「서류」열에 그대로 쓰인다"
+                      },
+                      "requirement": {
+                        "type": "string",
+                        "description": "무엇을 어떻게 갖춰야 하는지 원문"
+                      },
+                      "copies": {
+                        "type": "string",
+                        "description": "🔴 제출 부수만 숫자로. 예: 「5」. 문서가 부수를 정하지 않았으면 빈 문자열. 「1부」면 「1」로 적는다. 부수가 아닌 쪽수·매수를 여기 넣지 않는다"
+                      },
+                      "validity_basis": {
+                        "type": "string",
+                        "description": "🔴 유효기간 기준만. 예: 「발급 30일 내」, 「2026-11-30」, 「제안서 마감일 전일까지 발급」. 기간 제한이 없으면 빈 문자열"
+                      },
+                      "submission_stage": {
+                        "type": "string",
+                        "description": "BID(입찰 제출), CONTRACT, KICKOFF, DURING_PROJECT, COMPLETION 중 하나"
+                      },
+                      "submission_method": {
+                        "type": "string",
+                        "description": "🔴 제출 수단만. 전자입찰, 나라장터, 인편, 방문, 우편, 이메일 중 문서가 말한 것. 없으면 빈 문자열"
+                      },
+                      "method_or_format": {
+                        "type": "string",
+                        "description": "파일 형식·용지·규격 등 형식 요건. 없으면 빈 문자열"
+                      },
+                      "quantity_or_limit": {
+                        "type": "string",
+                        "description": "분량 상한·용량 상한 등 수량 제한. 없으면 빈 문자열"
+                      },
+                      "condition_or_note": {
+                        "type": "string",
+                        "description": "단서·예외·주의. ※ 문장이 있으면 원문 그대로"
+                      },
+                      "template_id": {
+                        "type": "string",
+                        "description": "지정 서식 번호. 예: 「붙임2 가」. 없으면 빈 문자열"
+                      },
+                      "signature_or_seal": {
+                        "type": "string",
+                        "description": "서명·날인·직인 요구. 문서가 말하지 않으면 빈 문자열"
+                      },
+                      "mandatory": {
+                        "type": "string",
+                        "description": "YES 또는 NO. 문서가 정하지 않았으면 빈 문자열"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 제출 항목이 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                      }
+                    }
+                  },
+                  "description": "제출해야 하는 서류·서식·제안서 항목을 한 줄에 하나씩 추출한다."
+                },
+                "constraint_method": {
+                  "type": "string",
+                  "description": "🔴 제출 전체에 걸리는 방식. 예: 「전자입찰(나라장터)」, 「인편 제출」. 없으면 빈 문자열"
+                },
+                "constraint_deadline": {
+                  "type": "string",
+                  "description": "🔴 입찰서·제안서 접수 마감 일시 원문. 예: 「2026. 08. 24(월) 10:30」. 요일과 분까지 남긴다"
+                },
+                "constraint_opens_at": {
+                  "type": "string",
+                  "description": "접수 시작 일시 원문. 없으면 빈 문자열"
+                },
+                "constraint_proposal_copies": {
+                  "type": "string",
+                  "description": "🔴 «제안서·입찰서류»를 몇 부 제출하라는 문장에서만 숫자를 옮긴다. 최종보고서·착수계획서·산출물·매뉴얼의 부수(계약 후 납품물)는 제안서 부수가 아니다 — 그 숫자를 여기 넣지 않는다. 전자입찰이면 보통 부수가 없으므로 빈 문자열. 없으면 빈 문자열"
+                },
+                "constraint_page_limit": {
+                  "type": "string",
+                  "description": "제안서 본문 분량 상한. 예: 「100쪽 이내 권고」. 없으면 빈 문자열"
+                },
+                "constraint_summary_page_limit": {
+                  "type": "string",
+                  "description": "제안 요약본 분량 상한. 없으면 빈 문자열"
+                },
+                "constraint_price_sealed": {
+                  "type": "string",
+                  "description": "가격제안서를 별도 밀봉·별도 제출하라는 요구가 있으면 그 원문. 없으면 빈 문자열"
+                },
+                "constraint_place": {
+                  "type": "string",
+                  "description": "제출 장소 또는 접수처. 없으면 빈 문자열"
+                },
+                "constraint_source_page": {
+                  "type": "integer",
+                  "description": "이 제약이 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "constraint_method",
+                "source": "root"
+              },
+              {
+                "name": "constraint_deadline",
+                "source": "root"
+              },
+              {
+                "name": "constraint_opens_at",
+                "source": "root"
+              },
+              {
+                "name": "constraint_proposal_copies",
+                "source": "root"
+              },
+              {
+                "name": "constraint_page_limit",
+                "source": "root"
+              },
+              {
+                "name": "constraint_summary_page_limit",
+                "source": "root"
+              },
+              {
+                "name": "constraint_price_sealed",
+                "source": "root"
+              },
+              {
+                "name": "constraint_place",
+                "source": "root"
+              },
+              {
+                "name": "constraint_source_page",
+                "source": "root"
+              },
+              {
+                "name": "rule_id",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "eligibility_type",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "condition",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "required_evidence",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "gate_level",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "mandatory",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "joint_fulfillment_allowed",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "valid_until_rule",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "eligibility_rules"
+              },
+              {
+                "name": "item_type",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "item_id",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "name",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "requirement",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "copies",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "validity_basis",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "submission_stage",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "submission_method",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "method_or_format",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "quantity_or_limit",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "condition_or_note",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "template_id",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "signature_or_seal",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "mandatory",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "submission_requirements"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 **입찰공고서**다. 조달 절차에서 공고서는 제안요청서보다 우선하며, 🔴 마감일시·전자입찰 여부·제출 부수·접수처는 **이 문서에만 있는 일이 많다**. 문서에 명시된 사실만 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[공고서에서 특히 놓치지 말 것]\n- 전자입찰서(제안서·입찰서류 포함) **접수 시작·마감 일시**를 인쇄된 표기 그대로. 「2026. 08. 24(월) 10:30」처럼 요일과 분까지 남긴다\n- 입찰 방식이 전자입찰(나라장터)인지 인편·방문인지\n- 관리번호·수요기관·추정금액·추정가격·입찰방법·낙찰자선정방법\n- 개찰·기술평가·설명회 일시와 장소가 있으면 submission_requirements에 stage와 함께\n- 참가자격 조항 전부. 🔴 등록·증명서·업종코드·세부품명번호·제한(대기업 배제 등)·공동수급 구성원 수 상한과 최소 지분율·하도급 허용 여부\n\n[이 문서에 없는 것]\n🔴 공고서에는 상세 요구사항 표가 없다. 없는 것을 만들지 않는다. 제안서 분량 상한처럼 제안요청서에만 있는 값은 빈 문자열로 둔다.\n\n[자격 조항 — 가장 중요한 배열]\n🔴 eligibility_rules가 이 사업에 낼 수 있는지를 가르는 유일한 근거다. 참가자격 절을 한 줄씩 훑어 조건을 쪼갠다. 한 불릿에 조건이 둘 이상이면 행을 나눈다. 업종코드·세부품명번호·법령 조문 번호·금액 기준·기간 기준을 숫자 그대로 옮긴다.\n제한(RESTRICTION)도 자격이다 — 「대기업·중견기업 참여 불가」, 「상호출자제한기업집단 제외」, 「부정당업자 제한을 받지 않은 자」를 빠뜨리지 않는다.\n공동수급 허용 여부, 구성원 수 상한, 최소 지분율, 하도급 허용 여부는 JOINT 유형으로 넣는다.\n\n[부수 — 2026-08-22 실측에서 잡힌 오귀속]\n🔴 제안요청서에서 「최종보고서 5부」(계약 후 산출물, submission_stage=COMPLETION)의 5를 constraint_proposal_copies에 넣은 사례가 있었다. 부수는 «그 문장이 무엇을 제출하라는 것인지» 주어를 확인하고 옮긴다. 제안서·제안요약서·입찰서류가 주어일 때만이다. 산출물 부수는 submission_requirements의 해당 행(copies)에만 남기고 constraint_*로 올리지 않는다.\n\n[부수·유효기간·제출방법을 가른다]\n🔴 「제안서 5부를 인편으로 마감일까지」 같은 한 문장을 그대로 두지 말고 copies=5, submission_method=인편, 마감은 constraint_deadline으로 나눈다. 화면이 이 셋을 다른 칸에 그린다.\n🔴 부수를 모르면 빈 문자열이다. 「1부」라고 지어내지 않는다.\n\n[법령 해석 금지]\n조문 이름과 번호만 그대로 옮긴다. 그 조문이 무슨 뜻인지 풀어 쓰거나, 문서에 없는 자격 요건을 일반적인 조달 관행으로 보충하지 않는다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[이 Agent 전용 출력 범위]\n입찰참가자격과 제출물 규칙만 추출한다.\n허용된 최상위 필드: eligibility_rules, submission_requirements, constraint_method, constraint_deadline, constraint_opens_at, constraint_proposal_copies, constraint_page_limit, constraint_summary_page_limit, constraint_price_sealed, constraint_place, constraint_source_page\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
         }
       ],
       "categorySchemaMapping": {
         "BUILD_IMPLEMENTATION_RFP": "extract_build_eligibility_submission",
-        "PMO_PIA_SERVICE_SPEC": "extract_pmo_eligibility_submission"
+        "PMO_PIA_SERVICE_SPEC": "extract_pmo_eligibility_submission",
+        "BID_NOTICE": "extract_notice_eligibility_submission"
       },
       "location": false,
-      "confidenceThreshold": 0.8,
       "manyRows": true,
       "manyRowsThreshold": 20,
       "manyRowsMaxRowsPerBatch": 40,
@@ -522,14 +1107,14 @@
         },
         "target": {
           "nodeType": "classify",
-          "name": "분류-1"
+          "name": "Classify-1"
         }
       },
       {
         "id": "e1",
         "source": {
           "nodeType": "classify",
-          "name": "분류-1"
+          "name": "Classify-1"
         },
         "target": {
           "nodeType": "extract",
@@ -543,7 +1128,7 @@
         "id": "e2",
         "source": {
           "nodeType": "classify",
-          "name": "분류-1"
+          "name": "Classify-1"
         },
         "target": {
           "nodeType": "extract",
@@ -551,6 +1136,20 @@
         },
         "condition": {
           "conditionName": "PMO_PIA_SERVICE_SPEC"
+        }
+      },
+      {
+        "id": "e3",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_notice_eligibility_submission"
+        },
+        "condition": {
+          "conditionName": "BID_NOTICE"
         }
       }
     ]

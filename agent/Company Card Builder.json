@@ -1,0 +1,1509 @@
+{
+  "kind": "studio.agent-config-draft",
+  "exportedAt": "2026-08-22T00:00:00.000Z",
+  "exportedFrom": {},
+  "agentConfig": {
+    "agent_name": "Company Card Builder",
+    "pipelineType": "classify-extract",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "auto",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": true,
+      "outputFormats": [
+        "html",
+        "text"
+      ],
+      "base64Encoding": [
+        "figure"
+      ]
+    },
+    "documentClassifyConfiguration": {
+      "schema": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "document-classify",
+          "schema": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "CO_BIZ_REG",
+                "description": "사업자등록증 또는 법인등기부등본. 상호·사업자등록번호·대표자·소재지·업태·종목이 있다."
+              },
+              {
+                "const": "CO_SME_CERT",
+                "description": "중소기업확인서, 중·소기업·소상공인확인서 또는 중견기업 확인서. 기업규모 구분과 유효기간이 있다."
+              },
+              {
+                "const": "CO_CREDIT_RATING",
+                "description": "신용평가등급확인서 또는 기업신용평가 보고서. 신용등급과 평가기관·유효기간이 있다."
+              },
+              {
+                "const": "CO_PIA_DESIGNATION",
+                "description": "개인정보 영향평가기관 지정서. 지정번호와 지정일·유효기간이 있다."
+              },
+              {
+                "const": "CO_SW_BUSINESS",
+                "description": "소프트웨어사업자 신고확인서. 신고번호와 업종·업종코드가 있다."
+              },
+              {
+                "const": "CO_DIRECT_PRODUCTION",
+                "description": "직접생산확인증명서. 세부품명번호와 유효기간이 있다."
+              },
+              {
+                "const": "CO_PERFORMANCE",
+                "description": "실적증명서, 용역수행확인서 또는 계약이행실적증명. 사업명·발주처·계약금액·기간이 있다."
+              },
+              {
+                "const": "CO_FINANCIAL",
+                "description": "재무제표, 감사보고서 또는 표준재무제표증명. 매출·자본금·자산·부채가 있다."
+              },
+              {
+                "const": "CO_TECH_STAFF",
+                "description": "기술인력 보유현황, 인력현황표 또는 기술자 보유증명. 등급별 인원이 있다."
+              },
+              {
+                "const": "CO_OTHER_REVIEW_REQUIRED",
+                "description": "위 아홉에 해당한다고 확정할 근거가 부족하거나, 여러 종류가 한 파일에 섞인 회사 서류."
+              }
+            ]
+          }
+        }
+      },
+      "modelName": "",
+      "userSystemPrompt": "업로드된 회사 서류 한 건의 종류를 가른다. 표제(문서 맨 위 제목)를 먼저 보고, 그다음 발급기관과 본문의 항목 이름으로 확인한다.\n🔴 파일명만으로 단정하지 않는다 — 본문 근거를 쓴다.\n🔴 서류가 다른 서류를 인용하는 경우(예: 실적증명서 안에 사업자등록번호가 적힘)에 인용된 쪽으로 분류하지 않는다. 표제가 이긴다.\n확정할 근거가 부족하거나 두 종류 이상이 한 파일에 섞였으면 CO_OTHER_REVIEW_REQUIRED다. 🔴 애매한 것을 억지로 한 갈래에 밀어 넣지 않는다 — 회사 카드의 값이 틀리면 자격 판정이 통째로 틀린다."
+    },
+    "informationExtractConfiguration": {
+      "modelName": "",
+      "schemas": [
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_biz_reg",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "representative": {
+                  "type": "string",
+                  "description": "대표자 성명"
+                },
+                "address": {
+                  "type": "string",
+                  "description": "사업장 소재지 전체 주소. 화면의 「소재지」는 이 값의 시·도 부분을 쓴다"
+                },
+                "corporate_number": {
+                  "type": "string",
+                  "description": "법인등록번호. 없으면 빈 문자열"
+                },
+                "established_at": {
+                  "type": "string",
+                  "description": "법인 설립일 또는 개업일"
+                },
+                "business_type": {
+                  "type": "string",
+                  "description": "업태"
+                },
+                "business_item": {
+                  "type": "string",
+                  "description": "종목"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "representative",
+                "source": "root"
+              },
+              {
+                "name": "address",
+                "source": "root"
+              },
+              {
+                "name": "corporate_number",
+                "source": "root"
+              },
+              {
+                "name": "established_at",
+                "source": "root"
+              },
+              {
+                "name": "business_type",
+                "source": "root"
+              },
+              {
+                "name": "business_item",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n상호·사업자등록번호·대표자·소재지·설립일·업태·종목.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_sme_cert",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "enterprise_size": {
+                  "type": "string",
+                  "description": "기업규모 구분. 서류에 인쇄된 그대로 — 소상공인 / 소기업 / 중기업 / 중소기업 / 중견기업 / 대기업"
+                },
+                "certificate_number": {
+                  "type": "string",
+                  "description": "확인서 번호"
+                },
+                "industry_code": {
+                  "type": "string",
+                  "description": "주된 업종코드. 없으면 빈 문자열"
+                },
+                "based_on_fiscal_year": {
+                  "type": "string",
+                  "description": "판정 기준 사업연도. 없으면 빈 문자열"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "enterprise_size",
+                "source": "root"
+              },
+              {
+                "name": "certificate_number",
+                "source": "root"
+              },
+              {
+                "name": "industry_code",
+                "source": "root"
+              },
+              {
+                "name": "based_on_fiscal_year",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n기업규모 구분과 유효기간. 🔴 「20억 미만 사업은 대기업·중견기업 참여 불가」 같은 조항이 이 값 하나로 갈린다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_credit_rating",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "credit_grade": {
+                  "type": "string",
+                  "description": "신용평가등급. 「A0」처럼 인쇄된 그대로. 등급 뒤 부호를 지우지 않는다"
+                },
+                "rating_agency": {
+                  "type": "string",
+                  "description": "평가기관 이름"
+                },
+                "evaluated_at": {
+                  "type": "string",
+                  "description": "평가 기준일"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "credit_grade",
+                "source": "root"
+              },
+              {
+                "name": "rating_agency",
+                "source": "root"
+              },
+              {
+                "name": "evaluated_at",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n신용등급·평가기관·유효기간. 화면②의 「신용 평가 등급」 카드가 이 값이다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_pia_designation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "designation_number": {
+                  "type": "string",
+                  "description": "지정번호"
+                },
+                "designated_at": {
+                  "type": "string",
+                  "description": "지정일"
+                },
+                "industry_code": {
+                  "type": "string",
+                  "description": "업종코드. 없으면 빈 문자열"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "designation_number",
+                "source": "root"
+              },
+              {
+                "name": "designated_at",
+                "source": "root"
+              },
+              {
+                "name": "industry_code",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n개인정보 영향평가기관 지정 사실과 지정번호·유효기간.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_sw_business",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "report_number": {
+                  "type": "string",
+                  "description": "신고확인번호"
+                },
+                "business_category": {
+                  "type": "string",
+                  "description": "신고 업종 이름. 예: 컴퓨터관련 서비스 사업"
+                },
+                "industry_code": {
+                  "type": "string",
+                  "description": "업종코드. 예: 1468. 없으면 빈 문자열"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "report_number",
+                "source": "root"
+              },
+              {
+                "name": "business_category",
+                "source": "root"
+              },
+              {
+                "name": "industry_code",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n소프트웨어사업자 신고 사실과 업종코드. 🔴 업종코드는 공고가 특정 코드를 지정하는 일이 많아 숫자를 정확히 옮긴다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_direct_production",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "product_name": {
+                  "type": "string",
+                  "description": "직접생산 확인을 받은 세부품명. 인쇄된 그대로"
+                },
+                "product_code": {
+                  "type": "string",
+                  "description": "세부품명번호. 예: 8111159801. 숫자를 그대로 옮긴다"
+                },
+                "certificate_number": {
+                  "type": "string",
+                  "description": "증명서 번호"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "product_name",
+                "source": "root"
+              },
+              {
+                "name": "product_code",
+                "source": "root"
+              },
+              {
+                "name": "certificate_number",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n세부품명번호와 유효기간. 🔴 공고가 특정 세부품명번호를 지정하므로 숫자 한 자리도 바꾸지 않는다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_performance",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "performance_items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "project_name": {
+                        "type": "string",
+                        "description": "사업명"
+                      },
+                      "client": {
+                        "type": "string",
+                        "description": "발주처·수요기관 이름"
+                      },
+                      "client_sector": {
+                        "type": "string",
+                        "description": "PUBLIC(공공·정부·지자체·공공기관), FINANCE(은행·금고·보험·증권), PRIVATE(민간), UNKNOWN 중 하나. 발주처 이름으로 판단하고 모르면 UNKNOWN"
+                      },
+                      "service_category": {
+                        "type": "string",
+                        "description": "PMO, AUDIT(감리), ISP, PIA(영향평가), BUILD(구축·개발), MAINTENANCE, OTHER 중 하나. 사업명에 근거해 고르고 애매하면 OTHER"
+                      },
+                      "contract_amount": {
+                        "type": "string",
+                        "description": "계약금액. 인쇄된 표기 그대로"
+                      },
+                      "our_share_amount": {
+                        "type": "string",
+                        "description": "공동수급일 때 자사 지분 금액. 없으면 빈 문자열"
+                      },
+                      "period_start": {
+                        "type": "string",
+                        "description": "사업 시작일"
+                      },
+                      "period_end": {
+                        "type": "string",
+                        "description": "사업 종료일"
+                      },
+                      "is_ongoing": {
+                        "type": "string",
+                        "description": "수행 중이면 YES, 완료면 NO, 모르면 빈 문자열"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 실적이 인쇄된 쪽. 확정할 수 없으면 0"
+                      }
+                    }
+                  },
+                  "description": "실적 한 건을 한 행으로. 서류에 여러 건이 있으면 모두 넣는다."
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "project_name",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "client",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "client_sector",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "service_category",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "contract_amount",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "our_share_amount",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "period_start",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "period_end",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "is_ongoing",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "performance_items"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n실적을 건별로 모두. 🔴 화면②가 「공공 PMO 8 · 금융 PMO 0 · 감리 3 · ISP 2 · 영향평가 2」처럼 갈래별로 세므로 client_sector와 service_category를 반드시 채운다.\n🔴 합계·최대 단일 계약을 여기서 계산하지 않는다 — 행만 정확히 뽑는다. 세는 것은 뒤 단계다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_financial",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "fiscal_year": {
+                  "type": "string",
+                  "description": "회계연도. 예: 2025"
+                },
+                "revenue": {
+                  "type": "string",
+                  "description": "매출액. 인쇄된 표기 그대로"
+                },
+                "capital": {
+                  "type": "string",
+                  "description": "자본금. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "total_assets": {
+                  "type": "string",
+                  "description": "자산총계. 없으면 빈 문자열"
+                },
+                "total_liabilities": {
+                  "type": "string",
+                  "description": "부채총계. 없으면 빈 문자열"
+                },
+                "total_equity": {
+                  "type": "string",
+                  "description": "자본총계. 없으면 빈 문자열"
+                },
+                "debt_ratio": {
+                  "type": "string",
+                  "description": "🔴 부채비율이 서류에 인쇄되어 있을 때만 그 값을 옮긴다. 부채총계÷자본총계로 직접 계산하지 않는다. 없으면 빈 문자열"
+                },
+                "operating_profit": {
+                  "type": "string",
+                  "description": "영업이익. 없으면 빈 문자열"
+                },
+                "net_income": {
+                  "type": "string",
+                  "description": "당기순이익. 없으면 빈 문자열"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "fiscal_year",
+                "source": "root"
+              },
+              {
+                "name": "revenue",
+                "source": "root"
+              },
+              {
+                "name": "capital",
+                "source": "root"
+              },
+              {
+                "name": "total_assets",
+                "source": "root"
+              },
+              {
+                "name": "total_liabilities",
+                "source": "root"
+              },
+              {
+                "name": "total_equity",
+                "source": "root"
+              },
+              {
+                "name": "debt_ratio",
+                "source": "root"
+              },
+              {
+                "name": "operating_profit",
+                "source": "root"
+              },
+              {
+                "name": "net_income",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n직전연도 매출·자본금·부채비율. 화면②의 「재무」 칸과 「미확인 2건」이 이 값들로 정해진다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_tech_staff",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "total_headcount": {
+                  "type": "string",
+                  "description": "기술인력 총원. 서류에 총계가 인쇄되어 있을 때만. 없으면 빈 문자열"
+                },
+                "staff_grades": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "grade": {
+                        "type": "string",
+                        "description": "기술사 / 특급 / 고급 / 중급 / 초급 등 인쇄된 등급 이름"
+                      },
+                      "count": {
+                        "type": "string",
+                        "description": "그 등급의 인원 수"
+                      },
+                      "qualification": {
+                        "type": "string",
+                        "description": "자격 종류. 없으면 빈 문자열"
+                      }
+                    }
+                  },
+                  "description": "등급별 인원을 한 행씩. 서류의 등급 구분을 그대로 따른다."
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "total_headcount",
+                "source": "root"
+              },
+              {
+                "name": "grade",
+                "source": "group_table",
+                "groupTableKey": "staff_grades"
+              },
+              {
+                "name": "count",
+                "source": "group_table",
+                "groupTableKey": "staff_grades"
+              },
+              {
+                "name": "qualification",
+                "source": "group_table",
+                "groupTableKey": "staff_grades"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n등급별 인원. 화면②가 「기술사 6 · 특급 24 · 고급 19 · 중급 15 · 초급 4」로 그린다. 🔴 총원이 인쇄되어 있지 않으면 등급을 더해 만들지 않는다 — 빈 문자열이다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_co_other",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "document_kind": {
+                  "type": "string",
+                  "description": "이 서류의 종류. 분류 갈래 이름과 같게 적는다"
+                },
+                "company_name": {
+                  "type": "string",
+                  "description": "서류에 적힌 상호 또는 법인명. 없으면 빈 문자열"
+                },
+                "business_number": {
+                  "type": "string",
+                  "description": "사업자등록번호. 하이픈을 포함해 인쇄된 그대로. 없으면 빈 문자열"
+                },
+                "issuer": {
+                  "type": "string",
+                  "description": "발급기관·발급처 이름. 없으면 빈 문자열"
+                },
+                "issued_at": {
+                  "type": "string",
+                  "description": "발급일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "expires_at": {
+                  "type": "string",
+                  "description": "유효기간 만료일. 인쇄된 표기 그대로. 없으면 빈 문자열"
+                },
+                "source_document": {
+                  "type": "string",
+                  "description": "이 값들이 나온 파일 이름"
+                },
+                "source_page": {
+                  "type": "integer",
+                  "description": "표제가 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                },
+                "observed_title": {
+                  "type": "string",
+                  "description": "문서 맨 위에 인쇄된 표제 그대로"
+                },
+                "why_uncertain": {
+                  "type": "string",
+                  "description": "왜 한 갈래로 확정하지 못했는지 한 문장"
+                },
+                "candidate_kinds": {
+                  "type": "string",
+                  "description": "가능해 보이는 갈래 이름을 쉼표로. 없으면 빈 문자열"
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "document_kind",
+                "source": "root"
+              },
+              {
+                "name": "company_name",
+                "source": "root"
+              },
+              {
+                "name": "business_number",
+                "source": "root"
+              },
+              {
+                "name": "issuer",
+                "source": "root"
+              },
+              {
+                "name": "issued_at",
+                "source": "root"
+              },
+              {
+                "name": "expires_at",
+                "source": "root"
+              },
+              {
+                "name": "source_document",
+                "source": "root"
+              },
+              {
+                "name": "source_page",
+                "source": "root"
+              },
+              {
+                "name": "observed_title",
+                "source": "root"
+              },
+              {
+                "name": "why_uncertain",
+                "source": "root"
+              },
+              {
+                "name": "candidate_kinds",
+                "source": "root"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 회사가 제출·보관하는 증빙 서류 한 건이다. 「회사 카드」의 한 조각을 만든다.\n\n[이 서류에서 뽑을 것]\n표제와 회사 식별 정보만. 🔴 값을 억지로 뽑지 않는다 — 이 갈래로 온 서류는 사람이 확인할 자리다.\n\n[지어내지 않기 — 이 Agent의 첫 번째 규율]\n🔴 회사 카드의 값이 틀리면 뒤따르는 자격 판정이 통째로 틀린다. 서류에 인쇄되어 있지 않은 값은 어떤 경우에도 만들지 않는다. 모르면 빈 문자열이고, 화면이 그 자리를 「[확인필요] · 직접 입력」으로 그린다. 업계 평균·통상적인 값·다른 서류에서 본 값으로 메우지 않는다.\n\n[값마다 근거]\n🔴 모든 값에 그 값이 적힌 서류 이름(source_document)과 쪽(source_page)을 붙인다. 화면이 값 아래에 「사업자 등록증_다온피엠씨.pdf」처럼 근거를 같이 그린다. 근거를 못 붙이는 값은 안 뽑은 것과 같다.\n\n[표기 보존]\n금액·날짜·등급은 서류에 인쇄된 표기를 그대로 옮긴다. 「6억 1200만원」을 612000000으로 바꾸거나 「A0」를 「A」로 줄이지 않는다. 단위 환산·반올림·정규화를 하지 않는다.\n\n[유효기간]\n발급일과 유효기간은 자격 판정에서 결정적이다. 「2026-11-30까지」처럼 인쇄된 그대로 옮기고, 기간이 안 적혀 있으면 빈 문자열이다. 발급일에 관행적인 유효기간을 더해 만들지 않는다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n이 스키마에 있는 필드만 채운다. 다른 서류가 담당하는 값을 짐작해 넣지 않는다."
+        }
+      ],
+      "categorySchemaMapping": {
+        "CO_BIZ_REG": "extract_co_biz_reg",
+        "CO_SME_CERT": "extract_co_sme_cert",
+        "CO_CREDIT_RATING": "extract_co_credit_rating",
+        "CO_PIA_DESIGNATION": "extract_co_pia_designation",
+        "CO_SW_BUSINESS": "extract_co_sw_business",
+        "CO_DIRECT_PRODUCTION": "extract_co_direct_production",
+        "CO_PERFORMANCE": "extract_co_performance",
+        "CO_FINANCIAL": "extract_co_financial",
+        "CO_TECH_STAFF": "extract_co_tech_staff",
+        "CO_OTHER_REVIEW_REQUIRED": "extract_co_other"
+      },
+      "location": false,
+      "manyRows": true,
+      "manyRowsThreshold": 20,
+      "manyRowsMaxRowsPerBatch": 40,
+      "manyRowsMaxConcurrent": 5
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        }
+      },
+      {
+        "id": "e1",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_biz_reg"
+        },
+        "condition": {
+          "conditionName": "CO_BIZ_REG"
+        }
+      },
+      {
+        "id": "e2",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_sme_cert"
+        },
+        "condition": {
+          "conditionName": "CO_SME_CERT"
+        }
+      },
+      {
+        "id": "e3",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_credit_rating"
+        },
+        "condition": {
+          "conditionName": "CO_CREDIT_RATING"
+        }
+      },
+      {
+        "id": "e4",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_pia_designation"
+        },
+        "condition": {
+          "conditionName": "CO_PIA_DESIGNATION"
+        }
+      },
+      {
+        "id": "e5",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_sw_business"
+        },
+        "condition": {
+          "conditionName": "CO_SW_BUSINESS"
+        }
+      },
+      {
+        "id": "e6",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_direct_production"
+        },
+        "condition": {
+          "conditionName": "CO_DIRECT_PRODUCTION"
+        }
+      },
+      {
+        "id": "e7",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_performance"
+        },
+        "condition": {
+          "conditionName": "CO_PERFORMANCE"
+        }
+      },
+      {
+        "id": "e8",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_financial"
+        },
+        "condition": {
+          "conditionName": "CO_FINANCIAL"
+        }
+      },
+      {
+        "id": "e9",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_tech_staff"
+        },
+        "condition": {
+          "conditionName": "CO_TECH_STAFF"
+        }
+      },
+      {
+        "id": "e10",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_co_other"
+        },
+        "condition": {
+          "conditionName": "CO_OTHER_REVIEW_REQUIRED"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "kind": "studio.agent-config-draft",
+  "exportedAt": "2026-08-22T00:00:00.000Z",
+  "exportedFrom": {},
+  "agentConfig": {
+    "agent_name": "Critical Path and Cost",
+    "pipelineType": "instruct",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "auto",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": true,
+      "outputFormats": [
+        "html",
+        "text"
+      ],
+      "base64Encoding": [
+        "figure"
+      ]
+    },
+    "instructConfiguration": {
+      "nodes": [
+        {
+          "name": "estimate-path-cost",
+          "modelName": "solar-pro3",
+          "prompt": "역할: 확정된 WBS와 공고 일정을 놓고, 마감을 놓치게 만드는 항목을 앞세우고(임계경로) 총 투입 M/M을 합산한다(예상 원가 추천).\n\n[파일 입력 계약]\n입력은 업로드된 단일 파일 하나뿐이다. 별도 텍스트 입력, 추가 변수, 두 번째 파일은 사용하지 않는다. 🔴 Studio의 Instruct 노드는 소스를 하나만 받으므로, 여러 문서를 맞대야 하는 판정은 호출하는 쪽이 문서들을 한 파일로 이어 붙여 올린다. 구분 표식이 없으면 각 영역이 시작되는 schema_version 또는 agent 값으로 경계를 찾는다. 영역 간 사실을 서로 바꾸지 않는다.\n이 Agent의 입력 파일은 두 영역이 이어져 있다.\n1. WBS_V1: WBS Planner의 출력. work_packages[]의 predecessors·duration·effort_mm이 있다.\n2. DOCUMENT_INFO: 공고 해부 결과. submission_constraints(마감·제출방법), submission_requirements(서류별 유효기간·발급 요건), eligibility_rules, evaluation_items를 쓴다.\n\n[임계경로란 무엇인가 — 이 Agent의 정의]\n🔴 여기서 임계경로는 사업 수행 일정이 아니라 «입찰 마감 전에 반드시 끝나 있어야 하는 준비»다. 화면이 「입찰참가자격 등록 확인 — 3일 전」처럼 마감 기준 역산으로 보여 준다.\n다음이 임계경로 항목이 된다.\n- 🔴 남이 시간을 쓰는 일 — 발주기관 직인이 필요한 실적증명서, 조달청 입찰참가자격 등록, 확인서·증명서 발급 신청. 우리가 아무리 빨라도 상대의 처리기간이 걸린다.\n- 유효기간이 마감 전에 끝나는 서류의 재발급.\n- 인쇄·제본·밀봉처럼 물리적으로 시간이 드는 일. 문서가 인편 제출을 요구할 때만.\n- 제안서 집필처럼 분량 상한이 정해진 큰 작업.\n\n[리드타임을 지어내지 않는다]\n🔴 lead_time_days는 문서가 처리기간·발급 소요를 명시했을 때만 그 숫자를 쓴다. 문서에 없으면 0으로 두고 due_label을 「[확인필요]」로 적는다. 「보통 3일 걸린다」는 우리가 아는 것이지 문서가 말한 것이 아니다.\n🔴 due_label은 lead_time_days가 0이 아닐 때만 「N일 전」 형식으로 만든다.\n\n[원가 — 투찰가가 아니다]\n🔴 total_mm은 WBS의 effort_mm을 등급별로 합산한 값이다. 합산만 하고 새로 추정하지 않는다.\n🔴 이것은 투찰가가 아니다. 금액으로 환산하지 않는다. 회사 카드에 등급별 단가가 있을 때만 환산이 가능하고, 이 Agent는 단가를 받지 않으므로 amount_convertible은 항상 false다.\n🔴 추정가격·낙찰하한율이 공고에 있으면 references에 라벨과 쪽 번호만 담는다. 그 숫자로 투찰가를 역산하지 않는다 — 출처 없는 숫자를 화면에 올리지 않는다.\n- 합계는 소수점 한 자리로 반올림한다. by_grade의 합이 total_mm과 일치해야 한다.\n\n[지어내지 않기]\n입력에 없는 사실·법령 해석·업계 평균·회사 역량·통상적인 조달 관행을 만들지 않는다. 회사 카드에 없는 실적·자격을 만들지 않고, 문서에 없는 기간·날짜·금액을 만들지 않는다. 조문은 이름과 번호만 그대로 옮기고 뜻을 풀지 않는다.\n\n[출력 형식]\n아래 키를 가진 파싱 가능한 JSON 객체 하나만 출력한다. Markdown, 코드블록 표시, 인사, 설명문, 권고문, 질문, 후속 제안은 모두 금지한다. 빈 배열은 빈 채로 유지하고 입력 원문을 재출력하지 않는다.\n{\n  \"agent\": \"CRITICAL_PATH_COST_V1\",\n  \"project_name\": \"\",\n  \"deadline\": \"\",\n  \"critical_path\": [\n    {\n      \"item\": \"마감 전에 끝나 있어야 하는 일 한 줄\",\n      \"lead_time_days\": 0,\n      \"due_label\": \"«N일 전» 또는 «[확인필요]»\",\n      \"blocking_reason\": \"왜 시간이 걸리는가. 누가 시간을 쓰는가\",\n      \"severity\": \"danger | warn | default\",\n      \"source_page\": 0\n    }\n  ],\n  \"cost_estimate\": {\n    \"total_mm\": 0.0,\n    \"by_grade\": [ { \"grade\": \"특급\", \"mm\": 0.0 } ],\n    \"is_recommendation\": true,\n    \"not_a_bid_price\": true,\n    \"amount_convertible\": false,\n    \"amount_note\": \"단가 미입력 — 회사 카드에 등급별 단가가 있을 때만 환산한다\",\n    \"references\": [ { \"label\": \"추정가격\", \"page\": 0 } ]\n  }\n}\ncritical_path는 마감에 가까운 것(lead_time_days가 큰 것)부터 정렬한다.\n🔴 severity는 백엔드 kitCells.js의 tone 어휘를 그대로 쓴다 — lead_time_days가 7 이상이면 danger, 3 이상이면 warn, 그 밖에는 default다. 화면이 이 값을 색으로 그대로 그리므로 다른 낱말(urgent·high·red 등)을 만들지 않는다."
+        }
+      ],
+      "connectionMapping": {
+        "estimate-path-cost": {
+          "targetType": "parse"
+        }
+      }
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "instruct",
+          "name": "estimate-path-cost"
+        }
+      }
+    ]
+  }
+}
