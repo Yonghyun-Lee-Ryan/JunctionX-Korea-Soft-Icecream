@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>제안서 — AX 진단-컨설팅 통합 서비스 개발 (가상)</title>
+<style>
+  body { font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+         line-height: 1.75; margin: 40px auto; max-width: 820px; color: #111; }
+  h1 { font-size: 24px; border-bottom: 3px solid #333; padding-bottom: 10px; }
+  h2 { font-size: 19px; margin-top: 38px; border-left: 5px solid #444; padding-left: 10px; }
+  h3 { font-size: 16px; margin-top: 26px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid #999; padding: 7px 9px; vertical-align: top; }
+  th { background: #f0f0f0; }
+  .banner { border: 2px solid #b00; background: #fff4f4; padding: 12px 16px; margin-bottom: 26px;
+            font-weight: bold; color: #b00; }
+  .pagenum { text-align: center; color: #777; font-size: 12px; margin: 30px 0 6px; }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  ⚠️ 가상 문서 — Solar for Bid 데모 입력용으로 지어낸 제안서입니다.
+  ㈜다온피엠씨는 실재하지 않는 가상 회사이며, 이 문서는 실제 입찰에 제출된 적이 없습니다.
+</div>
+
+<h1>제 안 서</h1>
+
+<table>
+  <tr><th style="width:22%">사업명</th><td>AX 진단-컨설팅 통합 서비스 개발</td></tr>
+  <tr><th>발주기관</th><td>한국과학기술정보연구원</td></tr>
+  <tr><th>공고번호</th><td>R26BK01673157-000</td></tr>
+  <tr><th>제안사</th><td>주식회사 다온피엠씨 (가상)</td></tr>
+  <tr><th>제출일</th><td>2026. 08. 24.</td></tr>
+</table>
+
+<div class="pagenum">- 1 -</div>
+
+<h2>Ⅰ. 제안개요</h2>
+
+<h3>1. 제안목적 및 배경</h3>
+<p>본 제안은 중소 제조기업의 AX 성숙도를 진단하고 그 결과를 컨설팅으로 잇는 통합 웹 서비스를
+개발하기 위한 것입니다. 당사는 공공 정보화 사업 8건의 수행 경험을 바탕으로 KISTI가 연구해 온
+AX 성숙도 진단 툴킷을 실제로 동작하는 서비스로 구현합니다.</p>
+
+<h3>2. 제안의 범위 및 전제조건</h3>
+<p>제안 범위는 진단 프레임워크 검토 자문, 하이브리드 RAG 지식베이스 및 벡터 DB 구축, 자동화
+진단-컨설팅 엔진 개발, 컨설팅 콘텐츠 생성, 웹 서비스 프로토타입 개발과 PoC 실증, 관리자 기능
+및 운영 문서화입니다. 진단 영역별 세부 평가항목은 KISTI가 제공하는 기준을 그대로 따릅니다.</p>
+
+<h3>3. 제안의 특성 및 장점</h3>
+<p>당사는 진단 결과와 컨설팅 콘텐츠 사이의 연결 규칙을 코드가 아니라 데이터로 관리합니다.
+평가항목이 바뀌어도 엔진을 다시 만들지 않고 규칙 테이블만 교체하면 됩니다.</p>
+
+<div class="pagenum">- 4 -</div>
+
+<h2>Ⅱ. 제안업체 일반</h2>
+
+<h3>1. 일반현황</h3>
+<table>
+  <tr><th>회사명</th><td>주식회사 다온피엠씨</td><th>대표자</th><td>김다온</td></tr>
+  <tr><th>설립</th><td>2009년</td><th>소재지</th><td>서울특별시</td></tr>
+  <tr><th>기업규모</th><td>중소기업</td><th>사업분야</th><td>컴퓨터관련 서비스업 (업종코드 1468)</td></tr>
+</table>
+
+<h3>2. 조직 및 인원</h3>
+<p>기술인력 68명을 보유하고 있으며 등급별로 기술사 6명, 특급 24명, 고급 19명, 중급 15명,
+초급 4명입니다.</p>
+
+<h3>4. 주요사업실적</h3>
+<table>
+  <tr><th>사업명</th><th>발주처</th><th>사업기간</th><th>계약금액</th></tr>
+  <tr><td>공공기관 정보화 PMO 용역</td><td>공공기관A</td><td>2024.03~2024.12</td><td>612,000,000원</td></tr>
+  <tr><td>지자체 정보화 ISP 수립</td><td>지자체B</td><td>2025.04~2025.11</td><td>318,000,000원</td></tr>
+  <tr><td>개인정보 영향평가 용역</td><td>공공기관C</td><td>2025.06~2025.09</td><td>84,000,000원</td></tr>
+</table>
+
+<div class="pagenum">- 12 -</div>
+
+<h2>Ⅲ. 전략 및 방법론</h2>
+
+<h3>1. 사업 이해도</h3>
+<p>본 사업의 핵심은 「진단이 컨설팅으로 이어지는가」입니다. 진단 점수만 내는 도구는 이미 많으나,
+점수에서 실행 가능한 데이터 준비 전략과 인증 절차로 이어지는 경로는 비어 있습니다.</p>
+
+<h3>2. 추진 전략</h3>
+<p>착수 4주 내 진단 프레임워크 검토를 마치고, 이후 8주 동안 엔진과 웹 서비스를 병렬로 개발하여
+PoC 실증에 2주를 확보합니다.</p>
+
+<h3>3. 적용 기술</h3>
+<p>하이브리드 RAG는 키워드 검색과 벡터 검색을 함께 사용하는 구조로 구현합니다. 향후 요구가 있을
+경우 외부 LLM 서비스와의 <strong>연계도 가능합니다</strong>.</p>
+
+<div class="pagenum">- 21 -</div>
+
+<h2>Ⅳ. 기술 및 기능</h2>
+
+<h3>1. 진단 기능 (SFR-001 ~ SFR-005)</h3>
+<p><strong>SFR-001 도메인 모드 선택 기능</strong> — 서비스 시작 화면에 「범용AX」와 「피지컬AX」 2종 모드
+선택 구분을 제공하고, 선택한 모드를 세션 전반에 유지하여 이후 진단·컨설팅 전 단계에 일괄
+적용합니다. 모드를 선택하지 않으면 다음 단계 진행을 차단하고 안내 메시지를 표시합니다.</p>
+<p><strong>SFR-002 진단그룹 자동 분류</strong> — AX 기본역량 파악 초기 질의를 제공하고, 응답값을 분석해
+A/B/C 그룹으로 자동 매칭하는 로직을 구현합니다. 그룹별로 진단 경로를 분기합니다.</p>
+<p><strong>SFR-003 AX 성숙도 진단 기능</strong> — KISTI가 제공하는 진단 영역 기준에 따라 멀티턴 질의응답
+형식의 진단을 수행합니다.</p>
+<p><strong>SFR-004 진단 채점 로직</strong> — 영역별 가중치와 환산 규칙을 규칙 테이블로 분리하여 구현하고,
+채점 근거를 응답 단위로 보존합니다.</p>
+<p><strong>SFR-005 진단 결과 대시보드</strong> — 영역별 점수, 그룹 내 상대 위치, 취약 영역을 한 화면에
+제공합니다.</p>
+
+<h3>2. 컨설팅 기능 (SFR-006 ~ SFR-007)</h3>
+<p><strong>SFR-006 AX 전환 전략 가이드 자동 생성</strong> — 진단 결과에 대응하는 전환 전략 가이드를 RAG
+기반으로 생성하고 생성 근거 문단을 함께 제시합니다.</p>
+<p><strong>SFR-007 맞춤형 데이터 전략 컨설팅</strong> — 기업의 데이터 보유 현황 응답을 기준으로 데이터
+준비 단계별 과제를 제시합니다.</p>
+
+<h3>3. 리포트 및 사용자 관리 (SFR-009 ~ SFR-010)</h3>
+<p><strong>SFR-009 통합 PDF 리포트 자동 생성</strong> — 진단 결과와 컨설팅 콘텐츠를 하나의 PDF 리포트로
+자동 생성합니다.</p>
+<p><strong>SFR-010 사용자/관리자 기능 분리</strong> — 사용자 화면과 관리자 화면을 분리하고 권한 기반으로
+접근을 통제합니다.</p>
+
+<h3>4. 인터페이스 (INR-001 ~ INR-002)</h3>
+<p><strong>INR-001 웹 표준화 인터페이스</strong> — 웹 표준을 준수하여 구현합니다.</p>
+<p><strong>INR-002 반응형 웹 UI</strong> — 데스크톱과 모바일 화면 폭에 대응하는 반응형 UI를 제공합니다.</p>
+
+<div class="pagenum">- 46 -</div>
+
+<h2>Ⅴ. 데이터</h2>
+
+<p><strong>DAR-001 데이터 구조 설계</strong> — 진단 문항, 응답, 채점 결과, 컨설팅 콘텐츠를 분리한 논리
+데이터 모델을 설계합니다.</p>
+<p><strong>DAR-002 Vector DB 기반 저장 구조</strong> — 지식베이스 문서를 청크 단위로 색인하고 벡터 DB에
+저장하는 구조를 구축합니다.</p>
+<p><strong>DAR-003 데이터 메타정보 및 출처 관리</strong> — 모든 색인 문서에 출처와 갱신 시점을 메타정보로
+붙여 관리하며, 생성 결과에 출처를 표기합니다.</p>
+<p><strong>DAR-005 기업 진단 데이터 저장 관리</strong> — 기업별 진단 이력을 보존하고 재진단 시 이전 결과와
+비교할 수 있도록 저장합니다.</p>
+
+<div class="pagenum">- 57 -</div>
+
+<h2>Ⅵ. 보안</h2>
+
+<p><strong>SER-001 사업 수행 과정 보안관리</strong> — 사업 수행 인력 전원에 대해 보안서약서를 징구하고
+반출입 통제 절차를 운영합니다.</p>
+<p><strong>SER-002 시스템 접근통제 및 사용자 인증</strong> — 역할 기반 접근통제를 적용하고 관리자 계정에
+대해서는 추가 인증을 적용합니다.</p>
+<p><strong>SER-003 응용 프로그램 및 데이터베이스 보안</strong> — 개인정보 항목은 저장 시 암호화하고 접근
+로그를 보존합니다. 정기 취약점 점검 도입은 사업 기간 중 <strong>추가로 고려할 수 있습니다</strong>.</p>
+
+<div class="pagenum">- 63 -</div>
+
+<h2>Ⅶ. 사업관리</h2>
+
+<p><strong>PMR-001 사업 수행 조직 및 역할 체계</strong> — PM 1명, 아키텍트 1명, 개발 4명, 컨설턴트 2명으로
+수행 조직을 구성하고 역할과 책임을 정의합니다.</p>
+<p><strong>PMR-002 개발 방법론 및 추진 절차</strong> — 반복형 개발 방법론을 적용하고 2주 단위 반복 주기로
+진행합니다.</p>
+<p><strong>PMR-003 단계별 산출물 작성 및 관리</strong> — 단계별 산출물 목록과 제출 일정을 착수계획서에
+포함하여 제출합니다.</p>
+<p><strong>PMR-004 요구사항 및 변경사항 관리</strong> — 요구사항 추적표를 유지하고 변경은 변경관리대장에
+기록한 뒤 발주기관 승인을 받아 반영합니다.</p>
+<p><strong>PMR-005 일정 및 진도 관리</strong> — 격주 진도보고를 실시하며, 필요시 주간 단위 보고도
+<strong>지원 가능</strong>합니다.</p>
+
+<div class="pagenum">- 71 -</div>
+
+<h2>Ⅷ. 기타</h2>
+<p>본 제안서에 기재된 내용은 계약 체결 시 계약 문서의 일부로 간주됩니다.</p>
+
+</body>
+</html>
