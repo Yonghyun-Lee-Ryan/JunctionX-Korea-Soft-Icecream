@@ -1,0 +1,414 @@
+{
+  "kind": "studio.agent-config-draft",
+  "exportedAt": "2026-08-22T00:00:00.000Z",
+  "exportedFrom": {},
+  "agentConfig": {
+    "agent_name": "Announcement 2 - Scope and Context",
+    "pipelineType": "classify-extract",
+    "documentParseConfiguration": {
+      "modelName": "document-parse",
+      "mode": "auto",
+      "ocrMode": "auto",
+      "lang": "",
+      "chartRecognition": false,
+      "coordinates": false,
+      "mergeMultipageTables": true,
+      "outputFormats": [
+        "html"
+      ],
+      "base64Encoding": []
+    },
+    "documentClassifyConfiguration": {
+      "schema": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "document-classify",
+          "schema": {
+            "type": "string",
+            "oneOf": [
+              {
+                "const": "BUILD_IMPLEMENTATION_RFP",
+                "description": "현재 입찰 대상이 정보시스템·앱·웹·인프라·플랫폼·DB·보안 등을 직접 개발·구축·도입하는 사업인 제안요청서 또는 과업문서"
+              },
+              {
+                "const": "PMO_PIA_SERVICE_SPEC",
+                "description": "현재 입찰 대상이 다른 구축사업을 관리·감독하는 PMO, 전자정부사업관리 또는 개인정보 영향평가 용역인 과업설명서·제안요청서"
+              },
+              {
+                "const": "OTHER_REVIEW_REQUIRED",
+                "description": "두 유형에 명확히 해당하지 않거나 표지·사업범위·상세 요구사항이 불충분한 문서"
+              }
+            ]
+          }
+        }
+      },
+      "modelName": "",
+      "userSystemPrompt": "표지의 현재 사업명, 현재 계약의 주요 범위, 요구사항 접두어, 입찰참가자격 순으로 판단한다. PMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
+    },
+    "informationExtractConfiguration": {
+      "modelName": "",
+      "schemas": [
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_build_scope_context",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "scope_items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "scope_role": {
+                        "type": "string",
+                        "description": "PRIMARY_CONTRACT, TARGET_PROJECT, RELATED_PROJECT 중 하나"
+                      },
+                      "service_component": {
+                        "type": "string",
+                        "description": "BUILD, PMO, PIA, COMMON, OTHER 중 하나"
+                      },
+                      "scope_category": {
+                        "type": "string",
+                        "description": "업무·시스템·서비스 범주"
+                      },
+                      "scope_item": {
+                        "type": "string",
+                        "description": "구축·관리·평가 범위 한 항목"
+                      },
+                      "responsible_party": {
+                        "type": "string",
+                        "description": "문서에 명시된 담당 주체"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "쪽 또는 절 제목"
+                      }
+                    }
+                  },
+                  "description": "현재 계약과 대상·연관사업의 범위를 역할 경계와 함께 추출한다."
+                },
+                "execution_context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "context_type": {
+                        "type": "string",
+                        "description": "GOVERNANCE, SCHEDULE, TARGET_SYSTEM, PROCESS, DATA_FLOW, TARGET_PROJECT, OTHER 중 하나"
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "도식·표·절 제목"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "구성요소·단계·역할 한 항목"
+                      },
+                      "relationships_and_flow": {
+                        "type": "string",
+                        "description": "노드 간 관계나 흐름. from -> to : relation 형식 권장"
+                      },
+                      "timing": {
+                        "type": "string",
+                        "description": "기간·순서·마일스톤"
+                      },
+                      "scope_role": {
+                        "type": "string",
+                        "description": "PRIMARY_CONTRACT, TARGET_PROJECT, RELATED_PROJECT 중 하나"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "쪽 또는 절 제목"
+                      }
+                    }
+                  },
+                  "description": "텍스트와 실질 도식에서 역할·일정·시스템·흐름을 중복 없이 구조화한다."
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "scope_role",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "service_component",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "scope_category",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "scope_item",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "responsible_party",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "context_type",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "title",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "content",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "relationships_and_flow",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "timing",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "scope_role",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 정보시스템을 직접 개발·구축·도입하는 사업의 제안요청서 또는 과업문서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[현재 계약]\n표지와 사업일반의 현재 입찰사업만 PRIMARY_CONTRACT로 둔다. 대상·관련·선행사업은 TARGET_PROJECT 또는 RELATED_PROJECT로 분리한다. document_type은 SYSTEM_BUILD, service_component는 주로 BUILD로 기록한다.\n\n[누락 금지]\n사업명·기관·기간·예산·입찰/계약방식, 목표, 범위, 요구사항 총괄표와 상세 요구사항, 인력·산출물·품질·보안·개인정보·시험·전환·교육·검수·지재권·하도급·비용 조건, 참가자격, 평가, 제출서류, 제안서 지정 목차·형식·금지표현·일정까지 문서 끝까지 확인한다. 상세 요구사항의 하위 불릿, 숫자, 기한, 각주, ※, 단, 다만, 승인·협의, 예외와 금지를 detailed_content에서 줄이지 않는다.\n\n[시각자료]\nHTML의 figurecaption과 도식 설명을 읽는다. 사업추진·운영체계도는 execution_context의 GOVERNANCE, 추진일정은 SCHEDULE, 목표시스템개념도는 TARGET_SYSTEM, 프로세스·데이터 흐름은 PROCESS·DATA_FLOW로 저장한다. 구성요소, 주체, 단계, 화살표 방향과 관계를 각각 행으로 구조화한다. 로고·장식·서명·빈 양식 이미지는 제외한다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n같은 사실을 여러 배열에 반복하지 않는다. 자격은 eligibility_rules, 평가기준은 evaluation_items, 입찰 제출과 제안서 작성 규칙은 submission_requirements, 계약 수행 조건은 execution_conditions에 둔다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식, 후속 제안 문구는 제외한다. source_reference는 좌표 대신 쪽 또는 절 제목만 기록한다.\n\n[이 Agent 전용 출력 범위]\n현재 계약, 대상사업, 연관사업의 범위를 구분하고 추진체계·일정·시스템·프로세스·데이터 흐름을 구조화한다.\n허용된 최상위 필드: scope_items, execution_context\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_pmo_scope_context",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "scope_items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "scope_role": {
+                        "type": "string",
+                        "description": "PRIMARY_CONTRACT, TARGET_PROJECT, RELATED_PROJECT 중 하나"
+                      },
+                      "service_component": {
+                        "type": "string",
+                        "description": "BUILD, PMO, PIA, COMMON, OTHER 중 하나"
+                      },
+                      "scope_category": {
+                        "type": "string",
+                        "description": "업무·시스템·서비스 범주"
+                      },
+                      "scope_item": {
+                        "type": "string",
+                        "description": "구축·관리·평가 범위 한 항목"
+                      },
+                      "responsible_party": {
+                        "type": "string",
+                        "description": "문서에 명시된 담당 주체"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "쪽 또는 절 제목"
+                      }
+                    }
+                  },
+                  "description": "현재 계약과 대상·연관사업의 범위를 역할 경계와 함께 추출한다."
+                },
+                "execution_context": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "context_type": {
+                        "type": "string",
+                        "description": "GOVERNANCE, SCHEDULE, TARGET_SYSTEM, PROCESS, DATA_FLOW, TARGET_PROJECT, OTHER 중 하나"
+                      },
+                      "title": {
+                        "type": "string",
+                        "description": "도식·표·절 제목"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "구성요소·단계·역할 한 항목"
+                      },
+                      "relationships_and_flow": {
+                        "type": "string",
+                        "description": "노드 간 관계나 흐름. from -> to : relation 형식 권장"
+                      },
+                      "timing": {
+                        "type": "string",
+                        "description": "기간·순서·마일스톤"
+                      },
+                      "scope_role": {
+                        "type": "string",
+                        "description": "PRIMARY_CONTRACT, TARGET_PROJECT, RELATED_PROJECT 중 하나"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "쪽 또는 절 제목"
+                      }
+                    }
+                  },
+                  "description": "텍스트와 실질 도식에서 역할·일정·시스템·흐름을 중복 없이 구조화한다."
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "scope_role",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "service_component",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "scope_category",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "scope_item",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "responsible_party",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "scope_items"
+              },
+              {
+                "name": "context_type",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "title",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "content",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "relationships_and_flow",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "timing",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "scope_role",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "execution_context"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 PMO·전자정부사업관리·개인정보 영향평가 용역의 과업설명서 또는 제안요청서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[계약 경계]\n표지와 사업일반의 PMO·PIA 용역이 PRIMARY_CONTRACT이며 document_type은 PMO_PIA다. 관리·평가 대상 정보시스템 구축사업은 TARGET_PROJECT다. 대상사업의 앱·웹·서버·스토리지·네트워크·플랫폼·DB·보안솔루션 개발·도입을 현재 수행사의 업무로 바꾸지 않는다. 현재 수행사가 검토·조정·점검·감독하도록 명시된 활동만 PRIMARY_CONTRACT로 둔다. service_component는 PMO, PIA, COMMON, OTHER로 구분한다.\n\n[누락 금지]\n현재 용역의 사업명·기관·기간·예산·입찰/계약방식, 목표, 대상사업 경계, PMO·PIA 범위와 방법, 요구사항 총괄표와 현재 용역 상세 요구사항, 인력·상주·산출물·보고·품질·보안·개인정보·검수·비용 조건, 참가자격, 평가, 제출서류, 제안서 작성 규칙과 일정을 문서 끝까지 확인한다. 현재 용역의 CSR·PAR·SER·QUR·COR·PMR·PSR 등만 requirements에 넣고 대상 구축사업의 ECR·SFR·PER·SIR·UIR·DAR·TER는 넣지 않는다. 상세내용의 불릿, 숫자, 기한, 각주, ※, 단, 다만, 승인·협의, 예외와 금지를 줄이지 않는다.\n\n[시각자료]\nHTML의 figurecaption과 도식 설명을 읽는다. 추진·운영체계는 GOVERNANCE, 용역·대상사업 일정은 SCHEDULE, 대상시스템 개념도는 TARGET_SYSTEM, 영향평가 절차는 PROCESS 또는 DATA_FLOW로 execution_context에 저장한다. 구성요소, 주체, 단계, 화살표 방향·관계와 scope_role을 각각 구조화한다. 로고·장식·서명·빈 양식 이미지는 제외한다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n같은 사실을 반복하지 않는다. 자격은 eligibility_rules, 평가는 evaluation_items, 입찰 제출과 제안서 작성 규칙은 submission_requirements, 계약 수행 조건은 execution_conditions에 둔다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식, 후속 제안 문구는 제외한다. source_reference는 좌표 대신 쪽 또는 절 제목만 기록한다.\n\n[이 Agent 전용 출력 범위]\n현재 계약, 대상사업, 연관사업의 범위를 구분하고 추진체계·일정·시스템·프로세스·데이터 흐름을 구조화한다.\n허용된 최상위 필드: scope_items, execution_context\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다."
+        }
+      ],
+      "categorySchemaMapping": {
+        "BUILD_IMPLEMENTATION_RFP": "extract_build_scope_context",
+        "PMO_PIA_SERVICE_SPEC": "extract_pmo_scope_context"
+      },
+      "location": false,
+      "confidenceThreshold": 0.8,
+      "manyRows": true,
+      "manyRowsThreshold": 20,
+      "manyRowsMaxRowsPerBatch": 40,
+      "manyRowsMaxConcurrent": 5
+    },
+    "pipelineEdges": [
+      {
+        "id": "e0",
+        "source": {
+          "nodeType": "parse"
+        },
+        "target": {
+          "nodeType": "classify",
+          "name": "분류-1"
+        }
+      },
+      {
+        "id": "e1",
+        "source": {
+          "nodeType": "classify",
+          "name": "분류-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_build_scope_context"
+        },
+        "condition": {
+          "conditionName": "BUILD_IMPLEMENTATION_RFP"
+        }
+      },
+      {
+        "id": "e2",
+        "source": {
+          "nodeType": "classify",
+          "name": "분류-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_pmo_scope_context"
+        },
+        "condition": {
+          "conditionName": "PMO_PIA_SERVICE_SPEC"
+        }
+      }
+    ]
+  }
+}

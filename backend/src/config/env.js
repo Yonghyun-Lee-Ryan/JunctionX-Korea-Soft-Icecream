@@ -17,6 +17,10 @@ const int = (key, fallback) => {
   const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) ? n : fallback;
 };
+const positiveInt = (key, fallback) => {
+  const value = int(key, fallback);
+  return value > 0 ? value : fallback;
+};
 
 export const env = {
   nodeEnv: str('NODE_ENV', 'development'),
@@ -32,6 +36,57 @@ export const env = {
     baseUrl: str('STUDIO_BASE_URL', 'https://api.upstage.ai'),
     pollIntervalMs: int('STUDIO_POLL_INTERVAL_MS', 3000),
     pollTimeoutMs: int('STUDIO_POLL_TIMEOUT_MS', 300000),
+  },
+
+  // 신규 workflow Agent는 기존 문서 추출과 발급 키가 다르다.
+  workflowAgents: {
+    apiKey: str('UPSTAGE_AGENT_API_KEY'),
+    rateLimitPerMinute: positiveInt('WORKFLOW_AGENT_RATE_LIMIT_PER_MINUTE', 20),
+    maxConcurrent: positiveInt('WORKFLOW_AGENT_MAX_CONCURRENT', 2),
+    baseUrl: str('STUDIO_BASE_URL', 'https://api.upstage.ai'),
+    pollIntervalMs: int('STUDIO_POLL_INTERVAL_MS', 3000),
+    // Workflow Agent는 전체 원본을 처리하므로 장시간 실행될 수 있다.
+    // 기존 문서 추출 timeout과 분리해 그쪽 동작을 바꾸지 않는다.
+    pollTimeoutMs: positiveInt('WORKFLOW_AGENT_POLL_TIMEOUT_MS', 1800000),
+    announcementExtractors: [
+      {
+        key: 'overview',
+        agentId: str('STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_ID'),
+        configId: str('STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_CONFIG'),
+      },
+      {
+        key: 'scope_context',
+        agentId: str('STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_ID'),
+        configId: str('STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_CONFIG'),
+      },
+      {
+        key: 'requirements',
+        agentId: str('STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_ID'),
+        configId: str('STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_CONFIG'),
+      },
+      {
+        key: 'eligibility_submission',
+        agentId: str('STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_ID'),
+        configId: str('STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_CONFIG'),
+      },
+      {
+        key: 'conditions_evaluation',
+        agentId: str('STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_ID'),
+        configId: str('STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_CONFIG'),
+      },
+    ],
+    companyBidFit: {
+      agentId: str('STUDIO_AGENT_COMPANY_BID_FIT_ID'),
+      configId: str('STUDIO_AGENT_COMPANY_BID_FIT_CONFIG'),
+    },
+    wpsCpDecomposer: {
+      agentId: str('STUDIO_AGENT_WPS_CP_DECOMPOSER_ID'),
+      configId: str('STUDIO_AGENT_WPS_CP_DECOMPOSER_CONFIG'),
+    },
+    submissionCompliance: {
+      agentId: str('STUDIO_AGENT_SUBMISSION_COMPLIANCE_ID'),
+      configId: str('STUDIO_AGENT_SUBMISSION_COMPLIANCE_CONFIG'),
+    },
   },
 
   g2b: {
@@ -61,6 +116,13 @@ export function envReport() {
   return {
     hasApiKey: Boolean(env.studio.apiKey),
     studioReady: Boolean(env.studio.apiKey),
+    workflowAgentsReady: Boolean(
+      env.workflowAgents.apiKey
+      && env.workflowAgents.announcementExtractors.every(({ agentId }) => agentId)
+      && env.workflowAgents.companyBidFit.agentId
+      && env.workflowAgents.wpsCpDecomposer.agentId
+      && env.workflowAgents.submissionCompliance.agentId
+    ),
     listSourceReady: Boolean(env.g2b.serviceKey),
     databaseFile: env.databaseFile,
   };

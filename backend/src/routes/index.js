@@ -3,6 +3,7 @@ import { healthRouter } from './health.routes.js';
 import { casesRouter } from './cases.routes.js';
 import { companiesRouter } from './companies.routes.js';
 import { docsRouter } from './docs.routes.js';
+import { agentsRouter } from './agents.routes.js';
 
 export const router = Router();
 
@@ -12,3 +13,4 @@ router.use('/', healthRouter);
 router.use('/api', casesRouter);
 router.use('/api', companiesRouter);
 router.use('/api', docsRouter);
+router.use('/api', agentsRouter);

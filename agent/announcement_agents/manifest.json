@@ -1,0 +1,71 @@
+{
+  "source": "Announcement Structure and WPS CP Decomposition.json",
+  "agents": [
+    {
+      "order": 1,
+      "name": "Announcement 1 - Project Overview",
+      "file": "01-overview.json",
+      "fields": [
+        "schema_version",
+        "document_type",
+        "document_form",
+        "procurement_project_name",
+        "issuer",
+        "project_period",
+        "budget",
+        "bid_method",
+        "contract_method",
+        "primary_supplier_role",
+        "project_objectives",
+        "source_documents"
+      ],
+      "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_ID",
+      "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_OVERVIEW_CONFIG"
+    },
+    {
+      "order": 2,
+      "name": "Announcement 2 - Scope and Context",
+      "file": "02-scope_context.json",
+      "fields": [
+        "scope_items",
+        "execution_context"
+      ],
+      "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_ID",
+      "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_SCOPE_CONTEXT_CONFIG"
+    },
+    {
+      "order": 3,
+      "name": "Announcement 3 - Requirements",
+      "file": "03-requirements.json",
+      "fields": [
+        "requirement_count",
+        "requirement_summary",
+        "requirements"
+      ],
+      "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_ID",
+      "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_REQUIREMENTS_CONFIG"
+    },
+    {
+      "order": 4,
+      "name": "Announcement 4 - Eligibility and Submission",
+      "file": "04-eligibility_submission.json",
+      "fields": [
+        "eligibility_rules",
+        "submission_requirements"
+      ],
+      "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_ID",
+      "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_ELIGIBILITY_SUBMISSION_CONFIG"
+    },
+    {
+      "order": 5,
+      "name": "Announcement 5 - Conditions and Evaluation",
+      "file": "05-conditions_evaluation.json",
+      "fields": [
+        "execution_conditions",
+        "evaluation_items"
+      ],
+      "agentIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_ID",
+      "configIdEnv": "STUDIO_AGENT_ANNOUNCEMENT_CONDITIONS_EVALUATION_CONFIG"
+    }
+  ]
+}

@@ -20,6 +20,9 @@ const server = app.listen(env.port, () => {
   }
 });
 
+// Node 기본 requestTimeout(5분)이 긴 Workflow Agent 요청을 먼저 끊지 않게 한다.
+server.requestTimeout = env.workflowAgents.pollTimeoutMs + 30_000;
+
 function shutdown(signal) {
   logger.info('shutdown', { signal });
   server.close(() => { closeDb(); process.exit(0); });

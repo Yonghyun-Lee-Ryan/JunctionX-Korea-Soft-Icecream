@@ -28,6 +28,7 @@ export const openapiSpec = swaggerJsdoc({
       { name: 'companies', description: 'S1 회사 서류 → 카드, S2~S4 스크리닝' },
       { name: 'cases', description: 'S1 수집 · S2~S5 팩트시트 · 산출물' },
       { name: 'docs', description: '회사 서류 PDF 1장 → 8갈래 판정 → 에이전트 추출' },
+      { name: 'agents', description: 'Upstage workflow Agent 파일 실행 API' },
     ],
     components,
   },
