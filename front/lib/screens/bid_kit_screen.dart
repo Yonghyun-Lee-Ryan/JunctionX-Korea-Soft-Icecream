@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -18,6 +20,8 @@ import '../widgets/dropzone_card.dart';
 ///    한 탭을 어떤 «모양»으로 그릴지도 서버가 준 `kind`가 정한다 — 화면이 탭 id를 보고
 ///    «이건 원가 카드»라고 판단하지 않는다. 그래야 패널이 늘어도 이 파일이 안 바뀐다.
 /// 🔴 아직 만들어지지 않은 탭은 「아직 없음」이라고 말한다 — 0건으로 그리지 않는다.
+/// 🔴 봉투가 분석 중(collecting/parsing/judging)이면 `pollInterval` 마다 다시 묻는다 — 첨부 수집·공고 해부·판정은
+///    수 분이 걸리고, 서버는 그동안 progress[] 로 어느 단계인지 말한다. done/failed 가 되면 멈춘다.
 class BidKitScreen extends StatefulWidget {
   const BidKitScreen({
     super.key,
@@ -29,6 +33,9 @@ class BidKitScreen extends StatefulWidget {
     this.daysLeft,
     this.onBack,
   });
+
+  /// 분석 중일 때 다시 묻는 간격
+  static const pollInterval = Duration(seconds: 4);
 
   final DocsApi api;
   final String caseId;
@@ -45,29 +52,68 @@ class BidKitScreen extends StatefulWidget {
 }
 
 class _BidKitScreenState extends State<BidKitScreen> {
-  late Future<Factsheet> _future;
+  Factsheet? _data;
+  Object? _error;
+  Timer? _poll;
   int _page = 0;
 
   @override
   void initState() {
     super.initState();
-    _future = widget.api.factsheet(widget.caseId);
+    _load();
   }
 
-  void _reload() => setState(() => _future = widget.api.factsheet(widget.caseId));
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
+  }
+
+  void _load() {
+    _poll?.cancel();
+    _poll = null;
+    widget.api.factsheet(widget.caseId).then(_accept, onError: (Object e) {
+      if (!mounted) return;
+      // 🔴 폴링 중 한 번 실패한 건 다음 턴에 다시 묻는다 — 이미 보이는 화면을 오류로 바꾸지 않는다
+      if (_data != null && _data!.isInProgress) {
+        _schedule();
+        return;
+      }
+      setState(() => _error = e);
+    });
+  }
+
+  void _accept(Factsheet f) {
+    if (!mounted) return;
+    setState(() {
+      _data = f;
+      _error = null;
+    });
+    if (f.isInProgress) _schedule();
+  }
+
+  void _schedule() {
+    _poll?.cancel();
+    _poll = Timer(BidKitScreen.pollInterval, _load);
+  }
+
+  void _reload() {
+    setState(() => _error = null);
+    _load();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: AppColors.canvas,
         body: SafeArea(
-          child: FutureBuilder<Factsheet>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done) {
+          child: Builder(
+            builder: (context) {
+              final data = _data;
+              if (data == null && _error == null) {
                 return const Center(child: CircularProgressIndicator(color: AppColors.primary));
               }
-              if (snap.hasError) {
-                final e = snap.error;
+              if (data == null) {
+                final e = _error;
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(40),
@@ -91,7 +137,7 @@ class _BidKitScreenState extends State<BidKitScreen> {
                   ),
                 );
               }
-              return _body(snap.data!);
+              return _body(data);
             },
           ),
         ),
@@ -182,6 +228,41 @@ class _BidKitScreenState extends State<BidKitScreen> {
                 const SizedBox(height: 8),
                 // 🔴 캐시라는 사실을 먼저 말한다
                 const AppChip.warn('캐시 결과'),
+              ],
+              // 🔴 분석 중이면 어느 단계인지 말한다 — 도는 원만 보여 주지 않는다
+              if (f.isInProgress) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text('분석 중 — ${f.runningStep ?? '잠시만 기다려 주세요'}',
+                          style: AppText.kitMeta, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
+              ],
+              // 🔴 실패는 서버가 준 문장 그대로. 다시 돌리는 길은 목록의 「응찰하러 가기」다
+              if (f.isFailed) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    const AppChip.danger('분석 실패'),
+                    Text(
+                      '${f.errorMessage ?? '문서 분석이 끝나지 못했습니다.'} 다시 돌리려면 응찰 목록에서 「응찰하러 가기」를 다시 누르세요.',
+                      style: AppText.kitMeta,
+                    ),
+                  ],
+                ),
               ],
             ],
           ),

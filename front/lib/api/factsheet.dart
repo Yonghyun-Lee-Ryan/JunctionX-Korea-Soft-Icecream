@@ -19,9 +19,12 @@ class Factsheet {
     this.org,
     this.deadline,
     this.daysLeft,
+    this.errorMessage,
   });
 
   final String caseId;
+
+  /// collecting | parsing | judging | done | failed
   final String status;
   final Verdict verdict;
   final List<KitTab> tabs;
@@ -42,6 +45,21 @@ class Factsheet {
   final String? org;
   final String? deadline;
   final int? daysLeft;
+
+  /// 🔴 status == failed 일 때 서버가 준 문장. 프론트가 문장을 짓지 않는다
+  final String? errorMessage;
+
+  /// 첨부 수집 → 공고 해부 → 판정이 아직 도는 중 — 화면은 이 동안 폴링한다
+  bool get isInProgress => const {'collecting', 'parsing', 'judging'}.contains(status);
+  bool get isFailed => status == 'failed';
+
+  /// 지금 도는 단계 이름 (progress[].state == running)
+  String? get runningStep {
+    for (final p in progress) {
+      if (p.state == 'running') return p.step;
+    }
+    return null;
+  }
 
   KitTab? tab(String id) {
     for (final t in tabs) {
@@ -85,6 +103,7 @@ class Factsheet {
       org: j['org'] as String?,
       deadline: j['deadline'] as String?,
       daysLeft: (j['daysLeft'] as num?)?.toInt(),
+      errorMessage: j['error'] is Map ? _text((j['error'] as Map)['message']) : null,
     );
   }
 }

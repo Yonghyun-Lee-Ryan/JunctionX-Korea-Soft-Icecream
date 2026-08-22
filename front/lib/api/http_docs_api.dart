@@ -11,10 +11,11 @@ import 'models.dart';
 
 /// `backend`의 `POST /api/docs/upload`에 붙는다.
 class HttpDocsApi implements DocsApi {
-  HttpDocsApi({String? baseUrl, http.Client? client, Duration? timeout})
+  HttpDocsApi({String? baseUrl, http.Client? client, Duration? timeout, DateTime Function()? clock})
       : baseUrl = (baseUrl ?? defaultBaseUrl).replaceAll(RegExp(r'/+$'), ''),
         timeout = timeout ?? defaultTimeout,
-        _client = client ?? http.Client();
+        _client = client ?? http.Client(),
+        _clock = clock ?? DateTime.now;
 
   /// `--dart-define=API_BASE_URL=https://...` 로 덮어쓴다
   static const defaultBaseUrl = String.fromEnvironment(
@@ -30,9 +31,16 @@ class HttpDocsApi implements DocsApi {
   /// 백엔드 multer 제한과 같은 값. 넘으면 요청조차 보내지 않는다
   static const maxUploadBytes = 30 * 1024 * 1024;
 
+  /// 🔴 Upstage 크레딧 — 끝난 봉투(status=done)는 10분 동안 다시 묻지 않는다.
+  ///    서버도 같은 케이스를 7일 동안 다시 돌리지 않지만, 탭을 오가며 생기는 왕복 자체를 줄인다.
+  ///    분석 중인 봉투(collecting/parsing/judging)는 폴링이 새 상태를 봐야 하므로 캐시하지 않는다.
+  static const factsheetCacheTtl = Duration(minutes: 10);
+
   final String baseUrl;
   final Duration timeout;
   final http.Client _client;
+  final DateTime Function() _clock;
+  final Map<String, (Factsheet, DateTime)> _factsheetCache = {};
 
   @override
   Future<DocUploadResult> upload(PickedDoc doc) async {
@@ -136,19 +144,36 @@ class HttpDocsApi implements DocsApi {
               'companyId': ?companyId,
             })),
           );
-          return _decode(res, Factsheet.fromJson);
+          // 🔴 7일 안에 끝난 케이스는 서버가 200 으로 봉투를 그대로 준다 — 그게 바로 캐시가 된다
+          return _remember(_decode(res, Factsheet.fromJson));
         },
         timeout: const Duration(seconds: 60),
       );
 
   @override
-  Future<Factsheet> factsheet(String caseId) => _guard(
-        () async {
-          final res = await _client.get(Uri.parse('$baseUrl/api/cases/$caseId'));
-          return _decode(res, Factsheet.fromJson);
-        },
-        timeout: const Duration(seconds: 30),
-      );
+  Future<Factsheet> factsheet(String caseId) async {
+    final hit = _factsheetCache[caseId];
+    if (hit != null && _clock().difference(hit.$2) < factsheetCacheTtl) return hit.$1;
+    return _guard(
+      () async {
+        final res = await _client.get(Uri.parse('$baseUrl/api/cases/$caseId'));
+        return _remember(_decode(res, Factsheet.fromJson));
+      },
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
+  Factsheet _remember(Factsheet f) {
+    if (f.status == 'done') {
+      _factsheetCache[f.caseId] = (f, _clock());
+    } else {
+      _factsheetCache.remove(f.caseId);
+    }
+    return f;
+  }
+
+  /// 캐시를 비운다 — 다시 돌린 케이스를 바로 보고 싶을 때
+  void forgetFactsheet(String caseId) => _factsheetCache.remove(caseId);
 
   @override
   Future<void> saveBid(String companyId, ShortlistItem item) => _guard(

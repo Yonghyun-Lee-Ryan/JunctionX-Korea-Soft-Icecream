@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:solar_for_bid/api/card_view.dart';
 import 'package:solar_for_bid/api/factsheet.dart';
 import 'package:solar_for_bid/main.dart';
+import 'package:solar_for_bid/screens/bid_kit_screen.dart';
 import 'package:solar_for_bid/services/document_picker.dart';
 import 'package:solar_for_bid/state/company_registration_controller.dart';
 
@@ -177,6 +178,39 @@ void main() {
     expect(find.text('응찰하러 가기'), findsOneWidget);
   });
 
+  // ── 분석 중 폴링 ───────────────────────────────────────
+  testWidgets('🔴 분석 중이면 진행 단계를 말하며 폴링하고, 끝나면 탭이 채워진다', (t) async {
+    addTearDown(t.view.reset);
+    final api = _PollingApi();
+    await _toKit(t, api: api);
+
+    // 첫 봉투는 judging — 탭은 「준비 중」, 어느 단계인지 말한다
+    expect(find.textContaining('문서 종류 분류'), findsOneWidget);
+    expect(find.text('입찰참가신청서'), findsNothing);
+    expect(api.factsheetCalls, 1);
+
+    // 🔴 4초마다 다시 묻는다. (settle 은 가짜 시계를 3초 더 미니 여기서는 pump 로만 센다)
+    await t.pump(BidKitScreen.pollInterval);
+    expect(api.factsheetCalls, 2);
+
+    await t.pump(BidKitScreen.pollInterval);
+    await t.pump();
+    expect(api.factsheetCalls, 3);
+    // 끝났다 — 폴링이 멎고 파일제출 탭이 채워진다
+    expect(find.textContaining('문서 종류 분류'), findsNothing);
+    expect(find.text('입찰참가신청서'), findsOneWidget);
+
+    await t.pump(BidKitScreen.pollInterval * 2);
+    expect(api.factsheetCalls, 3, reason: 'done 이면 더 묻지 않는다');
+  });
+
+  testWidgets('🔴 실패한 케이스는 서버가 준 이유를 보여 주고 다시 돌리는 길을 말한다', (t) async {
+    addTearDown(t.view.reset);
+    await _toKit(t, api: _FailedApi());
+    expect(find.textContaining('제안요청서를 찾지 못했습니다'), findsOneWidget);
+    expect(find.textContaining('응찰하러 가기'), findsOneWidget);
+  });
+
   group('봉투 견고성', _envelopeRobustness);
 
   testWidgets('🔴 폭을 훑어도 오버플로 0건', (t) async {
@@ -328,4 +362,65 @@ void _envelopeRobustness() {
     expect(t.alignRight(2), isTrue);
     expect(t.alignRight(0), isFalse);
   });
+}
+
+/// 분석 중인 서버 — 두 번은 judging, 세 번째에 done.
+class _PollingApi extends FakeApi {
+  _PollingApi() : super(company: const CurrentCompany(exists: true, companyId: 'co_x'));
+  int factsheetCalls = 0;
+
+  Factsheet _judging(String caseId) => Factsheet.fromJson({
+        'caseId': caseId,
+        'status': 'judging',
+        'verdict': {'badge': 'eligible'},
+        'tabs': const [],
+        'downloads': const [],
+        'progress': [
+          {'step': '첨부 수집', 'state': 'done', 'detail': '첨부 5건'},
+          {'step': '문서 읽기', 'state': 'done'},
+          {'step': '문서 종류 분류', 'state': 'running'},
+          {'step': '요구사항 추출·판정', 'state': 'pending'},
+        ],
+        'meta': {'cached': false, 'kitPages': sampleFactsheet(caseId).pages.map((p) => {'id': p.id, 'label': p.label, 'kind': p.kind, 'tabs': [for (final x in p.tabs) {'id': x.id, 'column': x.column}]}).toList()},
+      });
+
+  @override
+  Future<Factsheet> createCase({required String bidPbancNo, String bidPbancOrd = '000', String? companyId}) async {
+    createdCases.add('$bidPbancNo-$bidPbancOrd');
+    return _judging('$bidPbancNo-$bidPbancOrd');
+  }
+
+  @override
+  Future<Factsheet> factsheet(String caseId) async {
+    factsheetCalls++;
+    return factsheetCalls < 3 ? _judging(caseId) : sampleFactsheet(caseId);
+  }
+}
+
+/// 파이프라인이 죽은 서버.
+class _FailedApi extends FakeApi {
+  _FailedApi() : super(company: const CurrentCompany(exists: true, companyId: 'co_x'));
+
+  Factsheet _failed(String caseId) => Factsheet.fromJson({
+        'caseId': caseId,
+        'status': 'failed',
+        'verdict': {'badge': 'eligible'},
+        'tabs': const [],
+        'downloads': const [],
+        'progress': [
+          {'step': '첨부 수집', 'state': 'done'},
+          {'step': '문서 읽기', 'state': 'failed'},
+        ],
+        'error': {'code': 'E_RFP_NOT_FOUND', 'message': '공고 첨부에서 제안요청서를 찾지 못했습니다.'},
+        'meta': {'cached': false, 'kitPages': const []},
+      });
+
+  @override
+  Future<Factsheet> createCase({required String bidPbancNo, String bidPbancOrd = '000', String? companyId}) async {
+    createdCases.add('$bidPbancNo-$bidPbancOrd');
+    return _failed('$bidPbancNo-$bidPbancOrd');
+  }
+
+  @override
+  Future<Factsheet> factsheet(String caseId) async => _failed(caseId);
 }
