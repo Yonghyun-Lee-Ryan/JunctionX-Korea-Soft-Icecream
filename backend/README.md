@@ -41,12 +41,101 @@ GET    /api/companies/{companyId}
 GET    /api/companies/{companyId}/screening                 # S2~S4 추천 목록 + 분모
 PUT    /api/companies/{companyId}/screening/{caseId}/decision   # 🚪 사람 게이트 (go/skip)
 
+POST   /api/docs/upload                                     # 🔴 PDF 1장 → 8갈래 판정 → 에이전트 추출 (동기)
+GET    /api/docs/types                                      # 지원 8종 + 에이전트 연결 상태
+
 POST   /api/cases                                           # S1 공고번호 → 첨부 수집 시작 (202)
 GET    /api/cases/{caseId}                                  # 팩트시트 봉투 (화면②·④가 폴링)
 GET    /api/cases/{caseId}/files/{tabId}.xlsx               # 산출물
 ```
 
 🔴 **`/api/cases/` 복수형으로 통일한다.** 이미 커밋된 `factsheet.demo.json`의 `downloads[].url`이 복수형이고 그쪽이 정본이다 (WBS 결정 12).
+
+## POST /api/docs/upload — 회사 서류 1장 → JSON
+
+PDF를 올리면 **8갈래 중 어느 것인지 가르고**, 그 갈래의 **Studio 에이전트**를 불러 값을 뽑아 돌려준다. 동기 응답이다.
+
+```bash
+curl -X POST -F "file=@사업자등록증.pdf" http://localhost:3000/api/docs/upload
+```
+
+### ① 분류는 백엔드가 규칙으로 한다
+
+PDF 텍스트를 읽어 표제로 판정한다. API 호출 0회 · 100ms 안쪽 · 무료다.
+
+> [!IMPORTANT]
+> 🔴 **매칭 전에 모든 공백을 지운다.** 이 서식들은 제목에 자간이 들어가서 추출 결과가
+> 「사 업 자 등 록 증」으로 나온다 — 공백을 두면 **하나도 안 걸린다.**
+>
+> 🔴 **표제는 문서 앞부분에서 걸릴 때만 제 무게를 갖는다.** 지정서 각주의
+> *"현재 현황은 「기술인력 보유현황」을 따릅니다"* 가 실제로 남의 갈래를 훔쳤다.
+>
+> 🔴 **판정이 서지 않으면 아무 에이전트도 돌리지 않는다.** 422 + 후보를 돌려준다.
+> 엉뚱한 에이전트를 돌리면 **그럴듯하게 틀린 JSON**이 나오고, 그게 제일 나쁘다.
+
+견본 8종 전부 `high`로 통과한다 (`npm test`).
+
+| 갈래 | key | 에이전트 env |
+|---|---|---|
+| 사업자등록증 | `biz_reg` | `STUDIO_AGENT_BIZ_REG` |
+| 중소기업확인서 | `sme_cert` | `STUDIO_AGENT_SME_CERT` |
+| 신용평가등급확인서 | `credit_rating` | `STUDIO_AGENT_CREDIT_RATING` |
+| 개인정보 영향평가기관 지정서 | `pia_designation` | `STUDIO_AGENT_PIA_DESIGNATION` |
+| 소프트웨어사업자 신고확인서 | `sw_business` | `STUDIO_AGENT_SW_BUSINESS` |
+| 실적증명서 | `performance` | `STUDIO_AGENT_PERFORMANCE` |
+| 재무제표 | `financial` | `STUDIO_AGENT_FINANCIAL` |
+| 기술인력 보유현황 | `tech_staff` | `STUDIO_AGENT_TECH_STAFF` |
+
+### ② 에이전트 호출 — 2026-08-22 실호출로 확정
+
+```
+POST {base}/v2/files           multipart(file, purpose=assistants)      → file_id
+POST {base}/v2/responses       { model: <agentId>, input:[input_file] } → job_... (in_progress)
+GET  {base}/v2/responses/{id}  폴링 → completed
+```
+
+- 🔴 **`model`에 에이전트 ID를 넣는다.** OpenAI 호환 responses API다
+- 🔴 webhook 없음 — 폴링. 실측 **8~10초/건**
+- 🔴 결과 JSON은 `output[].content[].text`에 **문자열**로 온다
+- 🟢 같은 자리 `additional_values`에 **필드별 confidence · page · coordinates**가 실려 온다
+
+🔴 `studio.upstage.ai/api/agents/{id}/run`은 **로그인 세션 전용(401)**이라 서버에서 못 쓴다. 공개 에이전트 조회(`GET /api/agents/{id}`)만 열려 있다.
+
+### ③ 응답
+
+```jsonc
+{
+  "uploadId": "up_11ec25ee-11a",
+  "filename": "사업자등록증.pdf",
+  "docType": {
+    "key": "biz_reg", "label": "사업자등록증",
+    "confidence": "high", "score": 22, "margin": 21,
+    "matched": ["사업자등록증", "법인사업자", "세무서장", …],
+    "candidates": [{ "key": "biz_reg", "score": 22 }, { "key": "sw_business", "score": 1 }]
+  },
+  "extraction": {
+    "data": { "등록번호": "120-86-01230", … },          // 에이전트 JSON 그대로
+    "fields": { "등록번호": { "confidence": "high", "page": 1, "coordinates": [...] } },
+    "confidence": "unknown",                            // 🔴 하나라도 low면 low
+    "confidenceCounts": { "high": 15, "low": 0, "unknown": 1 },
+    "lowFields": []                                     // 화면이 ⚠를 여기에 단다
+  },
+  "meta": { "source": "agent", "agentId": "agt_…", "jobId": "job_…", "elapsedMs": 7899, … }
+}
+```
+
+🔴 **배열 필드에는 confidence가 실려 오지 않아 `unknown`이 남는다.** 그 수를 숨기지 않고
+`confidenceCounts`로 낸다 — 「16개 중 low 0건, unknown 1건」이 `unknown` 한 단어보다 정직하다.
+
+### 오류
+
+| code | status | 언제 |
+|---|---:|---|
+| `E_FILE_REQUIRED` | 400 | 파일이 없다 |
+| `E_UNSUPPORTED_FILE` | 415 | PDF가 아니거나 열리지 않는다 |
+| `E_DOC_TYPE_UNKNOWN` | 422 | 판정이 서지 않았다 · 스캔본이라 글자가 없다 |
+| `E_AGENT_NOT_SET` | 503 | 그 갈래의 에이전트 ID가 `.env`에 없다 |
+| `E_STUDIO_TIMEOUT` | 504 | 폴링이 시간을 넘겼다 |
 
 ## 구조
 
@@ -56,6 +145,8 @@ src/
 ├── app.js                 express 조립 (테스트가 listen 없이 쓴다)
 ├── config/
 │   ├── env.js             🔴 절대 throw 하지 않는다 — 키가 없어도 부팅해야 한다
+│   ├── docTypes.js        🔴 8갈래 정의 + 표제/단서/deny + normalize
+│   ├── agents.js          🔴 에이전트 ID를 넣는 유일한 자리
 │   └── logger.js          JSON 한 줄 로거 + 요청 로거 (의존성 0)
 ├── db/
 │   ├── index.js           better-sqlite3 · WAL · foreign_keys ON
@@ -67,11 +158,15 @@ src/
 │   ├── case.repo.js
 │   └── company.repo.js
 ├── services/              봉투 조립 · 외부 연동
+│   ├── docs.service.js      🔴 업로드 오케스트레이션 — 텍스트 → 분류 → 에이전트
+│   ├── pdfText.service.js   unpdf로 텍스트 레이어 추출
+│   ├── classify.service.js  🔴 규칙 분류. 서지 않으면 고르지 않는다
+│   ├── schema.service.js    fixtures/extract/*.json에서 스키마 역산
 │   ├── case.service.js      🔴 봉투 조회는 이 함수 하나를 통한다 (캐시 분기가 한 곳에)
 │   ├── screening.service.js
 │   ├── fixture.service.js   캐시 봉투 로더
 │   ├── g2b.service.js       나라장터 첨부 수집
-│   ├── studio.service.js    Upstage Studio 업로드·Job·폴링
+│   ├── studio.service.js    🔴 Upstage v2 — files → responses → 폴링 → 파싱
 │   └── xlsx.service.js      🔴 탭별 빌더 없음 — 제너릭 한 벌
 ├── controllers/           HTTP ↔ 서비스
 ├── routes/                @openapi 주석이 여기 산다
@@ -116,17 +211,20 @@ bid_case ─┬─ case_progress   (seq 순서가 의미다)
 | 🔴 G2B가 **UA 없으면 500** | `env.g2b.userAgent` 기본값을 비워 두지 않았다 |
 | 🟢 G2B **422 = 종료 신호** | `collectAttachments`가 422에서 루프를 멈춘다 |
 | 🔴 파일명이 **percent-encoded UTF-8** | `decodeFilename()` — RFC 5987 `filename*`과 평문 둘 다. 테스트 3건 |
-| 🔴 Studio에 **webhook 없음** | `pollJob()` 폴링 + 타임아웃. 넘기면 캐시로 떨어진다 |
+| 🔴 Studio에 **webhook 없음** | `pollResponse()` 폴링 + 타임아웃. 실측 8~10초/건 |
+| 🔴 서식 제목의 **자간** | 「사 업 자 등 록 증」 — `normalize()`가 공백을 지운 뒤 매칭한다 |
 
 ## 테스트
 
 ```bash
-npm test        # node:test — 7건
+npm test        # node:test — 18건 (분류 8종 실PDF 포함)
 ```
 
 ## 다음에 채울 자리
 
-- [ ] `services/studio.service.js` 실제 엔드포인트 경로 — Studio `</> Code` 스니펫 받은 뒤 확정
+- [x] ~~`services/studio.service.js` 실제 엔드포인트 경로~~ ✅ v2 responses API로 확정 (2026-08-22)
+- [ ] `POST /api/docs/upload` 결과를 `company_document` · `company.card_json`에 적재
+- [ ] 스캔본 대응 — 텍스트가 없으면 `document-digitization`(OCR)로 한 번 파싱한 뒤 분류
 - [ ] `POST /api/cases` 이후 파이프라인 — 업로드 → Job → 폴링 → `case_tab` 채우기
 - [ ] 🔴 **검산은 Node가 다시 센다** — Instruct가 자기 출력에 쓴 숫자를 화면·파일에 쓰지 않는다 (WBS 3.3)
 - [ ] `errors/codes.js` ← `04_계약/error-codes.md` (정운)

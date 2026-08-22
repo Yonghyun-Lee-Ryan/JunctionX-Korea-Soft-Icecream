@@ -27,6 +27,74 @@ export const components = {
       },
     },
 
+    DocUpload: {
+      type: 'object',
+      required: ['uploadId', 'filename', 'docType', 'extraction'],
+      properties: {
+        uploadId: { type: 'string', example: 'up_3f2a9c1b4d5e' },
+        filename: { type: 'string', example: '사업자등록증.pdf' },
+        bytes: { type: 'integer' },
+        docType: {
+          type: 'object',
+          description: '🔴 규칙 분류 결과. key가 null이면 판정하지 않은 것이다',
+          properties: {
+            key: { type: 'string', enum: ['biz_reg', 'sme_cert', 'credit_rating', 'pia_designation', 'sw_business', 'performance', 'financial', 'tech_staff'] },
+            label: { type: 'string', example: '사업자등록증' },
+            confidence: { type: 'string', enum: ['high', 'low', 'unknown'] },
+            score: { type: 'integer' },
+            margin: { type: 'integer', description: '1등과 2등의 점수 차. 좁으면 판정하지 않는다' },
+            matched: { type: 'array', items: { type: 'string' }, description: '걸린 표제·단서' },
+            candidates: {
+              type: 'array',
+              items: { type: 'object', properties: { key: { type: 'string' }, label: { type: 'string' }, score: { type: 'integer' } } },
+            },
+          },
+        },
+        extraction: {
+          type: 'object',
+          properties: {
+            data: { type: 'object', description: '에이전트가 뽑은 JSON 그대로', additionalProperties: true },
+            raw: { type: 'string', description: 'JSON 파싱에 실패했을 때만. 원문을 버리지 않는다' },
+            fields: {
+              type: 'object',
+              description: '🟢 필드별 confidence · 근거 쪽 · 좌표',
+              additionalProperties: {
+                type: 'object',
+                properties: {
+                  confidence: { type: 'string', enum: ['high', 'low', 'unknown'] },
+                  page: { type: 'integer', description: '근거 쪽. 모르면 0' },
+                  coordinates: { type: 'array', items: { type: 'object' } },
+                },
+              },
+            },
+            confidence: { type: 'string', enum: ['high', 'low', 'unknown'], description: '🔴 하나라도 low면 low' },
+            confidenceCounts: {
+              type: 'object',
+              description: '배열 필드에는 confidence가 실려 오지 않아 unknown이 남는다. 그 수를 숨기지 않는다',
+              properties: { high: { type: 'integer' }, low: { type: 'integer' }, unknown: { type: 'integer' } },
+            },
+            lowFields: { type: 'array', items: { type: 'string' }, description: '🔴 low인 필드 이름 — 화면이 ⚠를 여기에 단다' },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            source: { type: 'string', enum: ['agent', 'fixture'] },
+            cached: { type: 'boolean' },
+            agentId: { type: 'string', example: 'agt_bzDccT6TnfW5hmiyTQBUoG' },
+            configId: { type: 'string', nullable: true },
+            jobId: { type: 'string', example: 'job_Hskfqw9nMbWRaKJ3FsJLq3' },
+            fileId: { type: 'string' },
+            stepModel: { type: 'string', example: 'step_2_extract' },
+            agentCacheHit: { type: 'boolean' },
+            pages: { type: 'integer' },
+            textChars: { type: 'integer' },
+            elapsedMs: { type: 'integer' },
+          },
+        },
+      },
+    },
+
     Factsheet: {
       type: 'object',
       required: ['caseId', 'status', 'verdict', 'tabs', 'downloads'],

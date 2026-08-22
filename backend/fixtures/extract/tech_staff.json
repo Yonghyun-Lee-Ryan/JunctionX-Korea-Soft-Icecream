@@ -1,0 +1,901 @@
+{
+  "company_name": "주식회사 다온피엠씨",
+  "reference_date": "2026-08-21",
+  "total_personnel_count": 68,
+  "regular_employee_ratio_percent": 73.5,
+  "technical_grade_holding_status": [
+    {
+      "technical_grade": "기술사",
+      "regular_employee_count": 6,
+      "contract_employee_count": 0,
+      "total_count": 6,
+      "composition_ratio_percent": 8.8,
+      "total_career_range": "20 ~ 24년"
+    },
+    {
+      "technical_grade": "특급",
+      "regular_employee_count": 18,
+      "contract_employee_count": 6,
+      "total_count": 24,
+      "composition_ratio_percent": 35.3,
+      "total_career_range": "13 ~ 21년"
+    },
+    {
+      "technical_grade": "고급",
+      "regular_employee_count": 15,
+      "contract_employee_count": 4,
+      "total_count": 19,
+      "composition_ratio_percent": 27.9,
+      "total_career_range": "9~13년"
+    },
+    {
+      "technical_grade": "중급",
+      "regular_employee_count": 9,
+      "contract_employee_count": 6,
+      "total_count": 15,
+      "composition_ratio_percent": 22.1,
+      "total_career_range": "5~9년"
+    },
+    {
+      "technical_grade": "초급",
+      "regular_employee_count": 2,
+      "contract_employee_count": 2,
+      "total_count": 4,
+      "composition_ratio_percent": 5.9,
+      "total_career_range": "1 ~ 1년"
+    },
+    {
+      "technical_grade": "합계",
+      "regular_employee_count": 50,
+      "contract_employee_count": 18,
+      "total_count": 68,
+      "composition_ratio_percent": 100,
+      "total_career_range": ""
+    }
+  ],
+  "qualification_holding_status": [
+    {
+      "qualification_name": "정보관리기술사",
+      "holder_count": 6
+    },
+    {
+      "qualification_name": "정보시스템감리사",
+      "holder_count": 5
+    },
+    {
+      "qualification_name": "PMP",
+      "holder_count": 14
+    },
+    {
+      "qualification_name": "CISA",
+      "holder_count": 4
+    },
+    {
+      "qualification_name": "CPPG",
+      "holder_count": 8
+    },
+    {
+      "qualification_name": "정보처리기사",
+      "holder_count": 22
+    },
+    {
+      "qualification_name": "ISO 27001 심사원",
+      "holder_count": 3
+    }
+  ],
+  "assignment_status_by_responsibility": [
+    {
+      "responsibility_area": "사업관리(PMO)",
+      "engineer_count": 2,
+      "special_grade_count": 10,
+      "advanced_grade_count": 11,
+      "intermediate_grade_count": 9,
+      "entry_grade_count": 2,
+      "total_count": 34
+    },
+    {
+      "responsibility_area": "정보시스템 감리",
+      "engineer_count": 1,
+      "special_grade_count": 3,
+      "advanced_grade_count": 4,
+      "intermediate_grade_count": 1,
+      "entry_grade_count": 0,
+      "total_count": 9
+    },
+    {
+      "responsibility_area": "ISP·컨설팅",
+      "engineer_count": 2,
+      "special_grade_count": 2,
+      "advanced_grade_count": 1,
+      "intermediate_grade_count": 3,
+      "entry_grade_count": 1,
+      "total_count": 9
+    },
+    {
+      "responsibility_area": "개인정보 영향평가",
+      "engineer_count": 0,
+      "special_grade_count": 2,
+      "advanced_grade_count": 1,
+      "intermediate_grade_count": 2,
+      "entry_grade_count": 1,
+      "total_count": 6
+    },
+    {
+      "responsibility_area": "품질·형상관리",
+      "engineer_count": 1,
+      "special_grade_count": 3,
+      "advanced_grade_count": 1,
+      "intermediate_grade_count": 0,
+      "entry_grade_count": 0,
+      "total_count": 5
+    },
+    {
+      "responsibility_area": "아키텍처·기술지원",
+      "engineer_count": 0,
+      "special_grade_count": 4,
+      "advanced_grade_count": 1,
+      "intermediate_grade_count": 0,
+      "entry_grade_count": 0,
+      "total_count": 5
+    },
+    {
+      "responsibility_area": "합계",
+      "engineer_count": 6,
+      "special_grade_count": 24,
+      "advanced_grade_count": 19,
+      "intermediate_grade_count": 15,
+      "entry_grade_count": 4,
+      "total_count": 68
+    }
+  ],
+  "technical_personnel_roster": [
+    {
+      "serial_number": 1,
+      "person_name": "문고은",
+      "position_title": "수석컨설턴트",
+      "technical_grade": "기술사",
+      "total_career_years": "23년",
+      "held_qualifications": "정보관리기술사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2011-07"
+    },
+    {
+      "serial_number": 2,
+      "person_name": "유의진",
+      "position_title": "수석컨설턴트",
+      "technical_grade": "기술사",
+      "total_career_years": "24년",
+      "held_qualifications": "정보관리기술사, CISA",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-07"
+    },
+    {
+      "serial_number": 3,
+      "person_name": "장윤슬",
+      "position_title": "수석컨설턴트",
+      "technical_grade": "기술사",
+      "total_career_years": "20년",
+      "held_qualifications": "정보관리기술사, 정 보처리기사",
+      "responsibility_area": "품질·형상관리",
+      "employment_type": "정규직",
+      "joining_year_month": "2011-12"
+    },
+    {
+      "serial_number": 4,
+      "person_name": "심태호",
+      "position_title": "수석컨설턴트",
+      "technical_grade": "기술사",
+      "total_career_years": "24년",
+      "held_qualifications": "정보관리기술사",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-09"
+    },
+    {
+      "serial_number": 5,
+      "person_name": "한아린",
+      "position_title": "수석컨설턴트",
+      "technical_grade": "기술사",
+      "total_career_years": "22년",
+      "held_qualifications": "정보관리기술사, CISA",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-04"
+    },
+    {
+      "serial_number": 6,
+      "person_name": "이민준",
+      "position_title": "수석컨설턴트",
+      "technical_grade": "기술사",
+      "total_career_years": "24년",
+      "held_qualifications": "정보관리기술사, 정 보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-11"
+    },
+    {
+      "serial_number": 7,
+      "person_name": "강소율",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "18년",
+      "held_qualifications": "정보시스템감리사",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-09"
+    },
+    {
+      "serial_number": 8,
+      "person_name": "장도현",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "19년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-07"
+    },
+    {
+      "serial_number": 9,
+      "person_name": "유상현",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "21년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "개인정보 영향평가",
+      "employment_type": "정규직",
+      "joining_year_month": "2011-07"
+    },
+    {
+      "serial_number": 10,
+      "person_name": "한경민",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "14년",
+      "held_qualifications": "정보시스템감리사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2012-07"
+    },
+    {
+      "serial_number": 11,
+      "person_name": "윤유진",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "17년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "아키텍처·기술지원",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-10"
+    },
+    {
+      "serial_number": 12,
+      "person_name": "송슬기",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "14년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2012-06"
+    },
+    {
+      "serial_number": 13,
+      "person_name": "한가람",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "15년",
+      "held_qualifications": "정보시스템감리사",
+      "responsibility_area": "아키텍처·기술지원",
+      "employment_type": "정규직",
+      "joining_year_month": "2011-10"
+    },
+    {
+      "serial_number": 14,
+      "person_name": "송보라",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "18년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "품질·형상관리",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-11"
+    },
+    {
+      "serial_number": 15,
+      "person_name": "전세아",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "14년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "품질·형상관리",
+      "employment_type": "정규직",
+      "joining_year_month": "2013-01"
+    },
+    {
+      "serial_number": 16,
+      "person_name": "서건우",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "17년",
+      "held_qualifications": "정보시스템감리사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-12"
+    },
+    {
+      "serial_number": 17,
+      "person_name": "송루아",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "16년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "품질·형상관리",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-02"
+    },
+    {
+      "serial_number": 18,
+      "person_name": "백석진",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "13년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2014-07"
+    },
+    {
+      "serial_number": 19,
+      "person_name": "손예솔",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "18년",
+      "held_qualifications": "정보시스템감리사",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "정규직",
+      "joining_year_month": "2011-03"
+    },
+    {
+      "serial_number": 20,
+      "person_name": "전보라",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "18년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-05"
+    },
+    {
+      "serial_number": 21,
+      "person_name": "오성민",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "14년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "아키텍처·기술지원",
+      "employment_type": "정규직",
+      "joining_year_month": "2012-11"
+    },
+    {
+      "serial_number": 22,
+      "person_name": "손유진",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "20년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2011-06"
+    },
+    {
+      "serial_number": 23,
+      "person_name": "유루아",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "13년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "개인정보 영향평가",
+      "employment_type": "정규직",
+      "joining_year_month": "2014-12"
+    },
+    {
+      "serial_number": 24,
+      "person_name": "신의진",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "21년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2010-04"
+    },
+    {
+      "serial_number": 25,
+      "person_name": "송성호",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "14년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "아키텍처·기술지원",
+      "employment_type": "계약직",
+      "joining_year_month": "2012-07"
+    },
+    {
+      "serial_number": 26,
+      "person_name": "양하람",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "17년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2011-03"
+    },
+    {
+      "serial_number": 27,
+      "person_name": "고서진",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "21년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "계약직",
+      "joining_year_month": "2011-03"
+    },
+    {
+      "serial_number": 28,
+      "person_name": "문나래",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "21년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "계약직",
+      "joining_year_month": "2011-04"
+    },
+    {
+      "serial_number": 29,
+      "person_name": "이아린",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "14년",
+      "held_qualifications": "CPPG",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2012-02"
+    },
+    {
+      "serial_number": 30,
+      "person_name": "송준서",
+      "position_title": "책임컨설턴트",
+      "technical_grade": "특급",
+      "total_career_years": "18년",
+      "held_qualifications": "ISO 27001 심사원",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2011-08"
+    },
+    {
+      "serial_number": 31,
+      "person_name": "홍해준",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "12년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2014-03"
+    },
+    {
+      "serial_number": 32,
+      "person_name": "안건우",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "10년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2017-10"
+    },
+    {
+      "serial_number": 33,
+      "person_name": "안민준",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "11년",
+      "held_qualifications": "ISO 27001 심사원",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2015-02"
+    },
+    {
+      "serial_number": 34,
+      "person_name": "장태윤",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "10년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2016-10"
+    },
+    {
+      "serial_number": 35,
+      "person_name": "손다은",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "11년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "개인정보 영향평가",
+      "employment_type": "정규직",
+      "joining_year_month": "2015-09"
+    },
+    {
+      "serial_number": 36,
+      "person_name": "정해준",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "10년",
+      "held_qualifications": "ISO 27001 심사원",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2016-12"
+    },
+    {
+      "serial_number": 37,
+      "person_name": "조현서",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "11년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "품질·형상관리",
+      "employment_type": "정규직",
+      "joining_year_month": "2016-06"
+    },
+    {
+      "serial_number": 38,
+      "person_name": "장보라",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "9년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "정규직",
+      "joining_year_month": "2017-10"
+    },
+    {
+      "serial_number": 39,
+      "person_name": "한예린",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "10년",
+      "held_qualifications": "-",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2017-07"
+    },
+    {
+      "serial_number": 40,
+      "person_name": "문윤슬",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "13년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2013-10"
+    },
+    {
+      "serial_number": 41,
+      "person_name": "장나래",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "10년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2017-04"
+    },
+    {
+      "serial_number": 42,
+      "person_name": "손소율",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "13년",
+      "held_qualifications": "-",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2014-03"
+    },
+    {
+      "serial_number": 43,
+      "person_name": "배의진",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "13년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "아키텍처·기술지원",
+      "employment_type": "정규직",
+      "joining_year_month": "2014-09"
+    },
+    {
+      "serial_number": 44,
+      "person_name": "홍루아",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "9년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2017-08"
+    },
+    {
+      "serial_number": 45,
+      "person_name": "권성호",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "10년",
+      "held_qualifications": "-",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2016-08"
+    },
+    {
+      "serial_number": 46,
+      "person_name": "강윤아",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "11년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "계약직",
+      "joining_year_month": "2015-03"
+    },
+    {
+      "serial_number": 47,
+      "person_name": "조도윤",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "12년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2015-06"
+    },
+    {
+      "serial_number": 48,
+      "person_name": "한승우",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "12년",
+      "held_qualifications": "-",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2015-11"
+    },
+    {
+      "serial_number": 49,
+      "person_name": "조시우",
+      "position_title": "선임컨설턴트",
+      "technical_grade": "고급",
+      "total_career_years": "12년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2014-02"
+    },
+    {
+      "serial_number": 50,
+      "person_name": "양재현",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "7년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2019-08"
+    },
+    {
+      "serial_number": 51,
+      "person_name": "양동현",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "8년",
+      "held_qualifications": "-",
+      "responsibility_area": "개인정보 영향평가",
+      "employment_type": "정규직",
+      "joining_year_month": "2019-03"
+    },
+    {
+      "serial_number": 52,
+      "person_name": "전승우",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "6년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2020-10"
+    },
+    {
+      "serial_number": 53,
+      "person_name": "장민준",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "7년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2020-04"
+    },
+    {
+      "serial_number": 54,
+      "person_name": "강채원",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "7년",
+      "held_qualifications": "-",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2020-04"
+    },
+    {
+      "serial_number": 55,
+      "person_name": "배지호",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "8년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2019-12"
+    },
+    {
+      "serial_number": 56,
+      "person_name": "윤라온",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "9년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2018-06"
+    },
+    {
+      "serial_number": 57,
+      "person_name": "임지호",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "5년",
+      "held_qualifications": "-",
+      "responsibility_area": "개인정보 영향평가",
+      "employment_type": "정규직",
+      "joining_year_month": "2022-09"
+    },
+    {
+      "serial_number": 58,
+      "person_name": "허시연",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "9년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "정보시스템 감리",
+      "employment_type": "정규직",
+      "joining_year_month": "2018-01"
+    },
+    {
+      "serial_number": 59,
+      "person_name": "한혜인",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "8년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "계약직",
+      "joining_year_month": "2018-06"
+    },
+    {
+      "serial_number": 60,
+      "person_name": "유다올",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "6년",
+      "held_qualifications": "-",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "계약직",
+      "joining_year_month": "2020-11"
+    },
+    {
+      "serial_number": 61,
+      "person_name": "남정우",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "9년",
+      "held_qualifications": "PMP",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2018-02"
+    },
+    {
+      "serial_number": 62,
+      "person_name": "최가람",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "8년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2018-01"
+    },
+    {
+      "serial_number": 63,
+      "person_name": "한민석",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "9년",
+      "held_qualifications": "-",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "계약직",
+      "joining_year_month": "2017-04"
+    },
+    {
+      "serial_number": 64,
+      "person_name": "박시현",
+      "position_title": "컨설턴트",
+      "technical_grade": "중급",
+      "total_career_years": "9년",
+      "held_qualifications": "CISA",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2017-12"
+    },
+    {
+      "serial_number": 65,
+      "person_name": "장민석",
+      "position_title": "주임컨설턴트",
+      "technical_grade": "초급",
+      "total_career_years": "1년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "정규직",
+      "joining_year_month": "2026-06"
+    },
+    {
+      "serial_number": 66,
+      "person_name": "문경민",
+      "position_title": "주임컨설턴트",
+      "technical_grade": "초급",
+      "total_career_years": "1년",
+      "held_qualifications": "-",
+      "responsibility_area": "개인정보 영향평가",
+      "employment_type": "정규직",
+      "joining_year_month": "2025-02"
+    },
+    {
+      "serial_number": 67,
+      "person_name": "배상현",
+      "position_title": "주임컨설턴트",
+      "technical_grade": "초급",
+      "total_career_years": "1년",
+      "held_qualifications": "CISA",
+      "responsibility_area": "사업관리(PMO)",
+      "employment_type": "계약직",
+      "joining_year_month": "2026-11"
+    },
+    {
+      "serial_number": 68,
+      "person_name": "신서진",
+      "position_title": "주임컨설턴트",
+      "technical_grade": "초급",
+      "total_career_years": "1년",
+      "held_qualifications": "정보처리기사",
+      "responsibility_area": "ISP·컨설팅",
+      "employment_type": "계약직",
+      "joining_year_month": "2025-11"
+    }
+  ]
+}
