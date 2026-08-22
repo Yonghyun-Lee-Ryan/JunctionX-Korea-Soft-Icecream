@@ -226,8 +226,11 @@ class KitTasksCard extends StatelessWidget {
 
 // ── 금지 표현 검사 (Figma 74:7524) ──────────────────────────
 class KitNoteCard extends StatelessWidget {
-  const KitNoteCard({super.key, required this.tab});
+  const KitNoteCard({super.key, required this.tab, this.onAction});
   final KitTab tab;
+
+  /// 서버가 붙인 행동(원고 올리기 등)을 눌렀을 때
+  final void Function(KitAction action)? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -241,11 +244,35 @@ class KitNoteCard extends StatelessWidget {
           Text(tab.title, style: AppText.sectionTitle),
           const SizedBox(height: 10),
           RichText(text: TextSpan(children: _spans(n))),
+          if (n.proposalFile != null && n.proposalFile!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text('검사한 원고: ${n.proposalFile}', style: AppText.rowSub),
+          ],
+          // 🔴 걸린 자리 — 표현·문장·쪽. 문장을 고쳐 주지 않는다
+          for (final it in n.items) ...[
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppChip.danger(it.expression),
+                const SizedBox(width: 8),
+                Expanded(child: Text(it.sentence, style: AppText.rowSub)),
+                if (it.page > 0) ...[
+                  const SizedBox(width: 8),
+                  Text('p.${it.page}', style: AppText.noteEvidence),
+                ],
+              ],
+            ),
+          ],
           if (n.evidence != null && n.evidence!.isNotEmpty) ...[
             const SizedBox(height: 16),
             // 🔴 배너는 「공고문 p21」로 그린다. 같은 뜻을 같은 모양으로 —
             //    Figma의 앞 마침표는 옮기지 않는다(같은 화면 안에서 표기가 갈린다)
             Text(n.evidence!, style: AppText.noteEvidence),
+          ],
+          if (n.action != null) ...[
+            const SizedBox(height: 16),
+            OutlineButtonSmall(label: n.action!.label, onTap: onAction == null ? null : () => onAction!(n.action!)),
           ],
         ],
       ),

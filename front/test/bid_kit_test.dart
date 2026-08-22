@@ -126,6 +126,52 @@ void main() {
     expect(api.caseUploads.single.requirement, isNotEmpty);
   });
 
+  // ── 금지 표현 검사 — 제안서 원고 (1-2) ──────────────────
+  Future<PickOutcome> pickProposal() async => PickOutcome(
+        docs: [PickedDoc(filename: '제안서_v2.pdf', bytes: Uint8List.fromList([0x25, 0x50, 0x44, 0x46]))],
+        rejected: const {},
+      );
+
+  testWidgets('🔴 금지 표현 카드는 걸린 문장과 쪽을 보여 준다 — 문장을 고쳐 주지 않고 자리만 짚는다', (t) async {
+    addTearDown(t.view.reset);
+    await _toKit(t);
+    await t.tap(find.text('제출준비').first);
+    await settle(t);
+    expect(find.textContaining('외부 LLM 서비스와의 연계도 가능합니다.'), findsOneWidget);
+    expect(find.textContaining('모바일 환경도 지원 가능하도록'), findsOneWidget);
+    expect(find.text('p.3'), findsOneWidget);
+    expect(find.textContaining('제안서_다온피엠씨_가상.pdf'), findsOneWidget);
+    expect(find.text('다른 원고로 다시 검사'), findsOneWidget);
+  });
+
+  testWidgets('🔴 「제안서 원고 올리기」를 누르면 원고를 올리고, 서버가 돌려준 스캔 결과로 카드가 바뀐다', (t) async {
+    addTearDown(t.view.reset);
+    final api = _AbsentProposalApi();
+    await _toKit(t, api: api, pick: pickProposal);
+    await t.tap(find.text('제출준비').first);
+    await settle(t);
+    expect(find.textContaining('미제출', findRichText: true), findsOneWidget);
+    await t.tap(find.text('제안서 원고 올리기'));
+    await settle(t);
+    expect(api.proposalUploads.single.caseId, 'R25BK00645031-000');
+    expect(api.proposalUploads.single.filename, '제안서_v2.pdf');
+    expect(find.textContaining('미제출', findRichText: true), findsNothing);
+    expect(find.textContaining('2곳', findRichText: true), findsOneWidget);
+    expect(find.textContaining('정기 점검은 추가로 고려할 수 있습니다.'), findsOneWidget);
+    expect(find.textContaining('제안서_v2.pdf'), findsOneWidget);
+  });
+
+  testWidgets('「다른 원고로 다시 검사」도 원고 업로드다', (t) async {
+    addTearDown(t.view.reset);
+    final api = await _toKit(t, pick: pickProposal);
+    await t.tap(find.text('제출준비').first);
+    await settle(t);
+    await t.tap(find.text('다른 원고로 다시 검사'));
+    await settle(t);
+    expect(api.proposalUploads.length, 1);
+    expect(api.caseUploads, isEmpty, reason: '제출 서류 업로드가 아니다');
+  });
+
   testWidgets('업로드가 실패하면 서버 문장을 보여 주고 화면은 그대로다', (t) async {
     addTearDown(t.view.reset);
     final api = FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'))
@@ -484,4 +530,18 @@ class _FailedApi extends FakeApi {
 
   @override
   Future<Factsheet> factsheet(String caseId) async => _failed(caseId);
+}
+
+/// 원고를 아직 안 올린 서버.
+class _AbsentProposalApi extends FakeApi {
+  _AbsentProposalApi() : super(company: const CurrentCompany(exists: true, companyId: 'co_x'));
+
+  @override
+  Future<Factsheet> createCase({required String bidPbancNo, String bidPbancOrd = '000', String? companyId}) async {
+    createdCases.add('$bidPbancNo-$bidPbancOrd');
+    return withProposalAbsent(sampleFactsheet('$bidPbancNo-$bidPbancOrd'));
+  }
+
+  @override
+  Future<Factsheet> factsheet(String caseId) async => withProposalAbsent(sampleFactsheet(caseId));
 }

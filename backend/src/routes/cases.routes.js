@@ -149,4 +149,35 @@ casesRouter.get('/cases/:caseId/files/:file', asyncHandler(ctrl.downloadTab));
  *       404: { $ref: '#/components/responses/Error' }
  */
 casesRouter.post('/cases/:caseId/files', upload.single('file'), asyncHandler(files.upload));
+
+/**
+ * @openapi
+ * /api/cases/{caseId}/proposal:
+ *   post:
+ *     tags: [cases]
+ *     summary: 제안서 원고 올리기 — 금지 표현 검사 (화면⑨)
+ *     description: |
+ *       🔴 텍스트 레이어가 있는 PDF 만 받는다(HWP·스캔본은 415). 텍스트를 저장하고 **스캔 + 검사(Solar 2회)** 만 다시 돌린다 — 규칙은 저장본.
+ *       원고는 케이스당 가장 최근 것 하나만 본다. 응답은 갱신된 팩트시트 봉투. 금지 표현 카드(phrases)에 걸린 자리(문장·쪽)가 실린다 — 문장을 고쳐 주지 않는다.
+ *     parameters:
+ *       - in: path
+ *         name: caseId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file: { type: string, format: binary, description: 제안서 원고 PDF }
+ *     responses:
+ *       200: { description: 갱신된 봉투 }
+ *       400: { $ref: '#/components/responses/Error' }
+ *       404: { $ref: '#/components/responses/Error' }
+ *       415: { $ref: '#/components/responses/Error' }
+ */
+casesRouter.post('/cases/:caseId/proposal', upload.single('file'), asyncHandler(files.uploadProposal));
 casesRouter.get('/cases/:caseId/files', asyncHandler(files.list));

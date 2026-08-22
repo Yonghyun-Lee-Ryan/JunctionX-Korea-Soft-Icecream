@@ -1,6 +1,7 @@
 import { getDb } from '../db/index.js';
 
-const row = (r) => r && ({
+// 없으면 null — undefined 를 밖으로 내보내지 않는다 (호출부가 === null 로 본다)
+const row = (r) => (!r ? null : {
   id: r.id, caseId: r.case_id, kind: r.kind, filename: r.filename, bytes: r.bytes ?? null,
   storagePath: r.storage_path ?? null, requirementName: r.requirement_name ?? null,
   docTypeKey: r.doc_type_key ?? null, textChars: r.text_chars ?? null, text: r.text ?? null, createdAt: r.created_at,

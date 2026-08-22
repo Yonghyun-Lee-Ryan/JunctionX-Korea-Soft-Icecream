@@ -80,6 +80,30 @@ export async function addSubmissionFile(caseId, { buffer, filename, mimeType, re
   return saved;
 }
 
+/**
+ * 제안서 원고 — 금지 표현 검사의 입력. 🔴 텍스트 레이어가 있는 PDF 만 받는다 (HWP·스캔본은 글자를 못 읽는다 — 받은 척하지 않는다).
+ * 원고는 케이스당 하나만 본다(가장 최근). 올리면 스캔 + 검사(Solar 2회)만 다시 돈다.
+ */
+export async function addProposal(caseId, { buffer, filename, mimeType }) {
+  const row = caseRepo.findCase(caseId);
+  if (!row) throw new AppError('E_CASE_NOT_FOUND');
+
+  if (!looksLikePdf(buffer)) {
+    throw new AppError('E_UNSUPPORTED_FILE', '제안서 원고는 텍스트가 있는 PDF 로 올려 주세요. HWP·스캔 이미지는 아직 글자를 읽지 못합니다.', { filename, mimeType });
+  }
+  const { text, chars } = await extractPdfText(buffer);   // 손상된 PDF 면 여기서 E_UNSUPPORTED_FILE
+  if (chars < MIN_TEXT_CHARS) {
+    throw new AppError('E_UNSUPPORTED_FILE', '이 PDF 에서 글자를 찾지 못했습니다. 스캔 이미지로만 된 원고는 검사하지 못합니다 — 텍스트가 있는 PDF 로 다시 올려 주세요.', { filename, chars });
+  }
+
+  const { id, storagePath } = storeFile(caseId, { buffer, filename });
+  const saved = insertCaseFile({ id, caseId, kind: 'proposal', filename, bytes: buffer.length, storagePath, textChars: chars, text });
+  logger.info('case_proposal_added', { caseId, id, filename, chars });
+
+  if (row.status === 'done') await rejudge(caseId, { parts: ['submission'] });
+  return saved;
+}
+
 /** 밖으로 내보낼 모양 — 저장 경로·본문은 뺀다 */
 export function publicCaseFile(f) {
   return { id: f.id, kind: f.kind, filename: f.filename, bytes: f.bytes, requirementName: f.requirementName, docTypeKey: f.docTypeKey, createdAt: f.createdAt };

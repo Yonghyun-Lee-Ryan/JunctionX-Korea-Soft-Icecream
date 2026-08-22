@@ -339,17 +339,55 @@ class KitBannerData {
 
 /// 글로 말하는 카드 (Figma 74:7362 — 금지 표현 검사)
 class KitNoteData {
-  const KitNoteData({required this.body, this.emphasis, this.evidence});
+  const KitNoteData({
+    required this.body,
+    this.emphasis,
+    this.evidence,
+    this.items = const [],
+    this.proposalFile,
+    this.action,
+  });
   final String body;
 
   /// body 안에서 붉게 강조할 조각 (예: 「3곳」)
   final String? emphasis;
   final String? evidence;
 
+  /// 🔴 걸린 자리 — 표현·문장·쪽. 문장을 고쳐 주지 않고 자리만 짚는다
+  final List<KitNoteItem> items;
+
+  /// 어느 원고를 검사했는지
+  final String? proposalFile;
+
+  /// 서버가 붙인 행동 (원고 올리기 · 다른 원고로 다시 검사). 🔴 문구는 서버가 준다
+  final KitAction? action;
+
   factory KitNoteData.fromJson(Map<String, dynamic> j) => KitNoteData(
         body: _text(j['body']) ?? '',
         emphasis: _text(j['emphasis']),
         evidence: _text(j['evidence']),
+        items: ((j['items'] as List?) ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(KitNoteItem.fromJson)
+            .toList(growable: false),
+        proposalFile: _text(j['proposal_file']),
+        action: j['action'] is Map ? KitAction.fromJson((j['action'] as Map).cast<String, dynamic>()) : null,
+      );
+}
+
+/// 금지 표현이 걸린 자리 하나
+class KitNoteItem {
+  const KitNoteItem({required this.expression, required this.sentence, this.page = 0});
+  final String expression;
+  final String sentence;
+
+  /// 원고의 쪽. 0 이면 모른다
+  final int page;
+
+  factory KitNoteItem.fromJson(Map<String, dynamic> j) => KitNoteItem(
+        expression: _text(j['expression']) ?? '',
+        sentence: _text(j['sentence']) ?? '',
+        page: (j['page'] as num?)?.toInt() ?? 0,
       );
 }
 

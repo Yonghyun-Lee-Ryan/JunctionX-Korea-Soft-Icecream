@@ -28,7 +28,7 @@ export function buildKit({ announcement, eligibility, plan, submission, caseId }
     constraints: () => announcement && constraintsTab(announcement, audit),
     checklist: () => audit && checklistTab(audit),
     rework: () => audit && reworkTab(audit),
-    phrases: () => audit && phrasesTab(audit),
+    phrases: () => audit && phrasesTab(audit, submission),
   };
 
   // kitPages 의 배치 순서대로, 입력이 있는 탭만
@@ -236,14 +236,20 @@ function reworkTab(audit) {
 }
 
 // ── 화면⑨ 금지 표현 ─────────────────────────────────────────────────────
-function phrasesTab(audit) {
+// 🔴 버튼 문구도 서버가 준다 — 원고가 없으면 「올리기」, 있으면 「다른 원고로 다시 검사」. 화면은 kind:'upload' 만 보고 파일을 고른다
+function phrasesTab(audit, submission) {
   const fe = audit.forbidden_expressions ?? {};
   const items = Array.isArray(fe.items) ? fe.items : [];
-  const absent = items.length === 0 && str(fe.rule_note).includes('미제출');
+  const proposalFile = str(submission?.proposalFile);
+  const absent = !proposalFile && items.length === 0 && str(fe.rule_note).includes('미제출');
   if (absent) {
     return {
       id: 'phrases', title: '금지 표현 검사', kind: 'note',
-      note: { body: '제안서 원고가 없어 금지 표현을 검사하지 못했습니다. 원고를 올리면 다시 검사합니다.', emphasis: '미제출', evidence: '' },
+      note: {
+        // 🔴 강조 조각(emphasis)은 본문 안에서 찾아 칠한다 — 본문에 없으면 화면에 안 보인다(실측)
+        body: '제안서 원고 미제출 — 금지 표현을 검사하지 못했습니다. 원고를 올리면 다시 검사합니다.', emphasis: '미제출', evidence: '',
+        action: { label: '제안서 원고 올리기', kind: 'upload' },
+      },
     };
   }
   const count = items.length;
@@ -251,10 +257,14 @@ function phrasesTab(audit) {
   return {
     id: 'phrases', title: '금지 표현 검사', kind: 'note',
     note: {
-      body: `제안서 원고에서 「가능하다」・「고려할 수 있다」 류 ${count}곳 - 평가에서 불가능한 것으로 간주되는 표현입니다.`,
+      body: count
+        ? `제안서 원고에서 「가능하다」・「고려할 수 있다」 류 ${count}곳 - 평가에서 불가능한 것으로 간주되는 표현입니다.`
+        : '제안서 원고에서 금지 표현을 찾지 못했습니다. 0곳 - 검사 기준은 공고의 금지 표현 규칙입니다.',
       emphasis: `${count}곳`,
       evidence: rulePage ? `RFP p${rulePage}` : str(fe.rule_note),
+      ...(proposalFile ? { proposal_file: proposalFile } : {}),
       items: items.map((i) => ({ expression: str(i.expression), sentence: str(i.sentence), page: num(i.proposal_page) })),
+      action: { label: '다른 원고로 다시 검사', kind: 'upload' },
     },
   };
 }

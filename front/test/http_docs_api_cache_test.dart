@@ -84,6 +84,21 @@ void main() {
     expect(server.requests.length, 2);
   });
 
+  test('uploadProposal — POST /api/cases/{id}/proposal 멀티파트, 필드는 file', () async {
+    http.BaseRequest? seen;
+    String body = '';
+    final client = MockClient((req) async {
+      seen = req;
+      body = String.fromCharCodes(req.bodyBytes);
+      return http.Response(jsonEncode(_envelope('R25X-000', 'done')), 200, headers: const {'content-type': 'application/json; charset=utf-8'});
+    });
+    final api = HttpDocsApi(baseUrl: 'http://x', client: client);
+    await api.uploadProposal('R25X-000', PickedDoc(filename: '제안서.pdf', bytes: Uint8List.fromList([1, 2, 3])));
+    expect(seen!.method, 'POST');
+    expect(seen!.url.path, '/api/cases/R25X-000/proposal');
+    expect(body, contains('name="file"'));
+  });
+
   test('uploadCaseFile — POST /api/cases/{id}/files 멀티파트, 필드는 file + requirement', () async {
     http.BaseRequest? seen;
     String body = '';

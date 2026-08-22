@@ -92,6 +92,16 @@ class FakeApi implements DocsApi {
   /// 업로드가 실패하는 상황을 만들 때
   ApiException? caseUploadError;
 
+  /// 올린 제안서 원고 (caseId, 파일명)
+  final List<({String caseId, String filename})> proposalUploads = [];
+
+  @override
+  Future<Factsheet> uploadProposal(String caseId, PickedDoc doc) async {
+    if (caseUploadError != null) throw caseUploadError!;
+    proposalUploads.add((caseId: caseId, filename: doc.filename));
+    return withProposalScanned(sampleFactsheet(caseId), filename: doc.filename);
+  }
+
   @override
   Future<Factsheet> uploadCaseFile(String caseId, PickedDoc doc, {String? requirement}) async {
     if (caseUploadError != null) throw caseUploadError!;
@@ -569,7 +579,14 @@ Factsheet sampleFactsheet(String caseId) => Factsheet.fromJson({
                     "note": {
                           "body": "제안서 원고에서 「가능하다」・「고려할 수 있다」 류 3곳 - 평가에서 불가능한 것으로 간주되는 표현입니다.",
                           "emphasis": "3곳",
-                          "evidence": "RFP p18"
+                          "evidence": "RFP p18",
+                          "proposal_file": "제안서_다온피엠씨_가상.pdf",
+                          "items": [
+                                {"expression": "가능합니다", "sentence": "외부 LLM 서비스와의 연계도 가능합니다.", "page": 3},
+                                {"expression": "고려할 수 있다", "sentence": "정기 점검은 추가로 고려할 수 있습니다.", "page": 4},
+                                {"expression": "지원 가능", "sentence": "모바일 환경도 지원 가능하도록 설계합니다.", "page": 5}
+                          ],
+                          "action": {"label": "다른 원고로 다시 검사", "kind": "upload"}
                     }
               }
         ],
@@ -862,6 +879,39 @@ Factsheet withUploaded(Factsheet f, {String? requirement, required String filena
             ];
           }(),
         ),
+  ];
+  return Factsheet(
+    caseId: f.caseId, status: f.status, verdict: f.verdict, tabs: tabs, downloads: f.downloads, progress: f.progress,
+    pages: f.pages, primaryAction: f.primaryAction, secondaryAction: f.secondaryAction, cached: f.cached,
+    attachments: f.attachments, title: f.title, org: f.org, deadline: f.deadline, daysLeft: f.daysLeft, errorMessage: f.errorMessage,
+  );
+}
+
+/// 원고를 올린 뒤 서버가 스캔을 다시 돌린 봉투 흉내 — 금지 표현 2곳.
+Factsheet withProposalScanned(Factsheet f, {required String filename}) => _replaceNote(f, KitNoteData(
+      body: '제안서 원고에서 「가능하다」・「고려할 수 있다」 류 2곳 - 평가에서 불가능한 것으로 간주되는 표현입니다.',
+      emphasis: '2곳',
+      evidence: 'RFP p18',
+      proposalFile: filename,
+      items: const [
+        KitNoteItem(expression: '가능합니다', sentence: '외부 LLM 서비스와의 연계도 가능합니다.', page: 3),
+        KitNoteItem(expression: '고려할 수 있다', sentence: '정기 점검은 추가로 고려할 수 있습니다.', page: 4),
+      ],
+      action: const KitAction(label: '다른 원고로 다시 검사', kind: 'upload'),
+    ));
+
+/// 원고가 아직 없는 서버 — 「미제출」과 올리기 버튼.
+Factsheet withProposalAbsent(Factsheet f) => _replaceNote(f, const KitNoteData(
+      body: '제안서 원고 미제출 — 금지 표현을 검사하지 못했습니다. 원고를 올리면 다시 검사합니다.',
+      emphasis: '미제출',
+      evidence: '',
+      action: KitAction(label: '제안서 원고 올리기', kind: 'upload'),
+    ));
+
+Factsheet _replaceNote(Factsheet f, KitNoteData note) {
+  final tabs = [
+    for (final t in f.tabs)
+      if (t.id != 'phrases') t else KitTab(id: t.id, title: t.title, columns: t.columns, rows: t.rows, kind: t.kind, note: note),
   ];
   return Factsheet(
     caseId: f.caseId, status: f.status, verdict: f.verdict, tabs: tabs, downloads: f.downloads, progress: f.progress,

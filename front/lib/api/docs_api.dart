@@ -44,6 +44,9 @@ abstract interface class DocsApi {
   ///    [requirement]는 파일제출 탭의 서류 이름(어느 서류용인지). 드롭존에서 올리면 null.
   Future<Factsheet> uploadCaseFile(String caseId, PickedDoc doc, {String? requirement});
 
+  /// 🔴 제안서 원고(PDF)를 올린다 — 서버가 금지 표현 스캔·검사를 다시 돌려 갱신된 봉투를 준다
+  Future<Factsheet> uploadProposal(String caseId, PickedDoc doc);
+
   /// 🚪 「응찰 준비」를 찍은 공고를 저장한다
   Future<void> saveBid(String companyId, ShortlistItem item);
 

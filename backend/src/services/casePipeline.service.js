@@ -146,7 +146,9 @@ export async function rejudge(caseId, { parts = [], proposalText } = {}) {
 
   if (parts.includes('submission')) {
     const text = typeof proposalText === 'string' ? proposalText : (latestCaseFile(caseId, 'proposal')?.text ?? '');
+    const proposal = latestCaseFile(caseId, 'proposal');
     submission = await judgeSubmission({ announcement, companyCard: card, proposalText: text, rules: submission?.rules, uploads: listCaseFiles(caseId, 'submission') });
+    submission = { ...submission, proposalFile: proposal?.filename ?? null };
     solarCalls += submission.meta?.calls ?? 0;
     caseRepo.deleteExtraction(caseId, 'SUBMISSION_V1');
     caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });

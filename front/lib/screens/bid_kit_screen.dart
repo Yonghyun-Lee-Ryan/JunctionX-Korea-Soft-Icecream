@@ -118,6 +118,27 @@ class _BidKitScreenState extends State<BidKitScreen> {
     await _uploadOutcome(outcome, requirement);
   }
 
+  /// 제안서 원고를 골라 올린다 — 서버가 스캔·검사를 다시 돌린다. 원고는 하나만 본다(여러 개면 첫 파일).
+  Future<void> _uploadProposal() async {
+    if (_uploading) return;
+    final outcome = await (widget.pickDocuments ?? picker.pickDocuments)();
+    if (!mounted) return;
+    if (outcome.rejected.isNotEmpty) {
+      _toast(outcome.rejected.entries.map((e) => '${e.key}: ${e.value}').join('\n'));
+    }
+    if (outcome.docs.isEmpty) return;
+    setState(() => _uploading = true);
+    try {
+      _accept(await widget.api.uploadProposal(widget.caseId, outcome.docs.first));
+    } on ApiException catch (e) {
+      if (mounted) _toast(e.message);
+    } catch (_) {
+      if (mounted) _toast('원고를 올리지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
   Future<void> _uploadOutcome(picker.PickOutcome outcome, String? requirement) async {
     if (!mounted || _uploading) return;
     // 🔴 거른 파일은 이유와 함께 말한다 — 조용히 삼키지 않는다
@@ -490,7 +511,8 @@ class _BidKitScreenState extends State<BidKitScreen> {
   Widget _panel(Factsheet f, KitTab tab) => switch (tab.kind) {
         'banner' when tab.banner != null => KitBanner(data: tab.banner!),
         'metric' when tab.metric != null => KitMetricCard(tab: tab),
-        'note' when tab.note != null => KitNoteCard(tab: tab),
+        // 🔴 카드의 행동은 원고 업로드다 — 문구(올리기 / 다른 원고로 다시 검사)는 서버가 준다
+        'note' when tab.note != null => KitNoteCard(tab: tab, onAction: (_) => _uploadProposal()),
         // 🔴 보완요청의 「보완 자료 올리기」도 그 서류용 업로드다
         'tasks' => KitTasksCard(tab: tab, onAction: (item) => _uploadFor(item.title)),
         'docs' => AppCard(child: KitDocsList(tab: tab, onUpload: (item) => _uploadFor(item.title))),
