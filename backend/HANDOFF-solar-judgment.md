@@ -463,3 +463,14 @@ BASE_DATE: 2025-11-12
 
 🔴 `rejudge(caseId, { parts })` 가 공통 재료다 — 저장된 공고 해부로 판정 일부만 다시 돈다(Studio 호출 없음). `parts: ['plan']` 은 Solar 3회(WBS 145건이면 5~9분), `['submission']` 은 1~2회.
 🔴 테스트는 파일(프로세스)마다 임시 DB 를 쓴다(`tests/setup.js`) — 병렬 실행이 서로의 캐시를 지우던 실측.
+
+### 11-1. 같은 날 보강 — 실제로 돌려 보고 고친 것
+
+| 실측 | 고친 것 | 어디 |
+|---|---|---|
+| Solar 스캔이 견본 원고의 「가능합니다」「고려할 수 있습니다」「지원 가능」을 **hits 0** 으로 돌려줬다 | 백엔드가 쪽 단위로 직접 전수 검색해(`scanForbidden`) 스캔 결과에 **합친다**(같은 문장은 한 번). 원고는 쪽 단위 텍스트(`case_file.pages_json`)로 저장 | `proposalScan.service.js` · `guardSubmissionAudit(localHits)` |
+| PDF 텍스트 레이어는 «행»마다 줄바꿈이 온다 → 문장이 중간에 잘렸다. Solar 가 5쪽 원고에 **p63** 을 붙였다 | 줄바꿈은 문장 경계가 아니다(제목·목록 줄만 따로). 같은 자리면 쪽은 PDF 쪽, 쪽 수 밖이면 0(모름) | `splitSentences` · `pageCount` |
+| 프롬프트에 15개 규칙을 넣어도 Solar 가 패키지 8개·기간 전부 「미 명시」·5개는 16개 이상으로 묶었다 | 백엔드가 **결정적으로 보정**: 16개 이상은 `requirement_category` 기준으로 `1.3.1…` 로 나눈다(M/M 은 건수 비례, 0 이면 칸 비움 · `split_from`). 운영·대행·유지보수·정산 류 패키지는 `사업기간 전체 (기간)` 으로 채운다(`duration_source:'project_period'`). WBS 입력은 요구사항을 id·분류·이름·쪽만으로 줄인다 | `guardWbs` · `splitOversized` · `announcementFor('wbs')` |
+| 가드만 바꿨는데 Solar 를 다시 사야 했다 | `rejudge(caseId, { parts: ['reguard'] })` — **Solar 호출 없이** 저장된 판정에 가드만 다시 건다(WBS·임계경로·제출 검사 + 로컬 금지 표현) | `casePipeline.rejudge` |
+
+🔴 데모 케이스(`R25BK00645031-000`) 실측: 파일제출 「사업자등록증 사본 → 준비됨」(Solar 1회) · 금지 표현 **3곳**(p3·p4·p5, 문장 원문) · 임계경로 19줄(맨 위 마감) · WBS 15패키지(3개 나눔 · 9개 사업기간) · 헤더 「마감 지남」.
