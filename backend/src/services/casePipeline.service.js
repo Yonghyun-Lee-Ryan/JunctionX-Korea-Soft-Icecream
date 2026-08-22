@@ -8,6 +8,7 @@ import { loadFixture } from './fixture.service.js';
 import { decomposeAnnouncement } from './announcement.service.js';
 import { judgeEligibility, judgePlan, judgeSubmission } from './solarJudge.service.js';
 import { buildKit } from './kit.service.js';
+import { listCaseFiles, latestCaseFile } from '../repositories/caseFile.repo.js';
 
 /**
  * 케이스 파이프라인 — 첨부 수집 뒤에 이어 붙는 «공고 해부 → 판정 → 탭» 한 벌.
@@ -103,6 +104,69 @@ const NO_COMPANY_VERDICT = {
   reasons: [],
 };
 
+function persistKit(caseId, kit) {
+  caseRepo.clearTabs(caseId);
+  kit.tabs.forEach((t, i) => caseRepo.upsertTab(caseId, t, i));
+  caseRepo.clearDownloads(caseId);
+  (kit.downloads ?? []).forEach((d, i) => caseRepo.upsertDownload(caseId, d, i));
+}
+
+const DOC_TYPE_LABEL = { biz_reg: '사업자등록증', sme_cert: '중소기업확인서', credit_rating: '신용평가등급확인서', pia_designation: '개인정보 영향평가기관 지정서', sw_business: '소프트웨어사업자 신고확인서', direct_production: '직접생산확인증명서', performance: '실적증명서', financial: '재무제표', tech_staff: '기술인력 보유현황' };
+
+/** 판정에 넣는 서류 = 회사 카드 서류 + 케이스에 올린 제출 파일 (caseFiles.service 와 같은 모양. 순환 import 를 피해 여기서 만든다) */
+function documentsWithUploads(caseId, companyCard) {
+  const base = Array.isArray(companyCard?.documents) ? companyCard.documents : [];
+  const uploads = listCaseFiles(caseId, 'submission').map((f) => ({
+    source_document: f.filename, docTypeKey: f.docTypeKey,
+    document_kind: f.docTypeKey ? (DOC_TYPE_LABEL[f.docTypeKey] ?? f.docTypeKey) : '(종류를 읽지 못한 파일)',
+    uploaded_for: f.requirementName ?? '', source: 'upload', uploaded_at: f.createdAt,
+  }));
+  return [...base, ...uploads];
+}
+
+/**
+ * 저장된 공고 해부 결과로 판정 일부만 다시 돈다 — 서류를 올렸을 때(submission)·프롬프트를 고쳤을 때(plan).
+ * 🔴 Studio 는 부르지 않는다. 제출 검사의 규칙(SUBMISSION_RULES_V2)은 저장본을 다시 쓴다 → 서류 하나 올릴 때 Solar 1회.
+ */
+export async function rejudge(caseId, { parts = [], proposalText } = {}) {
+  const row = caseRepo.findCase(caseId);
+  if (!row) throw new AppError('E_CASE_NOT_FOUND');
+  const stored = (name) => caseRepo.listExtractions(caseId, name)[0]?.payload ?? null;
+  const announcement = stored('ANNOUNCEMENT_CORE_V1');
+  if (!announcement) {
+    throw new AppError('E_VALIDATION', '이 케이스는 공고 해부 결과가 없어 다시 판정할 수 없습니다. 응찰 목록에서 「응찰하러 가기」로 먼저 분석해 주세요.');
+  }
+  const started = Date.now();
+  const eligibility = stored('ELIGIBILITY_SCREENING_V1');
+  let plan = stored('PLAN_V1');
+  let submission = stored('SUBMISSION_V1');
+  const companyCard = companyCardFor(row.company_id);
+  const card = { schema_version: 'COMPANY_CARD_V1', company_name: companyCard?.company_name ?? '', business_number: companyCard?.business_number ?? '', documents: documentsWithUploads(caseId, companyCard) };
+  let solarCalls = 0;
+
+  if (parts.includes('submission')) {
+    const text = typeof proposalText === 'string' ? proposalText : (latestCaseFile(caseId, 'proposal')?.text ?? '');
+    submission = await judgeSubmission({ announcement, companyCard: card, proposalText: text, rules: submission?.rules, uploads: listCaseFiles(caseId, 'submission') });
+    solarCalls += submission.meta?.calls ?? 0;
+    caseRepo.deleteExtraction(caseId, 'SUBMISSION_V1');
+    caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });
+  }
+  if (parts.includes('plan') && announcement.requirements?.length) {
+    plan = await judgePlan({ announcement });
+    solarCalls += plan.meta?.calls ?? 0;
+    caseRepo.deleteExtraction(caseId, 'PLAN_V1');
+    caseRepo.insertExtraction(caseId, { schemaName: 'PLAN_V1', payload: plan });
+  }
+
+  const kit = buildKit({ announcement, eligibility, plan, submission, caseId });
+  persistKit(caseId, kit);
+  const meta = parseJson(caseRepo.findCase(caseId)?.meta_json, {});
+  const pipeline = { ...(meta.pipeline ?? {}), rejudgedAt: new Date().toISOString(), rejudged: parts, rejudgeSolarCalls: solarCalls, rejudgeElapsedMs: Date.now() - started };
+  caseRepo.setCaseResult(caseId, { verdict: kit.verdict ?? parseJson(row.verdict_json, NO_COMPANY_VERDICT), meta: { ...meta, pipeline } });
+  logger.info('case_rejudged', { caseId, parts, solarCalls, tabs: kit.tabs.length });
+  return { parts, solarCalls, tabs: kit.tabs.length };
+}
+
 export async function runPipeline(caseId, files, { companyId = null } = {}) {
   const started = Date.now();
   let step = 1;
@@ -143,10 +207,7 @@ export async function runPipeline(caseId, files, { companyId = null } = {}) {
     const kit = buildKit({ announcement, eligibility, plan, submission, caseId });
 
     // ── 저장 — 프론트가 읽는 봉투는 전부 DB 에서 나온다 ──
-    caseRepo.clearTabs(caseId);
-    kit.tabs.forEach((t, i) => caseRepo.upsertTab(caseId, t, i));
-    caseRepo.clearDownloads(caseId);
-    (kit.downloads ?? []).forEach((d, i) => caseRepo.upsertDownload(caseId, d, i));
+    persistKit(caseId, kit);
     // 🔴 판정 원본도 남긴다 — 탭을 다시 그리거나 사람이 근거를 볼 때 Upstage 를 다시 부르지 않게
     caseRepo.deleteExtractions(caseId);
     caseRepo.insertExtraction(caseId, { schemaName: 'ANNOUNCEMENT_CORE_V1', payload: announcement });

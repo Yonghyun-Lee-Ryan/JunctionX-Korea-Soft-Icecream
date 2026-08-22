@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solar_for_bid/api/card_view.dart';
+import 'package:solar_for_bid/api/docs_api.dart';
 import 'package:solar_for_bid/api/factsheet.dart';
+import 'package:solar_for_bid/api/models.dart';
 import 'package:solar_for_bid/main.dart';
 import 'package:solar_for_bid/screens/bid_kit_screen.dart';
 import 'package:solar_for_bid/services/document_picker.dart';
@@ -13,14 +17,14 @@ import 'support/settle.dart';
 /// 회사 카드 → 공고 탐색 → 「응찰 준비」(저장) → 응찰 목록 → 「응찰하러 가기」 → Bid Kit
 ///
 /// 🔴 「응찰 준비」는 이제 **저장까지만** 한다. 첨부 수집(케이스 생성)은 목록에서 한 번 더 눌러야 시작된다.
-Future<FakeApi> _toKit(WidgetTester t, {double w = 1920, double h = 1080, FakeApi? api}) async {
+Future<FakeApi> _toKit(WidgetTester t, {double w = 1920, double h = 1080, FakeApi? api, Future<PickOutcome> Function()? pick}) async {
   api ??= FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'));
   t.view.physicalSize = Size(w, h);
   t.view.devicePixelRatio = 1.0;
   await t.pumpWidget(SolarForBidApp(
     api: api,
     controller: CompanyRegistrationController(api),
-    pickDocuments: () async => const PickOutcome(docs: [], rejected: {}),
+    pickDocuments: pick ?? () async => const PickOutcome(docs: [], rejected: {}),
   ));
   await settle(t);
   await t.tap(find.text('이 카드로 공고 추천'));
@@ -68,12 +72,69 @@ void main() {
     expect(find.text('임시저장'), findsNothing);
   });
 
-  testWidgets('🔴 업로드는 아직 연결되지 않았다고 «말한다» — 받은 척하지 않는다', (t) async {
+  // ── 파일제출 — 업로드가 실제로 간다 (1-1) ────────────────
+  Future<PickOutcome> pickOne() async => PickOutcome(
+        docs: [PickedDoc(filename: '실적증명서_2026.pdf', bytes: Uint8List.fromList([0x25, 0x50, 0x44, 0x46]))],
+        rejected: const {},
+      );
+
+  testWidgets('🔴 서류 줄의 「업로드」는 파일을 골라 그 서류용으로 올리고, 돌아온 봉투로 줄이 「준비됨」이 된다', (t) async {
     addTearDown(t.view.reset);
-    await _toKit(t);
+    final api = await _toKit(t, pick: pickOne);
+    // 표본에서 「업로드」가 붙은 첫 줄은 실적증명서다
     await t.tap(find.text('업로드').first);
     await settle(t);
-    expect(find.textContaining('지금은 화면만 있습니다'), findsOneWidget);
+
+    expect(api.caseUploads.length, 1);
+    final up = api.caseUploads.single;
+    expect(up.caseId, 'R25BK00645031-000');
+    expect(up.filename, '실적증명서_2026.pdf');
+    expect(up.requirement, '실적증명서');
+    // 서버가 돌려준 봉투가 그대로 화면이 된다 — 줄이 파일명 + 준비됨
+    expect(find.text('실적증명서_2026.pdf'), findsOneWidget);
+    expect(find.text('준비됨'), findsWidgets);
+    expect(find.text('업로드'), findsOneWidget, reason: '남은 미제출 줄 하나만 「업로드」');
+  });
+
+  testWidgets('드롭존의 「파일 선택」은 서류를 지정하지 않고 올린다', (t) async {
+    addTearDown(t.view.reset);
+    final api = await _toKit(t, pick: pickOne);
+    await t.tap(find.text('파일 선택'));
+    await settle(t);
+    expect(api.caseUploads.single.requirement, isNull);
+    expect(api.caseUploads.single.filename, '실적증명서_2026.pdf');
+  });
+
+  testWidgets('🔴 올릴 파일이 없거나 거른 파일은 그 이유를 말한다 — 조용히 삼키지 않는다', (t) async {
+    addTearDown(t.view.reset);
+    final api = await _toKit(t, pick: () async => const PickOutcome(docs: [], rejected: {'사진.jpg': '지금은 PDF만 분석할 수 있습니다.'}));
+    await t.tap(find.text('파일 선택'));
+    await settle(t);
+    expect(api.caseUploads, isEmpty);
+    expect(find.textContaining('사진.jpg'), findsOneWidget);
+  });
+
+  testWidgets('제출준비의 「보완 자료 올리기」는 그 서류용으로 올린다', (t) async {
+    addTearDown(t.view.reset);
+    final api = await _toKit(t, pick: pickOne);
+    await t.tap(find.text('제출준비').first);
+    await settle(t);
+    await t.tap(find.text('보완 자료 올리기').first);
+    await settle(t);
+    expect(api.caseUploads.length, 1);
+    expect(api.caseUploads.single.requirement, isNotNull);
+    expect(api.caseUploads.single.requirement, isNotEmpty);
+  });
+
+  testWidgets('업로드가 실패하면 서버 문장을 보여 주고 화면은 그대로다', (t) async {
+    addTearDown(t.view.reset);
+    final api = FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'))
+      ..caseUploadError = const ApiException(code: 'E_UNSUPPORTED_FILE', message: 'PDF를 읽지 못했습니다.');
+    await _toKit(t, api: api, pick: pickOne);
+    await t.tap(find.text('업로드').first);
+    await settle(t);
+    expect(find.text('PDF를 읽지 못했습니다.'), findsOneWidget);
+    expect(find.text('업로드'), findsNWidgets(2), reason: '봉투가 바뀌지 않았다');
   });
 
   // ── 요구사항 체크리스트 (Figma 74:7004) ─────────────────

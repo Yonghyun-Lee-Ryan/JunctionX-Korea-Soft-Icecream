@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:solar_for_bid/api/docs_api.dart';
 import 'package:solar_for_bid/api/http_docs_api.dart';
 
 /// 🔴 Upstage 크레딧 — 끝난 봉투(status=done)는 프론트가 10분 동안 다시 묻지 않는다.
@@ -80,5 +82,24 @@ void main() {
     api.forgetFactsheet('R25X-000');
     await api.factsheet('R25X-000');
     expect(server.requests.length, 2);
+  });
+
+  test('uploadCaseFile — POST /api/cases/{id}/files 멀티파트, 필드는 file + requirement', () async {
+    http.BaseRequest? seen;
+    String body = '';
+    final client = MockClient((req) async {
+      seen = req;
+      body = String.fromCharCodes(req.bodyBytes);
+      return http.Response(jsonEncode(_envelope('R25X-000', 'done')), 200, headers: const {'content-type': 'application/json; charset=utf-8'});
+    });
+    final api = HttpDocsApi(baseUrl: 'http://x', client: client);
+    final f = await api.uploadCaseFile('R25X-000', PickedDoc(filename: '사업자등록증.pdf', bytes: Uint8List.fromList([1, 2, 3])), requirement: '사업자등록증 사본');
+    expect(f.caseId, 'R25X-000');
+    expect(seen!.method, 'POST');
+    expect(seen!.url.path, '/api/cases/R25X-000/files');
+    expect(seen!.headers['content-type'], startsWith('multipart/form-data'));
+    expect(body, contains('name="file"'));
+    expect(body, contains('name="requirement"'));
+    expect(body, contains('filename="'));
   });
 }

@@ -86,6 +86,19 @@ class FakeApi implements DocsApi {
   @override
   Future<Factsheet> factsheet(String caseId) async => sampleFactsheet(caseId);
 
+  /// 케이스에 올린 제출 서류 (caseId, 파일명, 어느 서류용인지)
+  final List<({String caseId, String filename, String? requirement})> caseUploads = [];
+
+  /// 업로드가 실패하는 상황을 만들 때
+  ApiException? caseUploadError;
+
+  @override
+  Future<Factsheet> uploadCaseFile(String caseId, PickedDoc doc, {String? requirement}) async {
+    if (caseUploadError != null) throw caseUploadError!;
+    caseUploads.add((caseId: caseId, filename: doc.filename, requirement: requirement));
+    return withUploaded(sampleFactsheet(caseId), requirement: requirement, filename: doc.filename);
+  }
+
   /// 🔴 저장된 응찰 대상. 서버처럼 caseId로 덮어쓴다
   final List<ShortlistItem> savedBids = [];
 
@@ -828,3 +841,31 @@ ScreeningResult sampleLiveScreening() => ScreeningResult.fromJson({
         'note': '목록 메타데이터만으로 걸렀습니다. 첨부 문서는 아직 읽지 않아 자격 충족은 미확인입니다.',
       },
     });
+
+/// 서버가 제출 검사를 다시 돌린 뒤의 봉투 흉내 — 그 서류(없으면 첫 미제출 줄)가 파일과 연결돼 「준비됨」이 된다.
+Factsheet withUploaded(Factsheet f, {String? requirement, required String filename}) {
+  final tabs = [
+    for (final t in f.tabs)
+      if (t.id != 'submitfiles')
+        t
+      else
+        KitTab(
+          id: t.id, title: t.title, columns: t.columns, rows: t.rows, kind: t.kind, summary: t.summary,
+          items: () {
+            var done = false;
+            return [
+              for (final i in t.items)
+                if (!done && (requirement == null ? i.state == 'missing' : i.title == requirement))
+                  () { done = true; return KitItem(title: i.title, filename: filename, state: 'done', label: '준비됨'); }()
+                else
+                  i,
+            ];
+          }(),
+        ),
+  ];
+  return Factsheet(
+    caseId: f.caseId, status: f.status, verdict: f.verdict, tabs: tabs, downloads: f.downloads, progress: f.progress,
+    pages: f.pages, primaryAction: f.primaryAction, secondaryAction: f.secondaryAction, cached: f.cached,
+    attachments: f.attachments, title: f.title, org: f.org, deadline: f.deadline, daysLeft: f.daysLeft, errorMessage: f.errorMessage,
+  );
+}

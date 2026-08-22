@@ -309,12 +309,17 @@ export function guardCriticalPath(out, wbs) {
 //   🔴 summarize-company-document 노드는 건너뛴다 — 회사 카드가 같은 사실을 갖고 있다
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function judgeSubmission({ announcement, companyCard, proposalText, fetchImpl }) {
+/**
+ * @param rules   이미 뽑아 둔 SUBMISSION_RULES_V2 — 있으면 규칙 호출을 건너뛴다 (서류를 올릴 때마다 공고 규칙을 다시 살 이유가 없다)
+ * @param uploads 이 케이스에 올린 제출 파일 — 검사가 파일을 빠뜨려도 가드가 requirement 이름으로 연결한다
+ */
+export async function judgeSubmission({ announcement, companyCard, proposalText, rules: givenRules, uploads = [], fetchImpl }) {
   const started = Date.now();
   const hasProposal = typeof proposalText === 'string' && proposalText.trim().length > 0;
+  const reuseRules = Boolean(givenRules && typeof givenRules === 'object');
 
   const [rules, proposalScan] = await Promise.all([
-    callSolar({
+    reuseRules ? Promise.resolve(givenRules) : callSolar({
       system: loadPrompt('submissionRules'),
       user: buildUserMessage([['DOCUMENT_INFO', announcementFor('submission', announcement)]]),
       fetchImpl,
@@ -337,9 +342,9 @@ export async function judgeSubmission({ announcement, companyCard, proposalText,
       ['COMPANY_DOCUMENT_SUMMARY_V2', Array.isArray(companyCard?.documents) ? companyCard.documents : companyCard],
     ]),
     fetchImpl,
-  }), { proposalScan });
+  }), { proposalScan, uploads });
 
-  return { rules, proposalScan, audit, meta: { ...runMeta(started), calls: hasProposal ? 3 : 2 } };
+  return { rules, proposalScan, audit, meta: { ...runMeta(started), calls: (reuseRules ? 0 : 1) + (hasProposal ? 1 : 0) + 1, rulesReused: reuseRules } };
 }
 
 const DOC_STATUS = new Set(['준비됨', '보완 필요', '미확인']);
@@ -350,8 +355,17 @@ const text = (v) => (v === null || v === undefined ? '' : String(v));
  * 🔴 개수·보완요청·overall_status 는 documents[] 에서 다시 만든다.
  * 🔴 금지 표현은 제안서 스캔의 실제 적중으로 다시 센다. 제안서가 없으면 0건 + 미제출 사유 — 통과가 아니다.
  */
-export function guardSubmissionAudit(out, { proposalScan } = {}) {
+export function guardSubmissionAudit(out, { proposalScan, uploads = [] } = {}) {
   const result = { ...(out ?? {}) };
+  // 🔴 사람이 「이 서류용」이라고 올린 파일은 검사가 빠뜨려도 연결한다 — 상태(준비됨/보완 필요/미확인)는 검사의 판단 그대로 둔다
+  const squash = (v) => text(v).replace(/\s+/g, '');
+  const uploadFor = (name) => uploads.find((u) => u.requirementName && (squash(u.requirementName) === squash(name) || squash(name).includes(squash(u.requirementName)) || squash(u.requirementName).includes(squash(name))));
+  if (Array.isArray(result.documents)) {
+    result.documents = result.documents.map((d) => {
+      const up = uploadFor(d?.name);
+      return up && !text(d?.matched_file) ? { ...d, matched_file: up.filename } : d;
+    });
+  }
 
   const documents = (Array.isArray(result.documents) ? result.documents : []).map((d) => {
     const status = DOC_STATUS.has(d?.status) ? d.status : '미확인';

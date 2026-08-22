@@ -157,6 +157,7 @@ class _AppRootState extends State<AppRoot> {
         _View.bidKit => BidKitScreen(
             api: widget.api,
             caseId: _bidCaseId!,
+            pickDocuments: widget.pickDocuments ?? pickDocuments,
             title: _bidItem?.title,
             org: _bidItem?.org,
             deadline: _bidItem?.deadline,

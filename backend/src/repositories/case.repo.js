@@ -172,6 +172,10 @@ export function insertExtraction(caseId, { attachmentId, schemaName, payload, co
     .run(caseId, attachmentId ?? null, schemaName, JSON.stringify(payload ?? {}), confidence ?? null);
 }
 
+export function deleteExtraction(caseId, schemaName) {
+  getDb().prepare('DELETE FROM extraction WHERE case_id = ? AND schema_name = ?').run(caseId, schemaName);
+}
+
 export function deleteExtractions(caseId) {
   getDb().prepare('DELETE FROM extraction WHERE case_id = ?').run(caseId);
 }

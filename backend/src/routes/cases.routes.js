@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
+import multer from 'multer';
 import * as ctrl from '../controllers/cases.controller.js';
+import * as files from '../controllers/caseFiles.controller.js';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024, files: 1 } });
 
 export const casesRouter = Router();
 
@@ -101,3 +105,48 @@ casesRouter.get('/cases/:caseId', asyncHandler(ctrl.getCase));
  *       404: { $ref: '#/components/responses/Error' }
  */
 casesRouter.get('/cases/:caseId/files/:file', asyncHandler(ctrl.downloadTab));
+
+/**
+ * @openapi
+ * /api/cases/{caseId}/files:
+ *   post:
+ *     tags: [cases]
+ *     summary: 제출 서류 올리기 — 화면⑥ 파일제출·화면⑨ 「보완 자료 올리기」
+ *     description: |
+ *       파일을 `data/uploads/<caseId>/` 에 남기고, PDF 면 텍스트 레이어로 8갈래 규칙 분류만 한다(Studio 호출 없음).
+ *       🔴 분석이 끝난 케이스면 **제출 검사(Solar)만 다시 돌려** 파일제출·제출준비 탭을 갱신한다 — 규칙은 저장본을 다시 쓰니 1회.
+ *       🔴 올린 파일이 어느 서류용인지는 `requirement`(서류 이름)가 말한다. 드롭존에서 올리면 비워도 된다.
+ *       응답은 갱신된 팩트시트 봉투(GET /api/cases/{caseId} 와 같다).
+ *     parameters:
+ *       - in: path
+ *         name: caseId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file:        { type: string, format: binary }
+ *               requirement: { type: string, description: '파일제출 탭의 서류 이름 그대로 (예: 사업자등록증 및 법인등기부등본)' }
+ *     responses:
+ *       200: { description: 갱신된 봉투 }
+ *       400: { $ref: '#/components/responses/Error' }
+ *       404: { $ref: '#/components/responses/Error' }
+ *   get:
+ *     tags: [cases]
+ *     summary: 이 케이스에 올린 파일 목록
+ *     parameters:
+ *       - in: path
+ *         name: caseId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: '{ caseId, files[] }' }
+ *       404: { $ref: '#/components/responses/Error' }
+ */
+casesRouter.post('/cases/:caseId/files', upload.single('file'), asyncHandler(files.upload));
+casesRouter.get('/cases/:caseId/files', asyncHandler(files.list));

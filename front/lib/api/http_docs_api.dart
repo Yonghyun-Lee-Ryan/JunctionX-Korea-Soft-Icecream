@@ -163,6 +163,26 @@ class HttpDocsApi implements DocsApi {
     );
   }
 
+  @override
+  Future<Factsheet> uploadCaseFile(String caseId, PickedDoc doc, {String? requirement}) {
+    if (doc.bytes.lengthInBytes > maxUploadBytes) {
+      throw ApiException(
+        code: 'E_TOO_LARGE',
+        message: '파일이 너무 큽니다. 30MB 이하만 올릴 수 있습니다. (${_mb(doc.bytes.lengthInBytes)}MB)',
+      );
+    }
+    final req = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/cases/$caseId/files'))
+      // 🔴 필드명은 `file` — 서버가 upload.single('file')로 받는다. 파일명은 그대로(서버가 latin1을 되돌린다)
+      ..files.add(http.MultipartFile.fromBytes('file', doc.bytes, filename: doc.filename));
+    if (requirement != null && requirement.isNotEmpty) req.fields['requirement'] = requirement;
+    // 🔴 서버가 제출 검사(Solar)를 다시 돌리고 돌려준다 — 업로드 타임아웃이 그걸 덮어야 한다
+    return _guard(() async {
+      final streamed = await _client.send(req);
+      final res = await http.Response.fromStream(streamed);
+      return _remember(_decode(res, Factsheet.fromJson));
+    });
+  }
+
   Factsheet _remember(Factsheet f) {
     if (f.status == 'done') {
       _factsheetCache[f.caseId] = (f, _clock());

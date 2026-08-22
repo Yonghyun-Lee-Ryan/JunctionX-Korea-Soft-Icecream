@@ -7,7 +7,9 @@ import '../api/docs_api.dart';
 import '../api/factsheet.dart';
 import '../api/http_docs_api.dart';
 import '../api/models.dart';
+import '../services/document_picker.dart' as picker;
 import '../theme/tokens.dart';
+import '../widgets/drop_region.dart';
 import '../widgets/app_chip.dart';
 import '../widgets/kit_panels.dart';
 import '../widgets/kit_table.dart';
@@ -32,7 +34,11 @@ class BidKitScreen extends StatefulWidget {
     this.deadline,
     this.daysLeft,
     this.onBack,
+    this.pickDocuments,
   });
+
+  /// 파일 선택 다이얼로그. 🔴 테스트가 가짜를 넣는다 — null 이면 실제 다이얼로그
+  final Future<picker.PickOutcome> Function()? pickDocuments;
 
   /// 분석 중일 때 다시 묻는 간격
   static const pollInterval = Duration(seconds: 4);
@@ -56,6 +62,8 @@ class _BidKitScreenState extends State<BidKitScreen> {
   Object? _error;
   Timer? _poll;
   int _page = 0;
+  bool _uploading = false;
+  bool _dragging = false;
 
   @override
   void initState() {
@@ -100,6 +108,36 @@ class _BidKitScreenState extends State<BidKitScreen> {
   void _reload() {
     setState(() => _error = null);
     _load();
+  }
+
+  /// 파일을 골라 이 케이스에 올린다. [requirement]는 어느 서류용인지(서류 줄·보완요청에서 누르면 그 이름, 드롭존이면 null).
+  /// 🔴 서버가 제출 검사를 다시 돌려 돌려준 봉투가 그대로 화면이 된다 — 화면이 「올렸으니 준비됨」이라고 짐작하지 않는다.
+  Future<void> _uploadFor(String? requirement) async {
+    if (_uploading) return;
+    final outcome = await (widget.pickDocuments ?? picker.pickDocuments)();
+    await _uploadOutcome(outcome, requirement);
+  }
+
+  Future<void> _uploadOutcome(picker.PickOutcome outcome, String? requirement) async {
+    if (!mounted || _uploading) return;
+    // 🔴 거른 파일은 이유와 함께 말한다 — 조용히 삼키지 않는다
+    if (outcome.rejected.isNotEmpty) {
+      _toast(outcome.rejected.entries.map((e) => '${e.key}: ${e.value}').join('\n'));
+    }
+    if (outcome.docs.isEmpty) return;
+    setState(() => _uploading = true);
+    try {
+      for (final doc in outcome.docs) {
+        final f = await widget.api.uploadCaseFile(widget.caseId, doc, requirement: requirement);
+        _accept(f);
+      }
+    } on ApiException catch (e) {
+      if (mounted) _toast(e.message);
+    } catch (_) {
+      if (mounted) _toast('파일을 올리지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   @override
@@ -418,29 +456,34 @@ class _BidKitScreenState extends State<BidKitScreen> {
         for (final tab in tabs)
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
-            child: KitDocsList(tab: tab, onUpload: (_) => _notWired()),
+            // 🔴 줄의 「업로드」는 그 서류용으로 올린다 — 서버가 어느 서류인지 알아야 연결한다
+            child: KitDocsList(tab: tab, onUpload: (item) => _uploadFor(item.title)),
           ),
       ],
     );
-    final zone = DropzoneCard(onPick: () async => _notWired());
+    final zone = DropzoneCard(onPick: () => _uploadFor(null), isDragging: _dragging, busy: _uploading);
 
-    if (maxWidth < 1240) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [zone, const SizedBox(height: 20), docs],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(flex: 1055, child: docs),
-        const SizedBox(width: 20),
-        Expanded(flex: 714, child: zone),
-      ],
+    final body = maxWidth < 1240
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [zone, const SizedBox(height: 20), docs],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 1055, child: docs),
+              const SizedBox(width: 20),
+              Expanded(flex: 714, child: zone),
+            ],
+          );
+    // 🔴 드롭은 카드가 아니라 페이지 전체에 건다 (DropRegion 주석 참조). 끌어다 놓은 파일은 서류를 지정하지 않고 올린다
+    return DropRegion(
+      enabled: !_uploading,
+      onDragChanged: (v) => setState(() => _dragging = v),
+      onFiles: (outcome) => _uploadOutcome(outcome, null),
+      child: body,
     );
   }
-
-  void _notWired() => _toast('제출 서류 적격 판단이 아직 연결되지 않았습니다. 지금은 화면만 있습니다.');
 
   /// 🔴 탭 하나를 어떤 모양으로 그릴지는 `kind`가 정한다. 모르는 kind면 표로 떨어진다 —
   ///    에이전트가 새 kind를 보내도 화면이 죽지 않는다.
@@ -448,8 +491,9 @@ class _BidKitScreenState extends State<BidKitScreen> {
         'banner' when tab.banner != null => KitBanner(data: tab.banner!),
         'metric' when tab.metric != null => KitMetricCard(tab: tab),
         'note' when tab.note != null => KitNoteCard(tab: tab),
-        'tasks' => KitTasksCard(tab: tab, onAction: (_) => _notWired()),
-        'docs' => AppCard(child: KitDocsList(tab: tab, onUpload: (_) => _notWired())),
+        // 🔴 보완요청의 「보완 자료 올리기」도 그 서류용 업로드다
+        'tasks' => KitTasksCard(tab: tab, onAction: (item) => _uploadFor(item.title)),
+        'docs' => AppCard(child: KitDocsList(tab: tab, onUpload: (item) => _uploadFor(item.title))),
         _ => _card(f, tab),
       };
 
