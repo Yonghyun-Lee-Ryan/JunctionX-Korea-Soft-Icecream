@@ -131,7 +131,7 @@ function wbsTab(wbs) {
     (Array.isArray(p.predecessors) && p.predecessors.length) ? p.predecessors.map(str).join('·') : '-',
     str(p.duration).trim() || '미 명시',
     (Array.isArray(p.effort_mm) ? p.effort_mm : []).map((e) => `${str(e.grade)} ${num(e.mm)}`).join('・'),
-    (Array.isArray(p.requirement_refs) ? p.requirement_refs : []).map(str).join('·'),
+    refsCell(Array.isArray(p.requirement_refs) ? p.requirement_refs : []),
     String(num(p.source_page)),
   ]);
   const unspecified = rows.filter((r) => r[4] === '미 명시').length;
@@ -141,6 +141,8 @@ function wbsTab(wbs) {
   if (unlinked.length) warnings.push(`요구사항 미연결 ${unlinked.length}건: ${unlinked.join(', ')}`);
   const unknown = Array.isArray(wbs.validation?.unknown_requirement_refs) ? wbs.validation.unknown_requirement_refs : [];
   if (unknown.length) warnings.push(`공고에 없는 요구사항 ID ${unknown.length}건: ${unknown.join(', ')}`);
+  const oversized = Array.isArray(wbs.validation?.oversized_packages) ? wbs.validation.oversized_packages : [];
+  if (oversized.length) warnings.push(`요구사항을 16개 이상 묶은 패키지 ${oversized.length}개 — 쪼개야 합니다: ${oversized.map((o) => `${str(o.wbs_id)}(${num(o.count)}건)`).join(', ')}`);
   return {
     id: 'wbs', title: 'WBS', kind: 'table',
     columns: ['ID', '작업 패키지', '산출물', '선행', '기간', 'M/M', '근거요구', 'P'],
@@ -149,6 +151,14 @@ function wbsTab(wbs) {
     warnings,
     summary: '기간은 문서를 참고해주세요. 없으면 「미 명시」로 표기합니다. - M/M은 추천값입니다.',
   };
+}
+
+/** 근거요구 칸 — 8개까지만 펼치고 나머지는 건수로. 50개를 한 칸에 늘어놓으면 표가 읽히지 않는다(실측) */
+const REFS_SHOWN = 8;
+function refsCell(refs) {
+  const ids = refs.map(str).filter(Boolean);
+  if (ids.length <= REFS_SHOWN) return ids.join('·');
+  return `${ids.slice(0, REFS_SHOWN).join('·')} 외 ${ids.length - REFS_SHOWN}건`;
 }
 
 // ── 화면⑧ 임계경로 ────────────────────────────────────────────────────────

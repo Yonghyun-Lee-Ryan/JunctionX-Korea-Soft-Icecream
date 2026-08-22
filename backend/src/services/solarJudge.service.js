@@ -225,6 +225,7 @@ export async function judgePlan({ announcement, fetchImpl }) {
 
 const round1 = (x) => Math.round(x * 10) / 10;
 const idOf = (r) => String(r?.requirement_id ?? '').trim();
+export const WBS_MAX_REFS = 15;   // 한 패키지에 묶는 요구사항 상한 — 프롬프트와 같은 숫자
 
 /**
  * 🔴 기간은 문서가 말한 것만 — 비어 있으면 정확히 「미 명시」. M/M 은 전부 추천값.
@@ -264,6 +265,8 @@ export function guardWbs(out, announcement) {
       .filter((p) => !p.requirement_refs.some((r) => known.has(r)))
       .map((p) => p.wbs_id),
     unknown_requirement_refs: [...unknown],
+    // 🔴 실측: 첫 패키지가 요구사항 50개를 한 행에 묶었다 — 쪼개야 할 패키지를 센다 (프롬프트 상한 15)
+    oversized_packages: packages.filter((p) => p.requirement_refs.length > WBS_MAX_REFS).map((p) => ({ wbs_id: p.wbs_id, count: p.requirement_refs.length })),
   };
   return result;
 }

@@ -251,3 +251,24 @@ test('guardCriticalPath — Solar 가 항목을 줘도 마감 줄이 없으면 �
   const withDeadline = { ...cpReply(), critical_path: [{ item: '제안서 제출 마감', lead_time_days: 0, source_page: 2 }, ...cpReply().critical_path] };
   assert.equal(guardCriticalPath(withDeadline, { work_packages: [] }, noticeAnn).critical_path.filter((c) => c.item.includes('마감')).length, 1);
 });
+
+// ── 2-2 WBS 품질: 기간 전부 「미 명시」·한 패키지에 요구사항 50개 (실측) ──
+import { loadPrompt } from '../src/services/solarJudge.service.js';
+
+test('WBS 프롬프트 — 사업기간·추진일정을 기간으로 쓰는 규칙과 패키지당 요구사항 상한(15)이 들어 있다', () => {
+  const p = loadPrompt('wbs');
+  assert.ok(p.includes('project_period'), '사업기간을 기간의 근거로');
+  assert.ok(p.includes('추진일정'), '추진일정 표를 기간의 근거로');
+  assert.ok(/15개/.test(p), '패키지당 요구사항 상한');
+  assert.ok(p.includes('미 명시'), '그래도 없으면 미 명시');
+});
+
+test('guardWbs — 요구사항을 16개 이상 묶은 패키지는 validation.oversized_packages 에 적는다', () => {
+  const many = Array.from({ length: 40 }, (_, i) => `SVR-${String(i + 1).padStart(3, '0')}`);
+  const ann = { requirements: many.map((id) => ({ requirement_id: id })) };
+  const out = guardWbs({ work_packages: [
+    { wbs_id: '1.1', name: '큰 묶음', requirement_refs: many.slice(0, 30), effort_mm: [] },
+    { wbs_id: '1.2', name: '작은 묶음', requirement_refs: many.slice(30, 35), effort_mm: [] },
+  ] }, ann);
+  assert.deepEqual(out.validation.oversized_packages, [{ wbs_id: '1.1', count: 30 }]);
+});

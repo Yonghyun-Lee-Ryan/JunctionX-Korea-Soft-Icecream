@@ -212,3 +212,19 @@ test('criticalpathTab — 채워 넣은 항목이면 경고줄로 말한다 · c
   const cost = kit.tabs.find((t) => t.id === 'cost');
   assert.deepEqual(cost.metric.evidence, ['예산 16,048,200,000원', '추정가격・공고 p3']);
 });
+
+// ── 2-2 WBS 탭: 요구사항을 많이 묶은 패키지는 경고로 말하고, 근거요구 칸은 8개까지만 펼친다 ──
+test('wbsTab — 16개 이상 묶은 패키지 경고 · 근거요구 칸은 「… 외 N건」', () => {
+  const many = Array.from({ length: 30 }, (_, i) => `SVR-${String(i + 1).padStart(3, '0')}`);
+  const wbs = {
+    work_packages: [{ wbs_id: '1.1', name: '큰 묶음', deliverable: '산출물', predecessors: [], duration: '미 명시', effort_mm: [{ grade: '특급', mm: 1 }], requirement_refs: many, source_page: 4 }],
+    validation: { primary_requirement_count: 30, linked_requirement_count: 30, unlinked_requirement_ids: [], packages_without_requirement: [], unknown_requirement_refs: [], oversized_packages: [{ wbs_id: '1.1', count: 30 }] },
+  };
+  const kit = buildKit({ announcement, plan: { wbs } });
+  const tab = kit.tabs.find((t) => t.id === 'wbs');
+  assert.ok(tab.warnings.some((w) => w.includes('1.1') && w.includes('30건') && w.includes('쪼개')), JSON.stringify(tab.warnings));
+  const refs = tab.rows[0][6];
+  assert.ok(refs.startsWith('SVR-001·'), refs);
+  assert.ok(refs.endsWith('외 22건'), refs);
+  assert.equal((refs.match(/SVR-/g) || []).length, 8);
+});
