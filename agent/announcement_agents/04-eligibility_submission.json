@@ -38,19 +38,23 @@
                 "description": "현재 입찰 대상이 다른 구축사업을 관리·감독하는 PMO, 전자정부사업관리 또는 개인정보 영향평가 용역인 과업설명서·제안요청서"
               },
               {
+                "const": "SERVICE_OPERATION_RFP",
+                "description": "현재 입찰 대상이 시스템 구축도 PMO·PIA도 아닌 용역 — 결제·발매 대행, 서비스 운영·위탁, 유지관리, 콜센터, 데이터·콘텐츠 제작, 컨설팅·연구, 교육, 홍보 등 — 의 제안요청서·과업내용서·과업지시서. 사업 범위와 요구사항(또는 과업 내용) 표가 있으면 여기다"
+              },
+              {
                 "const": "BID_NOTICE",
                 "description": "입찰공고서·재공고·용역 입찰공고. 관리번호, 수요기관, 입찰명, 추정가격, 입찰방법, 낙찰자선정방법, 전자입찰서 접수기간, 입찰참가자격, 공동수급 허용 여부가 목록으로 적혀 있고 상세 요구사항 표는 없는 문서"
               },
               {
                 "const": "OTHER_REVIEW_REQUIRED",
-                "description": "두 유형에 명확히 해당하지 않거나 표지·사업범위·상세 요구사항이 불충분한 문서"
+                "description": "세 유형에 명확히 해당하지 않거나, 제안요청서·과업문서가 아니거나(입찰공고서·계약특수조건·서식·협정서), 표지·사업범위·요구사항이 불충분한 문서"
               }
             ]
           }
         }
       },
       "modelName": "",
-      "userSystemPrompt": "이 Agent는 참가자격과 제출 규칙을 뽑는다. 입력 문서가 넷 중 무엇인지 가른다.\n🔴 표제를 먼저 본다. 「입찰공고서」·「용역 입찰공고」·「재공고」로 시작하고 관리번호·추정가격·접수기간이 목록으로 적혀 있으면 BID_NOTICE다. 쪽수가 10쪽 안팎으로 짧고 상세 요구사항 표가 없는 것도 신호다.\n「제안요청서」·「과업내용서」·「과업설명서」이고 상세 요구사항 표가 있으면 BUILD_IMPLEMENTATION_RFP 또는 PMO_PIA_SERVICE_SPEC이다. 현재 계약이 다른 구축사업을 관리·감독하는 PMO·전자정부사업관리·개인정보 영향평가면 PMO_PIA_SERVICE_SPEC, 직접 개발·구축·도입하면 BUILD_IMPLEMENTATION_RFP다.\nPMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
+      "userSystemPrompt": "이 Agent는 참가자격과 제출 규칙을 뽑는다. 입력 문서가 넷 중 무엇인지 가른다.\n🔴 표제를 먼저 본다. 「입찰공고서」·「용역 입찰공고」·「재공고」로 시작하고 관리번호·추정가격·접수기간이 목록으로 적혀 있으면 BID_NOTICE다. 쪽수가 10쪽 안팎으로 짧고 상세 요구사항 표가 없는 것도 신호다.\n「제안요청서」·「과업내용서」·「과업설명서」이고 사업 범위·요구사항 표가 있으면 BUILD_IMPLEMENTATION_RFP · PMO_PIA_SERVICE_SPEC · SERVICE_OPERATION_RFP 중 하나다. 현재 계약이 다른 구축사업을 관리·감독하는 PMO·전자정부사업관리·개인정보 영향평가면 PMO_PIA_SERVICE_SPEC, 직접 개발·구축·도입하면 BUILD_IMPLEMENTATION_RFP, 그 밖의 용역(결제·발매 대행, 운영·위탁, 유지관리, 컨설팅 등)이면 SERVICE_OPERATION_RFP다.\nPMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
     },
     "informationExtractConfiguration": {
       "modelName": "",
@@ -1090,6 +1094,7 @@
       ],
       "categorySchemaMapping": {
         "BUILD_IMPLEMENTATION_RFP": "extract_build_eligibility_submission",
+        "SERVICE_OPERATION_RFP": "extract_build_eligibility_submission",
         "PMO_PIA_SERVICE_SPEC": "extract_pmo_eligibility_submission",
         "BID_NOTICE": "extract_notice_eligibility_submission"
       },
@@ -1132,6 +1137,20 @@
         },
         "target": {
           "nodeType": "extract",
+          "name": "extract_build_eligibility_submission"
+        },
+        "condition": {
+          "conditionName": "SERVICE_OPERATION_RFP"
+        }
+      },
+      {
+        "id": "e3",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
           "name": "extract_pmo_eligibility_submission"
         },
         "condition": {
@@ -1139,7 +1158,7 @@
         }
       },
       {
-        "id": "e3",
+        "id": "e4",
         "source": {
           "nodeType": "classify",
           "name": "Classify-1"

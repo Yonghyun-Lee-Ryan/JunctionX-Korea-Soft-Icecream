@@ -158,6 +158,12 @@ def instruct_agent(agent_name, node_name, prompt):
 # 공고 해부 5종이 공유하는 분류 갈래
 # ─────────────────────────────────────────────────────────────────────────────
 
+# 🔴 2026-08-23 실측으로 더한 갈래 — SERVICE_OPERATION_RFP
+#
+#   나라장터 R25BK00645031(체육진흥투표권 온라인발매 결제서비스(PG) 대행 용역)의 제안요청서를 넣었더니
+#   01·02·03·05 의 Classify 가 전부 OTHER_REVIEW_REQUIRED 로 보내 Extract 가 안 돌았다(04만 BUILD 로 통과).
+#   갈래가 「직접 구축」과 「PMO/PIA」 둘뿐이라 결제대행·운영·유지관리·컨설팅 같은 **용역 RFP** 가 설 자리가 없었다.
+#   용역 RFP 도 사업 범위·요구사항·자격·평가를 같은 틀로 갖고 있으므로 구축용 Extract 노드를 그대로 태운다.
 ANNOUNCEMENT_BRANCHES = [
     ("BUILD_IMPLEMENTATION_RFP",
      "현재 입찰 대상이 정보시스템·앱·웹·인프라·플랫폼·DB·보안 등을 직접 개발·구축·도입하는 "
@@ -165,14 +171,22 @@ ANNOUNCEMENT_BRANCHES = [
     ("PMO_PIA_SERVICE_SPEC",
      "현재 입찰 대상이 다른 구축사업을 관리·감독하는 PMO, 전자정부사업관리 또는 개인정보 "
      "영향평가 용역인 과업설명서·제안요청서"),
+    ("SERVICE_OPERATION_RFP",
+     "현재 입찰 대상이 시스템 구축도 PMO·PIA도 아닌 용역 — 결제·발매 대행, 서비스 운영·위탁, "
+     "유지관리, 콜센터, 데이터·콘텐츠 제작, 컨설팅·연구, 교육, 홍보 등 — 의 제안요청서·과업내용서·"
+     "과업지시서. 사업 범위와 요구사항(또는 과업 내용) 표가 있으면 여기다"),
     ("OTHER_REVIEW_REQUIRED",
-     "두 유형에 명확히 해당하지 않거나 표지·사업범위·상세 요구사항이 불충분한 문서"),
+     "세 유형에 명확히 해당하지 않거나, 제안요청서·과업문서가 아니거나(입찰공고서·계약특수조건·"
+     "서식·협정서), 표지·사업범위·요구사항이 불충분한 문서"),
 ]
 
 ANNOUNCEMENT_CLASSIFY_PROMPT = (
     "표지의 현재 사업명, 현재 계약의 주요 범위, 요구사항 접두어, 입찰참가자격 순으로 판단한다. "
     "PMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. "
-    "근거가 부족하면 OTHER_REVIEW_REQUIRED다."
+    "🔴 「제안요청서」·「과업내용서」·「과업지시서」 표제가 있고 사업 범위와 요구사항(과업 내용)이 적혀 있으면 "
+    "OTHER_REVIEW_REQUIRED가 아니다 — 구축이면 BUILD_IMPLEMENTATION_RFP, PMO·PIA면 PMO_PIA_SERVICE_SPEC, "
+    "그 밖의 용역(대행·운영·유지관리·컨설팅 등)이면 SERVICE_OPERATION_RFP다. "
+    "제안요청서가 아닌 문서(입찰공고서·특수조건·서식)이거나 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
 )
 
 EMPTY_VALUE_RULE = (
@@ -289,6 +303,31 @@ REQ_PMO_PROMPT = (
     + REQUIREMENTS_SCOPE
 )
 
+# 🔴 2026-08-23 실측 — 용역 RFP(PG 대행)는 «요구사항 총괄표»가 없다. 과업 내용이 절·불릿·표로 산문처럼 적혀 있어
+#    구축용 프롬프트(REQ_BUILD_PROMPT)는 0건을 돌려줬다. 용역 RFP 는 과업 내용을 요구사항으로 «세어서» 뽑아야 한다.
+REQ_SERVICE_PROMPT = (
+    "입력은 시스템 구축이 아닌 **용역**(결제·발매 대행, 운영·위탁, 유지관리, 컨설팅 등)의 제안요청서·과업내용서다. "
+    "문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n"
+    "[요구사항의 자리]\n"
+    "🔴 이런 문서에는 「요구사항 총괄표」가 없는 일이 많다. 그때는 「과업 내용」·「제안요청 내용」·「세부 과업」·"
+    "「서비스 요구사항」·「운영·정산·보안·연계·장애 대응」 같은 절에서 수행사가 해야 할 일을 **한 줄에 하나씩** "
+    "requirements 행으로 옮긴다. 불릿·번호·표의 행 하나가 요구사항 하나다. 요구사항을 합치거나 요약하지 않는다.\n"
+    "- requirement_id: 문서에 번호·코드가 있으면 그대로, 없으면 문서 순서대로 SVR-001, SVR-002 … 형식\n"
+    "- requirement_category: 문서의 절 제목을 그대로(예: 「결제서비스」, 「정산」, 「정보보안」, 「시스템 연계」, 「장애 대응」, 「사업관리」)\n"
+    "- requirement_name: 그 줄의 핵심을 20자 안팎으로\n"
+    "- detailed_content: 불릿·숫자·기한·수수료율·응답시간·가용률·승인·협의·예외·금지를 줄이지 않고 원문대로\n"
+    "- requirement_count 는 실제로 뽑은 행 수\n\n"
+    "[현재 계약]\n"
+    "표지와 사업개요의 현재 입찰 용역만 PRIMARY_CONTRACT다. 발주기관이 이미 운영하는 시스템(연계 대상)은 TARGET_PROJECT 로 "
+    "두되, 그 시스템을 새로 구축하는 요구사항으로 바꾸지 않는다. service_component 는 주로 OTHER 또는 BUILD(연계 개발이 있으면)다.\n\n"
+    "[※ 단서 분리]\n"
+    "🔴 ※ 로 시작하는 문장과 「단」·「다만」 제한은 detailed_content에 남기면서 note_clause에도 원문 그대로 옮긴다.\n\n"
+    + PAGE_RULE + "\n\n" + EMPTY_VALUE_RULE + "\n\n"
+    "[출력 경계]\n"
+    "자격·평가기준·제출서류·계약조건은 이 Agent가 다루지 않는다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식은 제외한다.\n\n"
+    + REQUIREMENTS_SCOPE
+)
+
 AGENT_03 = classify_extract_agent(
     "Announcement 3 - Requirements",
     ANNOUNCEMENT_BRANCHES,
@@ -298,9 +337,12 @@ AGENT_03 = classify_extract_agent(
                        REQUIREMENTS_LAYOUT, REQ_BUILD_PROMPT),
         extract_schema("extract_pmo_requirements", REQUIREMENTS_PROPS,
                        REQUIREMENTS_LAYOUT, REQ_PMO_PROMPT),
+        extract_schema("extract_service_requirements", REQUIREMENTS_PROPS,
+                       REQUIREMENTS_LAYOUT, REQ_SERVICE_PROMPT),
     ],
     {
         "BUILD_IMPLEMENTATION_RFP": "extract_build_requirements",
+        "SERVICE_OPERATION_RFP": "extract_service_requirements",   # 🔴 용역은 과업 내용을 요구사항으로 센다 — 구축용은 0건을 낸다(실측)
         "PMO_PIA_SERVICE_SPEC": "extract_pmo_requirements",
     },
 )
@@ -478,8 +520,9 @@ BID_NOTICE_BRANCH = (
 ANNOUNCEMENT_BRANCHES_WITH_NOTICE = [
     ANNOUNCEMENT_BRANCHES[0],
     ANNOUNCEMENT_BRANCHES[1],
+    ANNOUNCEMENT_BRANCHES[2],   # SERVICE_OPERATION_RFP
     BID_NOTICE_BRANCH,
-    ANNOUNCEMENT_BRANCHES[2],
+    ANNOUNCEMENT_BRANCHES[3],   # OTHER_REVIEW_REQUIRED
 ]
 
 ELIGIBILITY_CLASSIFY_PROMPT = (
@@ -487,10 +530,11 @@ ELIGIBILITY_CLASSIFY_PROMPT = (
     "🔴 표제를 먼저 본다. 「입찰공고서」·「용역 입찰공고」·「재공고」로 시작하고 관리번호·"
     "추정가격·접수기간이 목록으로 적혀 있으면 BID_NOTICE다. 쪽수가 10쪽 안팎으로 짧고 "
     "상세 요구사항 표가 없는 것도 신호다.\n"
-    "「제안요청서」·「과업내용서」·「과업설명서」이고 상세 요구사항 표가 있으면 "
-    "BUILD_IMPLEMENTATION_RFP 또는 PMO_PIA_SERVICE_SPEC이다. 현재 계약이 다른 구축사업을 "
+    "「제안요청서」·「과업내용서」·「과업설명서」이고 사업 범위·요구사항 표가 있으면 "
+    "BUILD_IMPLEMENTATION_RFP · PMO_PIA_SERVICE_SPEC · SERVICE_OPERATION_RFP 중 하나다. 현재 계약이 다른 구축사업을 "
     "관리·감독하는 PMO·전자정부사업관리·개인정보 영향평가면 PMO_PIA_SERVICE_SPEC, "
-    "직접 개발·구축·도입하면 BUILD_IMPLEMENTATION_RFP다.\n"
+    "직접 개발·구축·도입하면 BUILD_IMPLEMENTATION_RFP, 그 밖의 용역(결제·발매 대행, 운영·위탁, 유지관리, "
+    "컨설팅 등)이면 SERVICE_OPERATION_RFP다.\n"
     "PMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. "
     "근거가 부족하면 OTHER_REVIEW_REQUIRED다."
 )
@@ -528,6 +572,7 @@ AGENT_04 = classify_extract_agent(
     ],
     {
         "BUILD_IMPLEMENTATION_RFP": "extract_build_eligibility_submission",
+        "SERVICE_OPERATION_RFP": "extract_build_eligibility_submission",   # 용역 RFP 도 구축용 Extract 를 탄다
         "PMO_PIA_SERVICE_SPEC": "extract_pmo_eligibility_submission",
         "BID_NOTICE": "extract_notice_eligibility_submission",
     },

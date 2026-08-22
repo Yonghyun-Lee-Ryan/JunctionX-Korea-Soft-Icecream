@@ -38,15 +38,19 @@
                 "description": "현재 입찰 대상이 다른 구축사업을 관리·감독하는 PMO, 전자정부사업관리 또는 개인정보 영향평가 용역인 과업설명서·제안요청서"
               },
               {
+                "const": "SERVICE_OPERATION_RFP",
+                "description": "현재 입찰 대상이 시스템 구축도 PMO·PIA도 아닌 용역 — 결제·발매 대행, 서비스 운영·위탁, 유지관리, 콜센터, 데이터·콘텐츠 제작, 컨설팅·연구, 교육, 홍보 등 — 의 제안요청서·과업내용서·과업지시서. 사업 범위와 요구사항(또는 과업 내용) 표가 있으면 여기다"
+              },
+              {
                 "const": "OTHER_REVIEW_REQUIRED",
-                "description": "두 유형에 명확히 해당하지 않거나 표지·사업범위·상세 요구사항이 불충분한 문서"
+                "description": "세 유형에 명확히 해당하지 않거나, 제안요청서·과업문서가 아니거나(입찰공고서·계약특수조건·서식·협정서), 표지·사업범위·요구사항이 불충분한 문서"
               }
             ]
           }
         }
       },
       "modelName": "",
-      "userSystemPrompt": "표지의 현재 사업명, 현재 계약의 주요 범위, 요구사항 접두어, 입찰참가자격 순으로 판단한다. PMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
+      "userSystemPrompt": "표지의 현재 사업명, 현재 계약의 주요 범위, 요구사항 접두어, 입찰참가자격 순으로 판단한다. PMO·PIA 문서에 포함된 대상 구축사업 설명을 현재 계약으로 오인하지 않는다. 🔴 「제안요청서」·「과업내용서」·「과업지시서」 표제가 있고 사업 범위와 요구사항(과업 내용)이 적혀 있으면 OTHER_REVIEW_REQUIRED가 아니다 — 구축이면 BUILD_IMPLEMENTATION_RFP, PMO·PIA면 PMO_PIA_SERVICE_SPEC, 그 밖의 용역(대행·운영·유지관리·컨설팅 등)이면 SERVICE_OPERATION_RFP다. 제안요청서가 아닌 문서(입찰공고서·특수조건·서식)이거나 근거가 부족하면 OTHER_REVIEW_REQUIRED다."
     },
     "informationExtractConfiguration": {
       "modelName": "",
@@ -358,10 +362,165 @@
           "modelName": "",
           "nodeMode": "extract",
           "userSystemPrompt": "입력은 PMO·전자정부사업관리·개인정보 영향평가 용역의 과업설명서 또는 제안요청서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[계약 경계]\n표지와 사업일반의 PMO·PIA 용역이 PRIMARY_CONTRACT다. 관리·평가 대상 정보시스템 구축사업은 TARGET_PROJECT다. 대상사업의 앱·웹·서버·플랫폼·DB·보안솔루션 개발·도입을 현재 수행사의 업무로 바꾸지 않는다. 현재 수행사가 검토·조정·점검·감독하도록 명시된 활동만 PRIMARY_CONTRACT로 둔다.\n\n[누락 금지]\n현재 용역의 CSR·PAR·SER·QUR·COR·PMR·PSR 등만 requirements에 넣고 대상 구축사업의 ECR·SFR·PER·SIR·UIR·DAR·TER는 넣지 않는다. 상세내용의 불릿, 숫자, 기한, 각주, 승인·협의, 예외와 금지를 줄이지 않는다.\n\n[※ 단서 분리]\n🔴 ※ 로 시작하는 문장과 「단」·「다만」 제한은 detailed_content에 남기면서 note_clause에도 원문 그대로 옮긴다. PMO 문서의 ※ 는 「대상사업 일정에 종속되는 구간은 제외」처럼 책임 경계를 가르는 자리라 특히 중요하다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n자격·평가·제출서류·계약조건은 이 Agent가 다루지 않는다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식은 제외한다.\n\n[이 Agent 전용 출력 범위]\n요구사항 총괄표의 건수와 분류를 확인하고 현재 계약의 상세 요구사항을 고유번호별로 빠짐없이 추출한다.\n허용된 최상위 필드: requirement_count, requirement_summary, requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다.\n\n[검산]\nrequirement_count와 requirements 배열 길이를 대조한다. 총괄표가 선언한 분류별 건수와 실제 추출된 건수가 다르면 값을 맞추려고 행을 지어내거나 지우지 않는다 — 있는 그대로 둔다."
+        },
+        {
+          "type": "json_schema",
+          "json_schema": {
+            "name": "extract_service_requirements",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "requirement_count": {
+                  "type": "integer",
+                  "description": "현재 입찰사업의 요구사항 총괄표에 명시된 총 건수. 없으면 0"
+                },
+                "requirement_summary": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "category_code": {
+                        "type": "string",
+                        "description": "분류코드 또는 접두어"
+                      },
+                      "category_name": {
+                        "type": "string",
+                        "description": "분류명"
+                      },
+                      "declared_count": {
+                        "type": "string",
+                        "description": "문서에 적힌 분류별 건수. 값이 없거나 확인되지 않으면 빈 문자열"
+                      }
+                    }
+                  },
+                  "description": "요구사항 총괄표의 분류별 건수"
+                },
+                "requirements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "requirement_id": {
+                        "type": "string",
+                        "description": "인쇄된 고유번호. 예: SFR-001, PMR-003"
+                      },
+                      "requirement_category": {
+                        "type": "string",
+                        "description": "요구사항 분류. 화면의 「분류」열에 그대로 쓰인다"
+                      },
+                      "requirement_name": {
+                        "type": "string",
+                        "description": "요구사항 명칭. 한 줄로 끝나는 짧은 이름"
+                      },
+                      "detailed_content": {
+                        "type": "string",
+                        "description": "세부내용 전체. 하위 불릿, 수치, 기한, 단, 다만, 예외와 금지를 생략하지 않는다."
+                      },
+                      "note_clause": {
+                        "type": "string",
+                        "description": "🔴 이 요구사항에 붙은 ※ 단서만 원문 그대로 옮긴다. ※ 기호로 시작하는 문장, 「단」·「다만」으로 시작하는 제한, 적용 범위를 좁히거나 뒤집는 조건이 대상이다. 예: 「※신규 도입장비에 한함」. 여러 개면 줄바꿈으로 잇는다. 없으면 빈 문자열. 🔴 요약하거나 바꿔 쓰지 않는다 — 이 문장은 뜻을 뒤집는 자리라 원문이 그대로 필요하다."
+                      },
+                      "scope_role": {
+                        "type": "string",
+                        "description": "PRIMARY_CONTRACT 또는 TARGET_PROJECT"
+                      },
+                      "service_component": {
+                        "type": "string",
+                        "description": "BUILD, PMO, PIA, COMMON, OTHER 중 하나"
+                      },
+                      "source_reference": {
+                        "type": "string",
+                        "description": "절 제목"
+                      },
+                      "source_page": {
+                        "type": "integer",
+                        "description": "이 요구사항이 인쇄된 쪽 번호. 확정할 수 없으면 0"
+                      }
+                    }
+                  },
+                  "description": "현재 계약의 상세 요구사항을 고유번호별로 모두 추출한다."
+                }
+              }
+            }
+          },
+          "schemaLayout": {
+            "version": 1,
+            "columns": [
+              {
+                "name": "requirement_count",
+                "source": "root"
+              },
+              {
+                "name": "category_code",
+                "source": "group_table",
+                "groupTableKey": "requirement_summary"
+              },
+              {
+                "name": "category_name",
+                "source": "group_table",
+                "groupTableKey": "requirement_summary"
+              },
+              {
+                "name": "declared_count",
+                "source": "group_table",
+                "groupTableKey": "requirement_summary"
+              },
+              {
+                "name": "requirement_id",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "requirement_category",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "requirement_name",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "detailed_content",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "note_clause",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "scope_role",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "service_component",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "source_reference",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              },
+              {
+                "name": "source_page",
+                "source": "group_table",
+                "groupTableKey": "requirements"
+              }
+            ]
+          },
+          "mode": "standard",
+          "modelName": "",
+          "nodeMode": "extract",
+          "userSystemPrompt": "입력은 시스템 구축이 아닌 **용역**(결제·발매 대행, 운영·위탁, 유지관리, 컨설팅 등)의 제안요청서·과업내용서다. 문서에 명시된 사실만 ANNOUNCEMENT_CORE_V1 계약으로 추출하고 추측·권고·요약 보고서를 만들지 않는다.\n\n[요구사항의 자리]\n🔴 이런 문서에는 「요구사항 총괄표」가 없는 일이 많다. 그때는 「과업 내용」·「제안요청 내용」·「세부 과업」·「서비스 요구사항」·「운영·정산·보안·연계·장애 대응」 같은 절에서 수행사가 해야 할 일을 **한 줄에 하나씩** requirements 행으로 옮긴다. 불릿·번호·표의 행 하나가 요구사항 하나다. 요구사항을 합치거나 요약하지 않는다.\n- requirement_id: 문서에 번호·코드가 있으면 그대로, 없으면 문서 순서대로 SVR-001, SVR-002 … 형식\n- requirement_category: 문서의 절 제목을 그대로(예: 「결제서비스」, 「정산」, 「정보보안」, 「시스템 연계」, 「장애 대응」, 「사업관리」)\n- requirement_name: 그 줄의 핵심을 20자 안팎으로\n- detailed_content: 불릿·숫자·기한·수수료율·응답시간·가용률·승인·협의·예외·금지를 줄이지 않고 원문대로\n- requirement_count 는 실제로 뽑은 행 수\n\n[현재 계약]\n표지와 사업개요의 현재 입찰 용역만 PRIMARY_CONTRACT다. 발주기관이 이미 운영하는 시스템(연계 대상)은 TARGET_PROJECT 로 두되, 그 시스템을 새로 구축하는 요구사항으로 바꾸지 않는다. service_component 는 주로 OTHER 또는 BUILD(연계 개발이 있으면)다.\n\n[※ 단서 분리]\n🔴 ※ 로 시작하는 문장과 「단」·「다만」 제한은 detailed_content에 남기면서 note_clause에도 원문 그대로 옮긴다.\n\n[쪽 번호 강제]\nsource_page는 그 값이 인쇄된 쪽 번호를 정수로 적는다. 문서에 인쇄된 쪽 번호를 우선하고, 없으면 파싱된 순서상의 쪽을 쓴다. 어느 쪽인지 확정할 수 없으면 0으로 둔다. 🔴 쪽을 지어내지 않는다 — 0이 틀린 숫자보다 낫다. source_reference에는 절 제목을 그대로 둔다.\n\n[빈 값 처리]\n모든 배열형 테이블에서 원문에 존재하는 행은 유지하되, 해당 행의 어떤 셀이 문서에 없거나 확인되지 않으면 추론·보완·대체하지 말고 반드시 빈 문자열(\"\")로 둔다. 다른 열의 값을 복사하거나 \"없음\", \"해당없음\", 0, null을 대신 넣지 않는다. 원문에 행 자체가 없으면 빈 행을 새로 만들지 않는다.\n\n[출력 경계]\n자격·평가기준·제출서류·계약조건은 이 Agent가 다루지 않는다. 단순 목차, 반복 머리말, 홍보문, 법령 전문, 빈 서식은 제외한다.\n\n[이 Agent 전용 출력 범위]\n요구사항 총괄표의 건수와 분류를 확인하고 현재 계약의 상세 요구사항을 고유번호별로 빠짐없이 추출한다.\n허용된 최상위 필드: requirement_count, requirement_summary, requirements\n허용 목록 밖의 최상위 필드는 출력하지 않는다. 결과는 전체 ANNOUNCEMENT_CORE_V1 중 이 Agent가 담당하는 부분 객체다.\n\n[검산]\nrequirement_count와 requirements 배열 길이를 대조한다. 총괄표가 선언한 분류별 건수와 실제 추출된 건수가 다르면 값을 맞추려고 행을 지어내거나 지우지 않는다 — 있는 그대로 둔다."
         }
       ],
       "categorySchemaMapping": {
         "BUILD_IMPLEMENTATION_RFP": "extract_build_requirements",
+        "SERVICE_OPERATION_RFP": "extract_service_requirements",
         "PMO_PIA_SERVICE_SPEC": "extract_pmo_requirements"
       },
       "location": false,
@@ -397,6 +556,20 @@
       },
       {
         "id": "e2",
+        "source": {
+          "nodeType": "classify",
+          "name": "Classify-1"
+        },
+        "target": {
+          "nodeType": "extract",
+          "name": "extract_service_requirements"
+        },
+        "condition": {
+          "conditionName": "SERVICE_OPERATION_RFP"
+        }
+      },
+      {
+        "id": "e3",
         "source": {
           "nodeType": "classify",
           "name": "Classify-1"

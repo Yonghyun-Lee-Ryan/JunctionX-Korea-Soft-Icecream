@@ -4,8 +4,8 @@
     {
       "order": 1,
       "name": "Announcement 1 - Project Overview",
-      "studioName": "01-Overview",
-      "agentId": "agt_2z8o3Lvz9oSuJDPz8hwAiK",
+      "studioName": "01-Overview v2",
+      "agentId": "agt_m3jgg8xxo36eUZ7Y3VtzbK",
       "file": "01-overview.json",
       "fields": [
         "schema_version",
@@ -27,8 +27,8 @@
     {
       "order": 2,
       "name": "Announcement 2 - Scope and Context",
-      "studioName": "02-Scope-Context",
-      "agentId": "agt_YkBxZFFfQ5pAqgDY2Tpkte",
+      "studioName": "02-Scope-Context v2",
+      "agentId": "agt_kkLc9mQwFWf72MH2iPsjJi",
       "file": "02-scope_context.json",
       "fields": [
         "scope_items",
@@ -40,8 +40,8 @@
     {
       "order": 3,
       "name": "Announcement 3 - Requirements",
-      "studioName": "03-Requirements",
-      "agentId": "agt_Vk8s7vQCevFqy37QrchgFC",
+      "studioName": "03-Requirements v2",
+      "agentId": "agt_eHjFLqtaGBzAaCF8A7Yzgf",
       "file": "03-requirements.json",
       "screen": "⑦ 요구사항 체크리스트",
       "revised": "note_clause(※ 단서)와 source_page(근거 쪽·정수)를 열로 분리했다",
@@ -56,8 +56,8 @@
     {
       "order": 4,
       "name": "Announcement 4 - Eligibility and Submission",
-      "studioName": "04-Eligibility-Submission",
-      "agentId": "agt_n7LXMmk3fmANEWKsSAQ9aU",
+      "studioName": "04-Eligibility-Submission v2",
+      "agentId": "agt_7Cg3HLb2pggLdpQTUz8doa",
       "file": "04-eligibility_submission.json",
       "screen": "⑥ 파일제출 · ⑨ 제출준비",
       "revised": "copies(부수)·validity_basis(유효기간)·submission_method를 열로 분리하고 submission_constraints를 더했다",
@@ -72,8 +72,8 @@
     {
       "order": 5,
       "name": "Announcement 5 - Conditions and Evaluation",
-      "studioName": "05-Conditions-Evaluation",
-      "agentId": "agt_BL4wbrGbHM5SaUcJHHQ4Qn",
+      "studioName": "05-Conditions-Evaluation v2",
+      "agentId": "agt_KfxL8VwSpdoo6foGwLtYii",
       "file": "05-conditions_evaluation.json",
       "fields": [
         "execution_conditions",
