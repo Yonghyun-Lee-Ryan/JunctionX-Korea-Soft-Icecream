@@ -5,6 +5,7 @@ import { loadFixture, stripComments } from './fixture.service.js';
 import { KIT_PAGES, KIT_PRIMARY_ACTION, KIT_SECONDARY_ACTION } from '../config/kitPages.js';
 import { env } from '../config/env.js';
 import { isFresh, pipelineConfigured } from './casePipeline.service.js';
+import { deadlineStatus } from './deadline.service.js';
 
 /** caseId = 공고번호-차수 */
 export function toCaseId(bidPbancNo, bidPbancOrd = '000') {
@@ -63,6 +64,13 @@ export function getFactsheet(caseId, { live = false } = {}) {
       kitSecondaryAction: KIT_SECONDARY_ACTION,
     },
   };
+  // 🔴 마감은 읽는 시점에 계산한다 — 저장된 D-값은 하루만 지나도 틀린다. 못 읽으면 필드를 만들지 않는다
+  const dl = deadlineStatus(header?.deadline);
+  if (dl.passed !== null) {
+    envelope.deadlineAt = dl.deadlineAt;
+    envelope.deadlinePassed = dl.passed;
+    envelope.daysLeft = dl.businessDaysLeft;
+  }
   const error = parseJson(row.error_json, null);
   if (error) envelope.error = error;
   return envelope;

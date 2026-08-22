@@ -919,3 +919,11 @@ Factsheet _replaceNote(Factsheet f, KitNoteData note) {
     attachments: f.attachments, title: f.title, org: f.org, deadline: f.deadline, daysLeft: f.daysLeft, errorMessage: f.errorMessage,
   );
 }
+
+/// 서버가 마감을 읽어 붙인 봉투 흉내.
+Factsheet withDeadline(Factsheet f, {required String deadline, required bool passed, required int daysLeft}) => Factsheet(
+      caseId: f.caseId, status: f.status, verdict: f.verdict, tabs: f.tabs, downloads: f.downloads, progress: f.progress,
+      pages: f.pages, primaryAction: f.primaryAction, secondaryAction: f.secondaryAction, cached: f.cached,
+      attachments: f.attachments, title: f.title, org: f.org, deadline: deadline, daysLeft: daysLeft, deadlinePassed: passed,
+      errorMessage: f.errorMessage,
+    );

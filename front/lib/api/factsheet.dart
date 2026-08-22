@@ -19,6 +19,7 @@ class Factsheet {
     this.org,
     this.deadline,
     this.daysLeft,
+    this.deadlinePassed,
     this.errorMessage,
   });
 
@@ -45,6 +46,9 @@ class Factsheet {
   final String? org;
   final String? deadline;
   final int? daysLeft;
+
+  /// 🔴 서버가 마감 문자열을 읽어 판단한 값. null 이면 서버도 모른다 — 화면이 날짜를 읽어 짐작하지 않는다
+  final bool? deadlinePassed;
 
   /// 🔴 status == failed 일 때 서버가 준 문장. 프론트가 문장을 짓지 않는다
   final String? errorMessage;
@@ -103,6 +107,7 @@ class Factsheet {
       org: j['org'] as String?,
       deadline: j['deadline'] as String?,
       daysLeft: (j['daysLeft'] as num?)?.toInt(),
+      deadlinePassed: j['deadlinePassed'] is bool ? j['deadlinePassed'] as bool : null,
       errorMessage: j['error'] is Map ? _text((j['error'] as Map)['message']) : null,
     );
   }

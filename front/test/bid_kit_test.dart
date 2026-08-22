@@ -318,6 +318,22 @@ void main() {
     expect(find.textContaining('응찰하러 가기'), findsOneWidget);
   });
 
+  // ── 마감이 지난 공고 (2-5) ───────────────────────────────
+  testWidgets('🔴 마감이 지난 공고는 D-값 대신 「마감 지남」을 말한다 — 서버가 판단한 값으로', (t) async {
+    addTearDown(t.view.reset);
+    await _toKit(t, api: _PassedDeadlineApi());
+    expect(find.text('마감 지남'), findsOneWidget);
+    expect(find.textContaining('영업일 D-'), findsNothing);
+    expect(find.textContaining('2025년 3월 14일'), findsOneWidget, reason: '마감 문구는 그대로 보인다');
+  });
+
+  testWidgets('마감이 남았으면 서버가 센 영업일을 쓴다 (목록 값이 아니라)', (t) async {
+    addTearDown(t.view.reset);
+    await _toKit(t, api: _FutureDeadlineApi());
+    expect(find.textContaining('영업일 D-8'), findsOneWidget);
+    expect(find.text('마감 지남'), findsNothing);
+  });
+
   group('봉투 견고성', _envelopeRobustness);
 
   testWidgets('🔴 폭을 훑어도 오버플로 0건', (t) async {
@@ -544,4 +560,29 @@ class _AbsentProposalApi extends FakeApi {
 
   @override
   Future<Factsheet> factsheet(String caseId) async => withProposalAbsent(sampleFactsheet(caseId));
+}
+
+/// 마감이 지난 공고 — 서버가 deadlinePassed 를 붙여 준다.
+class _PassedDeadlineApi extends FakeApi {
+  _PassedDeadlineApi() : super(company: const CurrentCompany(exists: true, companyId: 'co_x'));
+  Factsheet _f(String caseId) => withDeadline(sampleFactsheet(caseId), deadline: '2025년 3월 14일(금) 11:00까지', passed: true, daysLeft: 0);
+  @override
+  Future<Factsheet> createCase({required String bidPbancNo, String bidPbancOrd = '000', String? companyId}) async {
+    createdCases.add('$bidPbancNo-$bidPbancOrd');
+    return _f('$bidPbancNo-$bidPbancOrd');
+  }
+  @override
+  Future<Factsheet> factsheet(String caseId) async => _f(caseId);
+}
+
+class _FutureDeadlineApi extends FakeApi {
+  _FutureDeadlineApi() : super(company: const CurrentCompany(exists: true, companyId: 'co_x'));
+  Factsheet _f(String caseId) => withDeadline(sampleFactsheet(caseId), deadline: '2026-09-02 18:00', passed: false, daysLeft: 8);
+  @override
+  Future<Factsheet> createCase({required String bidPbancNo, String bidPbancOrd = '000', String? companyId}) async {
+    createdCases.add('$bidPbancNo-$bidPbancOrd');
+    return _f('$bidPbancNo-$bidPbancOrd');
+  }
+  @override
+  Future<Factsheet> factsheet(String caseId) async => _f(caseId);
 }

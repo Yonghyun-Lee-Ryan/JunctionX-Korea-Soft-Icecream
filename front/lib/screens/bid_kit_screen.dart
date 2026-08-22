@@ -230,11 +230,13 @@ class _BidKitScreenState extends State<BidKitScreen> {
 
   Widget _header(Factsheet f, KitPage? page) {
     final title = f.title ?? widget.title ?? f.caseId;
+    // 🔴 마감이 지났는지는 서버가 판단한다(deadlinePassed). 지났으면 D-값을 그리지 않는다 — 목록의 옛 값이 「D-0」으로 남던 실측
+    final passed = f.deadlinePassed == true;
     final meta = [
       f.caseId,
       f.org ?? widget.org,
       if ((f.deadline ?? widget.deadline) != null) '마감 ${f.deadline ?? widget.deadline}',
-      if ((f.daysLeft ?? widget.daysLeft) != null) '영업일 D-${f.daysLeft ?? widget.daysLeft}',
+      if (!passed && (f.daysLeft ?? widget.daysLeft) != null) '영업일 D-${f.daysLeft ?? widget.daysLeft}',
     ].whereType<String>().join('・');
 
     final actions = Wrap(
@@ -287,6 +289,11 @@ class _BidKitScreenState extends State<BidKitScreen> {
                 const SizedBox(height: 8),
                 // 🔴 캐시라는 사실을 먼저 말한다
                 const AppChip.warn('캐시 결과'),
+              ],
+              if (passed) ...[
+                const SizedBox(height: 8),
+                // 🔴 지난 공고는 응찰할 수 없다 — 준비 자료는 남기되 사실을 먼저 말한다
+                const AppChip.danger('마감 지남'),
               ],
               // 🔴 분석 중이면 어느 단계인지 말한다 — 도는 원만 보여 주지 않는다
               if (f.isInProgress) ...[
