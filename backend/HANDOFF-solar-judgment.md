@@ -474,3 +474,17 @@ BASE_DATE: 2025-11-12
 | 가드만 바꿨는데 Solar 를 다시 사야 했다 | `rejudge(caseId, { parts: ['reguard'] })` — **Solar 호출 없이** 저장된 판정에 가드만 다시 건다(WBS·임계경로·제출 검사 + 로컬 금지 표현) | `casePipeline.rejudge` |
 
 🔴 데모 케이스(`R25BK00645031-000`) 실측: 파일제출 「사업자등록증 사본 → 준비됨」(Solar 1회) · 금지 표현 **3곳**(p3·p4·p5, 문장 원문) · 임계경로 19줄(맨 위 마감) · WBS 15패키지(3개 나눔 · 9개 사업기간) · 헤더 「마감 지남」.
+
+---
+
+## 12. 2026-08-23 화면④ 미흡 4건 더 (파일 다시 올리기 · 체크 저장 · WBS 기간/선행 · 업로드 반응)
+
+| # | 실측 | 고친 것 | 어디 |
+|---|---|---|---|
+| 1 | 준비됨·보완 필요 줄은 파일을 바꿀 길이 없었고, 「보완 필요」가 초록 칩이었다 | 파일이 붙은 줄에 **「다시 올리기」**. 칩은 서버가 `chip{text,tone}` 으로 색을 정한다 | `submitfilesTab` · `DocumentRow(onReplace, tone)` |
+| 2 | 체크박스가 56×24 직사각형(표 칸의 tight 제약) · 체크가 화면 로컬이라 탭을 나가면 사라졌다 | **`case_check` 테이블(007)** + `PUT /api/cases/{id}/checks/{tabId}` `{key, checked}`. 봉투의 탭에 `checked[]`. 화면은 서버 값으로 그리고 누르면 저장, 실패하면 되돌린다. 24×24 는 `Center+SizedBox` | `caseCheck.repo.js` · `case.service.withChecks` · `KitTableCard(checked, onCheck)` |
+| 3 | AX 진단 케이스: 공고에 추진일정 6단계가 있는데 WBS 29개 전부 「미 명시」·선행 [] | 프롬프트: SCHEDULE 의 `timing` 을 그대로 duration 으로, 추진일정 순서 = 선행. 가드: `schedule[]` 첨부 · 선행이 전부 비면 **단계 번호 순서로 채움**(`predecessor_source: stage_order`, 같은 단계 안은 병행). `rejudge(parts:['wbs'])` = Solar 1회. 실호출 결과 32개 — 미 명시 0, 선행 26건 채움 | `guardWbs` · `fillStageOrder` · `judgeWbs` |
+| 4 | 보완 자료·원고 업로드는 서버에 가고 있었다(42~78초, Solar 재검사) — 그동안 화면이 침묵했고, 새로고침으로 응답을 버린 건도 있었다 | 올리는 동안 **배너**(파일명·서버가 하는 일·걸리는 시간·새로고침 금지) + 버튼 「올리는 중…」. 끝나면 토스트 「X」 올렸습니다 — 검사 결과: 준비됨/보완 필요(+사유) · 원고는 금지 표현 N곳. 보완요청 항목에 올린 파일명 | `bid_kit_screen._uploadBanner/_fileOutcome` · `reworkTab.filename` |
+
+🔴 데모 케이스(PG 대행)의 구축 패키지 6개가 「미 명시」인 것은 맞다 — 공고에 구축 일정이 없다(용역기간·정산주기·조달 일정뿐). 요약의 「공고 추진일정」이 그 근거를 같이 보여 준다.
+🔴 가드는 두 번 걸어도 같다 — 나눈 기록은 `split_from`, 채운 선행은 `predecessor_source` 에서 다시 센다(저장본을 믿지 않는다).
