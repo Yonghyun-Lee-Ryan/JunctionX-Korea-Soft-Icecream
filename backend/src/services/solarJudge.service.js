@@ -474,6 +474,7 @@ export async function judgeSubmission({ announcement, companyCard, proposalText,
     uploads,
     // 🔴 모델이 놓친 자리를 백엔드 전수 검색이 보탠다 — 쪽 단위 텍스트가 있으면 쪽, 없으면 본문 전체를 1쪽으로
     localHits: hasProposal ? scanForbidden(Array.isArray(proposalPages) && proposalPages.length ? proposalPages : [proposalText], forbiddenFromRules(rules)) : [],
+    pageCount: Array.isArray(proposalPages) ? proposalPages.length : 0,
   });
 
   return { rules, proposalScan, audit, meta: { ...runMeta(started), calls: (reuseRules ? 0 : 1) + (hasProposal ? 1 : 0) + 1, rulesReused: reuseRules } };
@@ -487,7 +488,7 @@ const text = (v) => (v === null || v === undefined ? '' : String(v));
  * 🔴 개수·보완요청·overall_status 는 documents[] 에서 다시 만든다.
  * 🔴 금지 표현은 제안서 스캔의 실제 적중으로 다시 센다. 제안서가 없으면 0건 + 미제출 사유 — 통과가 아니다.
  */
-export function guardSubmissionAudit(out, { proposalScan, uploads = [], localHits = [] } = {}) {
+export function guardSubmissionAudit(out, { proposalScan, uploads = [], localHits = [], pageCount = 0 } = {}) {
   const result = { ...(out ?? {}) };
   // 🔴 사람이 「이 서류용」이라고 올린 파일은 검사가 빠뜨려도 연결한다 — 상태(준비됨/보완 필요/미확인)는 검사의 판단 그대로 둔다
   const squash = (v) => text(v).replace(/\s+/g, '');
@@ -541,13 +542,21 @@ export function guardSubmissionAudit(out, { proposalScan, uploads = [], localHit
   if (hits) {
     const squashSentence = (s) => text(s).replace(/\s+/g, '');
     // 같은 자리인지는 문장 포함 관계로 본다 — 모델은 「외부 LLM…가능합니다.」, 우리는 「당사는 외부 LLM…가능합니다.」처럼 경계가 다를 수 있다
-    const seen = hits.map((h) => squashSentence(h?.sentence)).filter(Boolean);
+    const keys = hits.map((h) => squashSentence(h?.sentence));
     for (const h of extra) {
       const k = squashSentence(h?.sentence);
-      if (!k || seen.some((s) => s === k || s.includes(k) || k.includes(s))) continue;
-      seen.push(k);
+      if (!k) continue;
+      const j = keys.findIndex((s) => s && (s === k || s.includes(k) || k.includes(s)));
+      if (j >= 0) {
+        // 🔴 같은 자리 — 쪽은 PDF 에서 읽은 쪽이 맞다 (모델이 5쪽 원고에 p63 을 붙인 실측)
+        if (Number(h.page) > 0) hits[j] = { ...hits[j], page: h.page };
+        continue;
+      }
+      keys.push(k);
       hits.push({ expression: h.expression, sentence: h.sentence, page: h.page });
     }
+    // 쪽 수를 알면 범위 밖 쪽은 모름(0) — 지어낸 숫자를 화면에 올리지 않는다
+    if (pageCount > 0) hits = hits.map((h) => (Number(h?.page) > pageCount ? { ...h, page: 0 } : h));
   }
   const forbidden_expressions = hits
     ? {

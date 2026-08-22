@@ -7,6 +7,7 @@ import * as companyRepo from '../repositories/company.repo.js';
 import { loadFixture } from './fixture.service.js';
 import { decomposeAnnouncement } from './announcement.service.js';
 import { judgeEligibility, judgePlan, judgeSubmission, guardWbs, guardCriticalPath, guardSubmissionAudit } from './solarJudge.service.js';
+import { scanForbidden, forbiddenFromRules } from './proposalScan.service.js';
 import { buildKit } from './kit.service.js';
 import { listCaseFiles, latestCaseFile } from '../repositories/caseFile.repo.js';
 
@@ -163,7 +164,12 @@ export async function rejudge(caseId, { parts = [], proposalText } = {}) {
       caseRepo.insertExtraction(caseId, { schemaName: 'PLAN_V1', payload: plan });
     }
     if (submission?.audit) {
-      submission = { ...submission, audit: guardSubmissionAudit(submission.audit, { proposalScan: submission.proposalScan, uploads: listCaseFiles(caseId, 'submission') }) };
+      const proposal = latestCaseFile(caseId, 'proposal');
+      const pages = proposal ? (proposal.pages ?? [proposal.text ?? '']) : [];
+      submission = { ...submission, audit: guardSubmissionAudit(submission.audit, {
+        proposalScan: submission.proposalScan, uploads: listCaseFiles(caseId, 'submission'),
+        localHits: proposal ? scanForbidden(pages, forbiddenFromRules(submission.rules)) : [], pageCount: proposal ? pages.length : 0,
+      }) };
       caseRepo.deleteExtraction(caseId, 'SUBMISSION_V1');
       caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });
     }

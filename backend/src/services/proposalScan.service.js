@@ -5,6 +5,8 @@
  *    모델에만 맡기면 「0곳」이 거짓이 된다. 표현 목록은 스캔 프롬프트(agent/Submission Auditor.json)의 것과 같고,
  *    공고 규칙(SUBMISSION_RULES_V2)이 더 주면 합친다. 걸린 문장은 원문 그대로, 쪽은 PDF 텍스트 레이어의 쪽이다.
  * 🔴 문장을 고쳐 주지 않는다 — 자리만 짚는다. 인용문(「」·""·『』 안)은 뺀다 — 우리가 쓴 문장만 대상이다.
+ * 🔴 PDF 텍스트 레이어는 «행»마다 줄바꿈이 들어온다(실측: 「외부 LLM 서비\n스와의 연계도 가능합니다.」). 줄바꿈은 문장 경계가 아니다 —
+ *    제목·목록 줄만 따로 두고 나머지는 이어 붙인 뒤 문장 부호로 가른다.
  */
 
 // 긴 표현이 먼저 — 「고려할 수 있습니다」가 「가능」류보다 앞서 잡히게
@@ -17,14 +19,36 @@ export const DEFAULT_FORBIDDEN = [
 ];
 
 const QUOTED = /"[^"]*"|“[^”]*”|「[^」]*」|『[^』]*』/g;
+const SENTENCE_END = /[.。!?]$/;
+// 제목·목록의 줄머리 — 「2.3 연계 방안」「① …」「- …」「(1) …」「가. …」「제3조 …」
+const HEADING = /^(\d+(\.\d+)*\.?\s|[①-⑳]|[-•·□■◦▪]\s?|\(\d+\)\s?|[가-힣]\.\s|제\s*\d+\s*[조장절항])/;
+const HANGUL_END = /[가-힣]$/;
 const squash = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 
-/** 마침표·물음표·느낌표(숫자 뒤는 제외 — 「1. 사업 이해」)와 줄바꿈으로 문장을 가른다 */
+/** 행을 문장으로 — 제목·목록 줄은 따로, 행 바꿈은 이어 붙인다(줄 끝에 공백이 있었으면 띄어서, 없으면 단어 중간으로 보고 붙여서), 그 뒤 문장 부호로 가른다 */
 export function splitSentences(text) {
-  return String(text ?? '')
-    .split(/(?<=[^\d.][.。!?])\s+|\n+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const rawLines = String(text ?? '').split(/\r?\n/);
+  const chunks = [];
+  let buf = '';
+  let prevHadTrailingSpace = false;
+  const flush = () => { if (buf.trim()) chunks.push(buf.trim()); buf = ''; };
+  for (const raw of rawLines) {
+    const line = raw.trim();
+    if (!line) { flush(); continue; }
+    if (HEADING.test(line)) {
+      flush();
+      buf = line;
+      if (!SENTENCE_END.test(line) && line.length <= 40) flush();   // 짧은 제목·목록 머리는 한 줄이 한 조각
+      prevHadTrailingSpace = /\s$/.test(raw);
+      continue;
+    }
+    if (!buf) buf = line;
+    else buf += (prevHadTrailingSpace || !HANGUL_END.test(buf) || !/^[가-힣]/.test(line) ? ' ' : '') + line;
+    prevHadTrailingSpace = /\s$/.test(raw);
+    if (SENTENCE_END.test(line)) flush();
+  }
+  flush();
+  return chunks.flatMap((c) => c.split(/(?<=[^\d.][.。!?])\s+/).map((s) => s.trim()).filter(Boolean));
 }
 
 /**

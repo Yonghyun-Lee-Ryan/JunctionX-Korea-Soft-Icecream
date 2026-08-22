@@ -46,3 +46,26 @@ test('🔴 guardSubmissionAudit — Solar 스캔이 놓친 자리를 로컬 검�
   assert.ok(fe.items.every((i) => i.proposal_page >= 1));
   assert.ok(fe.items.some((i) => i.expression === '지원 가능'));
 });
+
+// ── 실측 2: PDF 텍스트 레이어는 줄바꿈으로 문장을 자른다 · Solar 가 쪽을 지어낸다(5쪽 원고에 p63) ──
+test('🔴 splitSentences — 줄바꿈(행 바꿈)은 문장 경계가 아니다: 이어 붙인다. 제목·목록 줄만 따로', () => {
+  const s = splitSentences('2.3 연계 방안\n당사는 외부 LLM 서비\n스와의 연계도 가능합니다. 정기 점검은 \n추가로 고려할 수 있습니다.\n- 모바일 환경도 지원 가능하도록 설계합니다.\n① 정산 보고는 월 1회 제출한다.');
+  assert.deepEqual(s, [
+    '2.3 연계 방안',
+    '당사는 외부 LLM 서비스와의 연계도 가능합니다.',
+    '정기 점검은 추가로 고려할 수 있습니다.',
+    '- 모바일 환경도 지원 가능하도록 설계합니다.',
+    '① 정산 보고는 월 1회 제출한다.',
+  ]);
+});
+
+test('🔴 guardSubmissionAudit — 같은 자리면 쪽은 PDF 에서 읽은 쪽(localHits)을 쓴다 — 모델이 5쪽 원고에 p63 을 붙인 실측', () => {
+  const proposalScan = { forbidden_expression_hits: [{ expression: '고려할 수 있다', sentence: '정기 점검은 추가로 고려할 수 있습니다.', page: 63 }] };
+  const localHits = [{ expression: '고려할 수 있습니다', sentence: '정기 점검은 추가로 고려할 수 있습니다.', page: 1 }];
+  const out = guardSubmissionAudit({ documents: [], forbidden_expressions: { items: [] } }, { proposalScan, localHits });
+  assert.equal(out.forbidden_expressions.count, 1);
+  assert.equal(out.forbidden_expressions.items[0].proposal_page, 1);
+  // 로컬에 없는 모델 항목은 모델의 쪽을 그대로 — 다만 쪽 수를 알면 범위 밖은 0(모름)
+  const out2 = guardSubmissionAudit({ documents: [], forbidden_expressions: { items: [] } }, { proposalScan, localHits: [], pageCount: 5 });
+  assert.equal(out2.forbidden_expressions.items[0].proposal_page, 0);
+});
