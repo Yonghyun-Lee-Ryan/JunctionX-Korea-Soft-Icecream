@@ -3,6 +3,7 @@ import { asyncHandler } from '../middlewares/asyncHandler.js';
 import multer from 'multer';
 import * as ctrl from '../controllers/cases.controller.js';
 import * as files from '../controllers/caseFiles.controller.js';
+import * as checks from '../controllers/caseChecks.controller.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024, files: 1 } });
 
@@ -181,3 +182,45 @@ casesRouter.post('/cases/:caseId/files', upload.single('file'), asyncHandler(fil
  */
 casesRouter.post('/cases/:caseId/proposal', upload.single('file'), asyncHandler(files.uploadProposal));
 casesRouter.get('/cases/:caseId/files', asyncHandler(files.list));
+
+/**
+ * @openapi
+ * /api/cases/{caseId}/checks/{tabId}:
+ *   put:
+ *     tags: [Cases]
+ *     summary: 체크리스트의 체크 하나를 저장한다 — 봉투의 그 탭에 checked[] 로 돌아온다
+ *     description: 화면이 체크 상태를 로컬에 두면 탭을 나가는 순간 사라진다. 서버가 케이스별로 기억하고, 판정을 다시 돌려 탭을 다시 써도 남는다.
+ *     parameters:
+ *       - in: path
+ *         name: caseId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: tabId
+ *         required: true
+ *         schema: { type: string, example: compliance }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [key, checked]
+ *             properties:
+ *               key: { type: string, description: 행의 첫 칸(요구사항 ID), example: SFR-001 }
+ *               checked: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: 그 탭에서 지금 체크된 키 전부
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 caseId: { type: string }
+ *                 tabId: { type: string }
+ *                 checked: { type: array, items: { type: string } }
+ *       400: { description: key 없음 · checked 가 불리언이 아님 }
+ *       404: { description: 케이스 없음 }
+ */
+casesRouter.put('/cases/:caseId/checks/:tabId', asyncHandler(checks.setCheck));

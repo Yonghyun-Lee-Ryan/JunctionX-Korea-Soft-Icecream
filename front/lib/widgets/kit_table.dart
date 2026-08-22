@@ -8,19 +8,29 @@ import 'app_chip.dart';
 /// 🔴 탭 하나를 그리는 **범용 표**. 탭이 늘거나 열이 바뀌어도 이 위젯은 안 바뀐다.
 ///    checklist면 행 앞에 체크박스가 붙는다 (Figma 57:4571).
 class KitTableCard extends StatefulWidget {
-  const KitTableCard({super.key, required this.tab, this.downloadUrl, this.onDownload});
+  const KitTableCard({super.key, required this.tab, this.downloadUrl, this.onDownload, this.checked, this.onCheck});
 
   final KitTab tab;
   final String? downloadUrl;
   final ValueChanged<String>? onDownload;
+
+  /// checklist — 체크된 행의 키(첫 칸). 🔴 부모(서버 값)가 준다
+  final Set<String>? checked;
+
+  /// 체크를 누르면 (키, 새 값) — 저장은 부모가 한다
+  final void Function(String key, bool value)? onCheck;
 
   @override
   State<KitTableCard> createState() => _KitTableCardState();
 }
 
 class _KitTableCardState extends State<KitTableCard> {
-  /// 🔴 체크 상태는 화면 로컬이다 — 계약이 「데모에서는 프론트 상태로 둬도 된다」고 못 박았다
-  final _checked = <int>{};
+  /// 🔴 체크 상태는 이 위젯 안에 없다 — 부모가 준 `checked`(서버 값)로 그린다.
+  ///    위젯 로컬로 두면 탭을 나가는 순간 사라졌다(실측). 부모가 안 주면 탭의 checked[] 를 쓴다
+  Set<String> get _checked => widget.checked ?? widget.tab.checked.toSet();
+
+  /// 행의 키 — 첫 칸(요구사항 ID). 서버가 같은 키로 기억한다
+  String _keyOf(int row) => widget.tab.rows[row].isEmpty ? '$row' : widget.tab.rows[row].first.text;
 
   @override
   Widget build(BuildContext context) {
@@ -147,20 +157,28 @@ class _KitTableCardState extends State<KitTableCard> {
   }
 
   Widget _checkbox(int row) {
-    final on = _checked.contains(row);
-    return InkWell(
-      onTap: () => setState(() => on ? _checked.remove(row) : _checked.add(row)),
-      borderRadius: AppRadius.card,
-      child: on
-          ? SvgPicture.asset(AppIcons.checkboxOn, width: 24, height: 24)
-          : Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.card,
-                border: Border.all(color: AppColors.border),
-              ),
-            ),
+    final key = _keyOf(row);
+    final on = _checked.contains(key);
+    // 🔴 표 칸은 폭(56)을 꽉 채우는 tight 제약을 준다 — Container(width: 24)가 56×24 직사각형으로 늘어났다(실측).
+    //    가운데 24×24 로 못 박는다. 켜짐·꺼짐이 같은 크기다
+    return Center(
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: InkWell(
+          key: ValueKey('check:$key:${on ? 'on' : 'off'}'),
+          onTap: widget.onCheck == null ? null : () => widget.onCheck!(key, !on),
+          borderRadius: AppRadius.card,
+          child: on
+              ? SvgPicture.asset(AppIcons.checkboxOn, width: 24, height: 24)
+              : DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: AppRadius.card,
+                    border: Border.all(color: AppColors.border),
+                  ),
+                ),
+        ),
+      ),
     );
   }
 

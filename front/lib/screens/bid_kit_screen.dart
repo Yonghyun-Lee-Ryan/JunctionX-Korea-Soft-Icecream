@@ -65,6 +65,9 @@ class _BidKitScreenState extends State<BidKitScreen> {
   bool _uploading = false;
   bool _dragging = false;
 
+  /// 체크리스트의 체크 — 탭 id → 행 키. 🔴 서버 값으로 시작하고, 누르면 서버에 저장한다. 탭을 나가도 여기 남는다
+  final _checks = <String, Set<String>>{};
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +99,10 @@ class _BidKitScreenState extends State<BidKitScreen> {
     setState(() {
       _data = f;
       _error = null;
+      // 서버가 기억하는 체크가 정본이다 — 봉투가 올 때마다 맞춘다
+      for (final t in f.tabs) {
+        if (t.isChecklist) _checks[t.id] = t.checked.toSet();
+      }
     });
     if (f.isInProgress) _schedule();
   }
@@ -526,11 +533,27 @@ class _BidKitScreenState extends State<BidKitScreen> {
         _ => _card(f, tab),
       };
 
+  /// 체크 하나를 서버에 저장한다 — 화면은 먼저 바꾸고, 실패하면 되돌리며 이유를 말한다
+  Future<void> _setCheck(KitTab tab, String key, bool value) async {
+    final set = _checks.putIfAbsent(tab.id, () => tab.checked.toSet());
+    setState(() => value ? set.add(key) : set.remove(key));
+    try {
+      final saved = await widget.api.setCheck(widget.caseId, tab.id, key, checked: value);
+      if (mounted) setState(() => _checks[tab.id] = saved.toSet());
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => value ? set.remove(key) : set.add(key));
+      _toast(e is ApiException ? e.message : '체크를 저장하지 못했습니다. 다시 눌러 주세요.');
+    }
+  }
+
   Widget _card(Factsheet f, KitTab tab) {
     // 🔴 다운로드는 서버가 downloads[]에 실은 탭에만 붙는다 — 조견표는 웹 체크리스트라 파일이 없다
     final d = f.downloads.where((x) => x.id == tab.id).firstOrNull;
     return KitTableCard(
       tab: tab,
+      checked: tab.isChecklist ? (_checks[tab.id] ?? tab.checked.toSet()) : null,
+      onCheck: tab.isChecklist ? (k, v) => _setCheck(tab, k, v) : null,
       downloadUrl: d == null
           ? null
           : (widget.api is HttpDocsApi

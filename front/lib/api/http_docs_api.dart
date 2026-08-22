@@ -200,6 +200,22 @@ class HttpDocsApi implements DocsApi {
     });
   }
 
+  @override
+  Future<List<String>> setCheck(String caseId, String tabId, String key, {required bool checked}) => _guard(
+        () async {
+          final res = await _client.put(
+            Uri.parse('$baseUrl/api/cases/$caseId/checks/$tabId'),
+            headers: const {'Content-Type': 'application/json; charset=utf-8'},
+            body: utf8.encode(jsonEncode({'key': key, 'checked': checked})),
+          );
+          final j = _decode(res, (j) => j);
+          // 🔴 10분 캐시에 옛 체크가 남지 않게 — 다음 진입은 서버에 다시 묻는다 (Solar 없는 GET 한 번)
+          forgetFactsheet(caseId);
+          return ((j['checked'] as List?) ?? const []).map((e) => e.toString()).toList(growable: false);
+        },
+        timeout: const Duration(seconds: 20),
+      );
+
   Factsheet _remember(Factsheet f) {
     if (f.status == 'done') {
       _factsheetCache[f.caseId] = (f, _clock());

@@ -217,10 +217,14 @@ class KitTab {
     this.banner,
     this.note,
     this.items = const [],
+    this.checked = const [],
   });
 
   final String id;
   final String title;
+
+  /// 🔴 checklist — 서버가 기억하는 체크된 행의 키(첫 칸). 화면이 자기 상태로 갖지 않는다
+  final List<String> checked;
 
   /// table | checklist | docs | metric | tasks | note | banner
   /// 🔴 checklist면 행마다 체크박스를 붙인다
@@ -281,6 +285,7 @@ class KitTab {
             .whereType<Map<String, dynamic>>()
             .map(KitItem.fromJson)
             .toList(growable: false),
+        checked: ((j['checked'] as List?) ?? const []).map((e) => e.toString()).toList(growable: false),
       );
 }
 

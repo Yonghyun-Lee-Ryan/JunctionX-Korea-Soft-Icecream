@@ -47,6 +47,10 @@ abstract interface class DocsApi {
   /// 🔴 제안서 원고(PDF)를 올린다 — 서버가 금지 표현 스캔·검사를 다시 돌려 갱신된 봉투를 준다
   Future<Factsheet> uploadProposal(String caseId, PickedDoc doc);
 
+  /// 🔴 체크리스트의 체크를 서버에 저장한다 — 화면 로컬 상태는 탭을 나가면 사라졌다(실측).
+  ///    [key]는 행의 첫 칸(요구사항 ID). 돌아오는 값은 그 탭에서 지금 체크된 키 전부.
+  Future<List<String>> setCheck(String caseId, String tabId, String key, {required bool checked});
+
   /// 🚪 「응찰 준비」를 찍은 공고를 저장한다
   Future<void> saveBid(String companyId, ShortlistItem item);
 

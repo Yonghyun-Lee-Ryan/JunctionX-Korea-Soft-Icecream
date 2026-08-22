@@ -336,6 +336,7 @@ void main() {
 
   group('봉투 견고성', _envelopeRobustness);
   group('다시 올리기', _reuploadTests);
+  group('체크 저장', _checkTests);
 
   testWidgets('🔴 폭을 훑어도 오버플로 0건', (t) async {
     addTearDown(t.view.reset);
@@ -606,5 +607,35 @@ void _reuploadTests() {
     await settle(t);
     expect(api.caseUploads.single.requirement, '입찰참가신청서');
     expect(api.caseUploads.single.filename, '신청서_v2.pdf');
+  });
+}
+
+// ── 요구사항 체크리스트 — 체크가 서버에 남는다 (2) ────────────────
+void _checkTests() {
+  testWidgets('🔴 체크를 누르면 서버에 저장하고, 다른 탭에 갔다 와도 체크가 남는다', (t) async {
+    addTearDown(t.view.reset);
+    final api = await _toKit(t);
+    await t.tap(find.text('요구사항 체크리스트').first);
+    await settle(t);
+    await t.tap(find.byKey(const ValueKey('check:CSR-001:off')));
+    await settle(t);
+    expect(api.checkCalls.single, (caseId: 'R25BK00645031-000', tabId: 'compliance', key: 'CSR-001', checked: true));
+    expect(find.byKey(const ValueKey('check:CSR-001:on')), findsOneWidget);
+
+    await t.tap(find.text('WBS').first);
+    await settle(t);
+    await t.tap(find.text('요구사항 체크리스트').first);
+    await settle(t);
+    expect(find.byKey(const ValueKey('check:CSR-001:on')), findsOneWidget, reason: '탭을 나갔다 와도 남는다');
+  });
+
+  testWidgets('서버가 checked[] 를 주면 그대로 체크된 채 그린다', (t) async {
+    addTearDown(t.view.reset);
+    final api = FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'))..checks['compliance'] = ['CSR-003'];
+    await _toKit(t, api: api);
+    await t.tap(find.text('요구사항 체크리스트').first);
+    await settle(t);
+    expect(find.byKey(const ValueKey('check:CSR-003:on')), findsOneWidget);
+    expect(find.byKey(const ValueKey('check:CSR-001:off')), findsOneWidget);
   });
 }

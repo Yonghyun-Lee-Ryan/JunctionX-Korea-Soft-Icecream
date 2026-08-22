@@ -80,11 +80,24 @@ class FakeApi implements DocsApi {
   Future<Factsheet> createCase({required String bidPbancNo, String bidPbancOrd = '000', String? companyId}) async {
     final id = '$bidPbancNo-$bidPbancOrd';
     createdCases.add(id);
-    return sampleFactsheet(id);
+    return withChecked(sampleFactsheet(id), checks);
   }
 
   @override
-  Future<Factsheet> factsheet(String caseId) async => sampleFactsheet(caseId);
+  Future<Factsheet> factsheet(String caseId) async => withChecked(sampleFactsheet(caseId), checks);
+
+  /// 서버가 기억하는 체크 — 탭 id → 체크된 행 키
+  final Map<String, List<String>> checks = {};
+  final List<({String caseId, String tabId, String key, bool checked})> checkCalls = [];
+
+  @override
+  Future<List<String>> setCheck(String caseId, String tabId, String key, {required bool checked}) async {
+    checkCalls.add((caseId: caseId, tabId: tabId, key: key, checked: checked));
+    final list = checks.putIfAbsent(tabId, () => []);
+    list.remove(key);
+    if (checked) list.add(key);
+    return List.of(list);
+  }
 
   /// 케이스에 올린 제출 서류 (caseId, 파일명, 어느 서류용인지)
   final List<({String caseId, String filename, String? requirement})> caseUploads = [];
@@ -878,6 +891,27 @@ Factsheet withUploaded(Factsheet f, {String? requirement, required String filena
                   i,
             ];
           }(),
+        ),
+  ];
+  return Factsheet(
+    caseId: f.caseId, status: f.status, verdict: f.verdict, tabs: tabs, downloads: f.downloads, progress: f.progress,
+    pages: f.pages, primaryAction: f.primaryAction, secondaryAction: f.secondaryAction, cached: f.cached,
+    attachments: f.attachments, title: f.title, org: f.org, deadline: f.deadline, daysLeft: f.daysLeft, errorMessage: f.errorMessage,
+  );
+}
+
+/// 서버가 기억하는 체크를 봉투의 탭에 싣는다 — `checked[]`
+Factsheet withChecked(Factsheet f, Map<String, List<String>> checks) {
+  if (checks.isEmpty) return f;
+  final tabs = [
+    for (final t in f.tabs)
+      if (!checks.containsKey(t.id))
+        t
+      else
+        KitTab(
+          id: t.id, title: t.title, columns: t.columns, rows: t.rows, kind: t.kind, columnAlign: t.columnAlign,
+          warnings: t.warnings, summary: t.summary, metric: t.metric, banner: t.banner, note: t.note, items: t.items,
+          checked: List.of(checks[t.id]!),
         ),
   ];
   return Factsheet(

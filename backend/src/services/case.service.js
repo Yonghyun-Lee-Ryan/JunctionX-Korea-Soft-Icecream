@@ -6,6 +6,7 @@ import { KIT_PAGES, KIT_PRIMARY_ACTION, KIT_SECONDARY_ACTION } from '../config/k
 import { env } from '../config/env.js';
 import { isFresh, pipelineConfigured } from './casePipeline.service.js';
 import { deadlineStatus } from './deadline.service.js';
+import { listAllChecks } from '../repositories/caseCheck.repo.js';
 
 /** caseId = 공고번호-차수 */
 export function toCaseId(bidPbancNo, bidPbancOrd = '000') {
@@ -34,7 +35,7 @@ export function getFactsheet(caseId, { live = false } = {}) {
 
   if (row.source === 'cached' && !live) {
     const cached = cachedFactsheet(caseId);
-    if (cached) return cached;
+    if (cached) return { ...cached, tabs: withChecks(caseId, cached.tabs) };
   }
 
   const meta = parseJson(row.meta_json, {});
@@ -46,7 +47,8 @@ export function getFactsheet(caseId, { live = false } = {}) {
     status: row.status,
     progress: repo.listProgress(caseId),
     verdict: parseJson(row.verdict_json, { badge: 'eligible' }),
-    tabs: repo.listTabs(caseId),
+    // 🔴 체크는 탭과 따로 저장된다 — 읽을 때 붙인다. 체크가 있는 탭에만 checked[] 를 만든다
+    tabs: withChecks(caseId, repo.listTabs(caseId)),
     downloads: repo.listDownloads(caseId),
     meta: {
       // 🔴 «캐시를 썼다»가 아니라 «캐시로 만들어진 케이스다»만 말하던 값이다.
@@ -74,6 +76,13 @@ export function getFactsheet(caseId, { live = false } = {}) {
   const error = parseJson(row.error_json, null);
   if (error) envelope.error = error;
   return envelope;
+}
+
+/** 서버가 기억하는 체크를 탭에 싣는다 — 없는 탭은 필드를 만들지 않는다 */
+function withChecks(caseId, tabs) {
+  const checks = listAllChecks(caseId);
+  if (!Object.keys(checks).length) return tabs;
+  return (Array.isArray(tabs) ? tabs : []).map((t) => (checks[t?.id] ? { ...t, checked: checks[t.id] } : t));
 }
 
 function cachedFactsheet(caseId) {
