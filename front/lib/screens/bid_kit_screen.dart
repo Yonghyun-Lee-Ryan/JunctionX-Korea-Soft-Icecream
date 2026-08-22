@@ -65,6 +65,9 @@ class _BidKitScreenState extends State<BidKitScreen> {
   bool _uploading = false;
   bool _dragging = false;
 
+  /// 올리는 동안 배너에 쓰는 문장 — 무엇을 올리고 서버가 무엇을 하는지. 🔴 40~80초 침묵이 「아무 반응 없음」으로 보였다(실측)
+  String? _uploadingNote;
+
   /// 체크리스트의 체크 — 탭 id → 행 키. 🔴 서버 값으로 시작하고, 누르면 서버에 저장한다. 탭을 나가도 여기 남는다
   final _checks = <String, Set<String>>{};
 
@@ -120,29 +123,42 @@ class _BidKitScreenState extends State<BidKitScreen> {
   /// 파일을 골라 이 케이스에 올린다. [requirement]는 어느 서류용인지(서류 줄·보완요청에서 누르면 그 이름, 드롭존이면 null).
   /// 🔴 서버가 제출 검사를 다시 돌려 돌려준 봉투가 그대로 화면이 된다 — 화면이 「올렸으니 준비됨」이라고 짐작하지 않는다.
   Future<void> _uploadFor(String? requirement) async {
-    if (_uploading) return;
+    // 🔴 조용히 무시하지 않는다 — 올리는 중이면 그렇다고 말한다
+    if (_uploading) {
+      _toast('아직 올리는 중입니다 — 끝나면 다시 눌러 주세요.');
+      return;
+    }
     final outcome = await (widget.pickDocuments ?? picker.pickDocuments)();
     await _uploadOutcome(outcome, requirement);
   }
 
   /// 제안서 원고를 골라 올린다 — 서버가 스캔·검사를 다시 돌린다. 원고는 하나만 본다(여러 개면 첫 파일).
   Future<void> _uploadProposal() async {
-    if (_uploading) return;
+    if (_uploading) {
+      _toast('아직 올리는 중입니다 — 끝나면 다시 눌러 주세요.');
+      return;
+    }
     final outcome = await (widget.pickDocuments ?? picker.pickDocuments)();
     if (!mounted) return;
     if (outcome.rejected.isNotEmpty) {
       _toast(outcome.rejected.entries.map((e) => '${e.key}: ${e.value}').join('\n'));
     }
     if (outcome.docs.isEmpty) return;
-    setState(() => _uploading = true);
+    final doc = outcome.docs.first;
+    setState(() {
+      _uploading = true;
+      _uploadingNote = '「${doc.filename}」 올리는 중 — 서버가 금지 표현을 검사하고 있습니다. 보통 1~2분 걸립니다. 화면을 새로고침하지 마세요.';
+    });
     try {
-      _accept(await widget.api.uploadProposal(widget.caseId, outcome.docs.first));
+      final f = await widget.api.uploadProposal(widget.caseId, doc);
+      _accept(f);
+      if (mounted) _toast(_proposalOutcome(f));
     } on ApiException catch (e) {
       if (mounted) _toast(e.message);
     } catch (_) {
       if (mounted) _toast('원고를 올리지 못했습니다.');
     } finally {
-      if (mounted) setState(() => _uploading = false);
+      if (mounted) setState(() { _uploading = false; _uploadingNote = null; });
     }
   }
 
@@ -155,17 +171,40 @@ class _BidKitScreenState extends State<BidKitScreen> {
     if (outcome.docs.isEmpty) return;
     setState(() => _uploading = true);
     try {
+      Factsheet? last;
       for (final doc in outcome.docs) {
-        final f = await widget.api.uploadCaseFile(widget.caseId, doc, requirement: requirement);
-        _accept(f);
+        setState(() => _uploadingNote = '「${doc.filename}」 올리는 중 — 서버가 제출 검사를 다시 돌리고 있습니다. 보통 1분 안팎 걸립니다. 화면을 새로고침하지 마세요.');
+        last = await widget.api.uploadCaseFile(widget.caseId, doc, requirement: requirement);
+        _accept(last);
       }
+      // 🔴 끝났으면 결과를 말한다 — 서버가 돌려준 봉투에서 그 서류의 상태를 읽는다
+      if (mounted && last != null) _toast(_fileOutcome(last, requirement, outcome.docs.length));
     } on ApiException catch (e) {
       if (mounted) _toast(e.message);
     } catch (_) {
       if (mounted) _toast('파일을 올리지 못했습니다.');
     } finally {
-      if (mounted) setState(() => _uploading = false);
+      if (mounted) setState(() { _uploading = false; _uploadingNote = null; });
     }
+  }
+
+  /// 업로드 결과 한 문장 — 「X」 올렸습니다 — 검사 결과: 준비됨 (보완 필요면 서버의 이유까지)
+  String _fileOutcome(Factsheet f, String? requirement, int count) {
+    if (requirement == null) return '파일 $count건을 올렸습니다 — 제출 검사를 다시 했습니다.';
+    final row = f.tabs.where((t) => t.kind == 'docs').expand((t) => t.items).where((i) => i.title == requirement).firstOrNull;
+    final status = row?.chip?.text ?? row?.label;
+    final rework = f.tabs.where((t) => t.kind == 'tasks').expand((t) => t.items).where((i) => i.title == requirement).firstOrNull;
+    return [
+      '「$requirement」 올렸습니다',
+      if (status != null && status.isNotEmpty && status != '업로드') '검사 결과: $status',
+      if (status == '보완 필요' && rework?.detail != null && rework!.detail!.isNotEmpty) rework.detail!,
+    ].join(' — ');
+  }
+
+  String _proposalOutcome(Factsheet f) {
+    final note = f.tabs.where((t) => t.kind == 'note').map((t) => t.note).whereType<KitNoteData>().firstOrNull;
+    final n = note?.emphasis;
+    return n == null || n.isEmpty ? '원고를 검사했습니다.' : '원고를 검사했습니다 — 금지 표현 $n';
   }
 
   @override
@@ -223,6 +262,8 @@ class _BidKitScreenState extends State<BidKitScreen> {
         const SizedBox(height: 20),
         if (pages.isNotEmpty) _tabBar(f, pages),
         const SizedBox(width: double.infinity, child: FigmaDivider.horizontal()),
+        // 🔴 올리는 동안 어느 탭에서든 보인다 — 무엇을 올리고 서버가 무엇을 하는지
+        if (_uploading && _uploadingNote != null) _uploadBanner(_uploadingNote!),
         Expanded(
           child: page == null
               ? const SizedBox.shrink()
@@ -234,6 +275,28 @@ class _BidKitScreenState extends State<BidKitScreen> {
       ],
     );
   }
+
+  Widget _uploadBanner(String note) => Container(
+        width: double.infinity,
+        color: AppColors.primarySoft,
+        padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(note, style: AppText.rowSub.copyWith(color: AppColors.primary)),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: AppRadius.bar,
+              child: const LinearProgressIndicator(
+                minHeight: 4,
+                backgroundColor: Colors.white,
+                valueColor: AlwaysStoppedAnimation(AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+      );
 
   Widget _header(Factsheet f, KitPage? page) {
     final title = f.title ?? widget.title ?? f.caseId;
@@ -526,9 +589,9 @@ class _BidKitScreenState extends State<BidKitScreen> {
         'banner' when tab.banner != null => KitBanner(data: tab.banner!),
         'metric' when tab.metric != null => KitMetricCard(tab: tab),
         // 🔴 카드의 행동은 원고 업로드다 — 문구(올리기 / 다른 원고로 다시 검사)는 서버가 준다
-        'note' when tab.note != null => KitNoteCard(tab: tab, onAction: (_) => _uploadProposal()),
+        'note' when tab.note != null => KitNoteCard(tab: tab, busy: _uploading, onAction: (_) => _uploadProposal()),
         // 🔴 보완요청의 「보완 자료 올리기」도 그 서류용 업로드다
-        'tasks' => KitTasksCard(tab: tab, onAction: (item) => _uploadFor(item.title)),
+        'tasks' => KitTasksCard(tab: tab, busy: _uploading, onAction: (item) => _uploadFor(item.title)),
         'docs' => AppCard(child: KitDocsList(tab: tab, onUpload: (item) => _uploadFor(item.title))),
         _ => _card(f, tab),
       };

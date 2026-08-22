@@ -279,3 +279,21 @@ test('wbs — 단계 순서로 채운 선행은 요약에 말한다 (validation.
   const tab = tabOf(buildKit({ announcement, plan: { ...plan, wbs } }), 'wbs');
   assert.ok(tab.summary.includes('선행 3건은 모델이 비워 보내 단계 순서(앞 단계의 마지막 패키지)로 채웠습니다'), tab.summary);
 });
+
+// ── 4: 보완 자료를 올려도 카드가 그대로라 반응이 없어 보였다 — 올린 파일명을 카드에 싣는다 ──
+test('🔴 rework — 같은 이름의 검사 서류에 파일이 붙어 있으면 보완요청 항목에 filename 을 싣는다', () => {
+  const audit = {
+    ...submission.audit,
+    documents: [
+      { name: '실적증명서', copies: '1', validity: '', status: '보완 필요', rework_note: '발주기관 직인본 필요', lead_time: '', matched_file: '실적증명서_v2.pdf', source_page: 36 },
+      { name: '가격제안서', copies: '1', validity: '', status: '보완 필요', rework_note: '별도 봉투 밀봉', lead_time: '', matched_file: '', source_page: 40 },
+    ],
+    rework_requests: [
+      { document: '실적증명서', reason: '발주기관 직인본 필요', action: '보완 자료 올리기' },
+      { document: '가격 제안서', reason: '별도 봉투 밀봉', action: '보완 자료 올리기' },   // 띄어쓰기가 달라도 같은 서류
+    ],
+  };
+  const tab = tabOf(buildKit({ announcement, submission: { ...submission, audit } }), 'rework');
+  assert.equal(tab.items[0].filename, '실적증명서_v2.pdf');
+  assert.equal(tab.items[1].filename, undefined, '파일이 없으면 필드를 만들지 않는다');
+});

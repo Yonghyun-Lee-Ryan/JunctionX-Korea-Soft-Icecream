@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -156,7 +157,8 @@ void main() {
     expect(api.proposalUploads.single.caseId, 'R25BK00645031-000');
     expect(api.proposalUploads.single.filename, '제안서_v2.pdf');
     expect(find.textContaining('미제출', findRichText: true), findsNothing);
-    expect(find.textContaining('2곳', findRichText: true), findsOneWidget);
+    // 카드(2곳)와 결과 토스트(금지 표현 2곳)가 같이 보인다
+    expect(find.textContaining('2곳', findRichText: true), findsAtLeastNWidgets(1));
     expect(find.textContaining('정기 점검은 추가로 고려할 수 있습니다.'), findsOneWidget);
     expect(find.textContaining('제안서_v2.pdf'), findsOneWidget);
   });
@@ -337,6 +339,7 @@ void main() {
   group('봉투 견고성', _envelopeRobustness);
   group('다시 올리기', _reuploadTests);
   group('체크 저장', _checkTests);
+  group('업로드 반응', _uploadFeedbackTests);
 
   testWidgets('🔴 폭을 훑어도 오버플로 0건', (t) async {
     addTearDown(t.view.reset);
@@ -637,5 +640,64 @@ void _checkTests() {
     await settle(t);
     expect(find.byKey(const ValueKey('check:CSR-003:on')), findsOneWidget);
     expect(find.byKey(const ValueKey('check:CSR-001:off')), findsOneWidget);
+  });
+}
+
+// ── 업로드 반응 (4) — 실측: 보완 자료를 올려도 40~80초 동안 화면이 침묵했다 ────
+class _SlowUploadApi extends FakeApi {
+  _SlowUploadApi() : super(company: const CurrentCompany(exists: true, companyId: 'co_x'));
+  final gate = Completer<void>();
+
+  @override
+  Future<Factsheet> uploadCaseFile(String caseId, PickedDoc doc, {String? requirement}) async {
+    await gate.future;
+    return super.uploadCaseFile(caseId, doc, requirement: requirement);
+  }
+}
+
+void _uploadFeedbackTests() {
+  Future<PickOutcome> pickOne() async => PickOutcome(
+        docs: [PickedDoc(filename: '실적증명서_v2.pdf', bytes: Uint8List.fromList([0x25, 0x50, 0x44, 0x46]))],
+        rejected: const {},
+      );
+  Future<PickOutcome> pickProposal() async => PickOutcome(
+        docs: [PickedDoc(filename: '제안서_v3.pdf', bytes: Uint8List.fromList([0x25, 0x50, 0x44, 0x46]))],
+        rejected: const {},
+      );
+
+  testWidgets('🔴 올리는 동안 화면이 말한다 — 파일명 배너와 「올리는 중…」, 끝나면 결과를 말하고 배너가 사라진다', (t) async {
+    addTearDown(t.view.reset);
+    final api = _SlowUploadApi();
+    await _toKit(t, api: api, pick: pickOne);
+    await t.tap(find.text('제출준비').first);
+    await settle(t);
+    await t.tap(find.text('보완 자료 올리기').first);
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 50));
+    expect(find.textContaining('실적증명서_v2.pdf'), findsOneWidget, reason: '무엇을 올리는지');
+    expect(find.textContaining('올리는 중'), findsWidgets);
+    expect(find.text('보완 자료 올리기'), findsNothing, reason: '버튼이 「올리는 중…」으로 바뀐다');
+    // 올리는 중에 또 누르면 기다리라고 말한다 — 조용히 무시하지 않는다
+    await t.tap(find.text('올리는 중…').first);
+    await t.pump(const Duration(milliseconds: 50));
+    expect(api.caseUploads, isEmpty);
+
+    api.gate.complete();
+    await settle(t);
+    expect(api.caseUploads.single.requirement, '실적증명서');
+    expect(find.textContaining('올리는 중'), findsNothing);
+    expect(find.textContaining('「실적증명서」 올렸습니다'), findsOneWidget);
+    expect(find.textContaining('검사 결과: 준비됨'), findsOneWidget);
+  });
+
+  testWidgets('원고를 올리면 검사 결과(금지 표현 수)를 말한다', (t) async {
+    addTearDown(t.view.reset);
+    await _toKit(t, pick: pickProposal);
+    await t.tap(find.text('제출준비').first);
+    await settle(t);
+    await t.tap(find.text('다른 원고로 다시 검사'));
+    await settle(t);
+    expect(find.textContaining('원고를 검사했습니다'), findsOneWidget);
+    expect(find.textContaining('금지 표현 2곳'), findsWidgets);
   });
 }

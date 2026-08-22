@@ -251,12 +251,17 @@ function checklistTab(audit) {
 // ── 화면⑨ 보완요청 ──────────────────────────────────────────────────────
 function reworkTab(audit) {
   const reqs = Array.isArray(audit.rework_requests) ? audit.rework_requests : [];
+  const docs = Array.isArray(audit.documents) ? audit.documents : [];
+  const squash = (v) => str(v).replace(/\s+/g, '');
+  // 🔴 올린 파일이 있으면 항목에 싣는다 — 검사가 여전히 「보완 필요」라 해도 올린 사실은 카드에 보여야 한다 (실측: 반응이 없어 보였다)
+  const fileFor = (name) => str(docs.find((d) => squash(d?.name) && squash(d.name) === squash(name))?.matched_file).trim();
   return {
     id: 'rework', title: `보완요청 ${reqs.length}건`, kind: 'tasks',
     items: reqs.map((r) => ({
       title: str(r.document),
       chip: { text: '보완 필요', tone: 'warn' },
       detail: str(r.reason),
+      ...(fileFor(r.document) ? { filename: fileFor(r.document) } : {}),
       action: { label: str(r.action).trim() || '보완 자료 올리기', kind: 'upload' },
     })),
     summary: '사람이 검토한 뒤 보완 자료를 올리면 다시 검사합니다.',

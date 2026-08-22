@@ -114,9 +114,12 @@ class KitMetricCard extends StatelessWidget {
 
 // ── 보완요청 (Figma 74:7530) ────────────────────────────────
 class KitTasksCard extends StatelessWidget {
-  const KitTasksCard({super.key, required this.tab, this.onAction});
+  const KitTasksCard({super.key, required this.tab, this.onAction, this.busy = false});
   final KitTab tab;
   final void Function(KitItem item)? onAction;
+
+  /// 🔴 올리는 중 — 버튼이 「올리는 중…」이 되고 눌리지 않는다. 실측: 40~80초 동안 화면이 침묵했다
+  final bool busy;
 
   @override
   Widget build(BuildContext context) => AppCard(
@@ -167,6 +170,11 @@ class KitTasksCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(item.detail!, style: AppText.rowSub.copyWith(color: AppColors.fontGray1)),
                 ],
+                // 🔴 올린 파일이 있으면 말한다 — 검사 결과가 「보완 필요」 그대로여도 올린 사실은 보여야 한다
+                if (item.filename != null && item.filename!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text('올린 파일: ${item.filename}', style: AppText.rowSub, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
               ],
             );
             final action = item.action == null ? null : _action(item);
@@ -206,9 +214,9 @@ class KitTasksCard extends StatelessWidget {
           ],
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 200),
-            child: Text(a.label,
+            child: Text(upload && busy ? '올리는 중…' : a.label,
                 style: AppText.chip
-                    .copyWith(color: upload ? AppColors.black : AppColors.fontGray1),
+                    .copyWith(color: upload && !busy ? AppColors.black : AppColors.fontGray1),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
           ),
@@ -217,7 +225,7 @@ class KitTasksCard extends StatelessWidget {
     );
     if (!upload) return body;
     return InkWell(
-      onTap: onAction == null ? null : () => onAction!(item),
+      onTap: onAction == null || busy ? null : () => onAction!(item),
       borderRadius: AppRadius.card,
       child: body,
     );
@@ -226,8 +234,11 @@ class KitTasksCard extends StatelessWidget {
 
 // ── 금지 표현 검사 (Figma 74:7524) ──────────────────────────
 class KitNoteCard extends StatelessWidget {
-  const KitNoteCard({super.key, required this.tab, this.onAction});
+  const KitNoteCard({super.key, required this.tab, this.onAction, this.busy = false});
   final KitTab tab;
+
+  /// 🔴 원고를 올리는 중 — 버튼이 「올리는 중…」이 되고 눌리지 않는다
+  final bool busy;
 
   /// 서버가 붙인 행동(원고 올리기 등)을 눌렀을 때
   final void Function(KitAction action)? onAction;
@@ -272,7 +283,7 @@ class KitNoteCard extends StatelessWidget {
           ],
           if (n.action != null) ...[
             const SizedBox(height: 16),
-            OutlineButtonSmall(label: n.action!.label, onTap: onAction == null ? null : () => onAction!(n.action!)),
+            OutlineButtonSmall(label: busy ? '올리는 중…' : n.action!.label, onTap: onAction == null || busy ? null : () => onAction!(n.action!)),
           ],
         ],
       ),
