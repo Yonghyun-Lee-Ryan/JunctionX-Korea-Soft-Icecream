@@ -272,3 +272,76 @@ test('guardWbs — 요구사항을 16개 이상 묶은 패키지는 validation.o
   ] }, ann);
   assert.deepEqual(out.validation.oversized_packages, [{ wbs_id: '1.1', count: 30 }]);
 });
+
+// ── 2-2 보강: 프롬프트가 안 먹는 실측(8개 패키지·전부 미 명시·5개가 16건 초과) → 가드가 결정적으로 보정 ──
+const svr = (n) => `SVR-${String(n).padStart(3, '0')}`;
+const bigAnn = {
+  project_period: '2025. 7. 1. ~ 2028. 06. 30./ 3년',
+  requirements: [
+    ...Array.from({ length: 12 }, (_, i) => ({ requirement_id: svr(i + 1), requirement_category: '① 결제 대행', requirement_name: `결제 ${i + 1}`, detailed_content: 'x'.repeat(200), source_page: 4 })),
+    ...Array.from({ length: 10 }, (_, i) => ({ requirement_id: svr(i + 13), requirement_category: '② 정산', requirement_name: `정산 ${i + 1}`, detailed_content: 'y'.repeat(200), source_page: 5 })),
+    ...Array.from({ length: 8 }, (_, i) => ({ requirement_id: svr(i + 23), requirement_category: '③ 정보보안', requirement_name: `보안 ${i + 1}`, detailed_content: 'z'.repeat(200), source_page: 6 })),
+  ],
+  scope_items: [{ scope_item: '결제서비스 제공' }], execution_context: [{ context_type: 'SCHEDULE', item: '시행 전 준비기간 3개월' }],
+};
+
+test('announcementFor(wbs) — 요구사항은 ID·분류·명칭·쪽만 (본문 200자×145건을 WBS 호출에 싣지 않는다), WPS/CP 호출(plan)은 본문을 그대로', () => {
+  const w = announcementFor('wbs', bigAnn);
+  assert.equal(w.requirements.length, 30);
+  assert.deepEqual(Object.keys(w.requirements[0]).sort(), ['requirement_category', 'requirement_id', 'requirement_name', 'source_page']);
+  assert.equal(w.project_period, bigAnn.project_period);
+  assert.ok(w.scope_items && w.execution_context);
+  const p = announcementFor('plan', bigAnn);
+  assert.ok('detailed_content' in p.requirements[0]);
+});
+
+test('🔴 guardWbs — 16건 초과 패키지는 공고의 절(requirement_category) 기준으로 나눈다: 1.3 → 1.3.1·1.3.2…, 이름에 절, M/M 은 건수 비례', () => {
+  const out = guardWbs({ work_packages: [
+    { wbs_id: '1.3', name: '결제·정산 기능 구현', deliverable: '결제 모듈', predecessors: ['1.1'], duration: '', effort_mm: [{ grade: '고급', mm: 3 }], requirement_refs: Array.from({ length: 22 }, (_, i) => svr(i + 1)), source_page: 4 },
+    { wbs_id: '1.4', name: '보안 기반 구축', deliverable: '보안 설계서', predecessors: ['1.3'], duration: '', effort_mm: [{ grade: '특급', mm: 1 }], requirement_refs: Array.from({ length: 8 }, (_, i) => svr(i + 23)), source_page: 6 },
+  ] }, bigAnn);
+  const ids = out.work_packages.map((p) => p.wbs_id);
+  assert.deepEqual(ids, ['1.3.1', '1.3.2', '1.4'], JSON.stringify(ids));
+  const [a, b] = out.work_packages;
+  assert.equal(a.name, '결제·정산 기능 구현 — ① 결제 대행');
+  assert.equal(b.name, '결제·정산 기능 구현 — ② 정산');
+  assert.equal(a.requirement_refs.length, 12);
+  assert.equal(b.requirement_refs.length, 10);
+  assert.deepEqual(a.effort_mm, [{ grade: '고급', mm: 1.6 }]);   // 3 × 12/22 = 1.64
+  assert.deepEqual(b.effort_mm, [{ grade: '고급', mm: 1.4 }]);   // 나머지 — 합이 3 을 지킨다
+  assert.equal(a.split_from, '1.3');
+  assert.deepEqual(a.predecessors, ['1.1']);
+  assert.deepEqual(b.predecessors, ['1.3.1'], '나눈 조각은 앞 조각을 선행으로 — 순서는 원본이 정한 것');
+  assert.deepEqual(out.work_packages[2].predecessors, ['1.3.2'], '원래 1.3 을 선행으로 둔 패키지는 마지막 조각을 본다');
+  assert.deepEqual(out.validation.split_packages, [{ wbs_id: '1.3', into: ['1.3.1', '1.3.2'] }]);
+  assert.deepEqual(out.validation.oversized_packages, [], '나눈 뒤에는 16건 초과가 없다');
+  assert.equal(out.validation.linked_requirement_count, 30);
+});
+
+test('guardWbs — 한 절 안에서 16건을 넘으면 나눌 기준이 없다 → 그대로 두고 oversized 로 말한다 · 이미 나눈 조각은 다시 나누지 않는다', () => {
+  const ann = { requirements: Array.from({ length: 20 }, (_, i) => ({ requirement_id: svr(i + 1), requirement_category: '① 결제 대행' })) };
+  const out = guardWbs({ work_packages: [{ wbs_id: '2.1', name: '결제', requirement_refs: Array.from({ length: 20 }, (_, i) => svr(i + 1)), effort_mm: [] }] }, ann);
+  assert.deepEqual(out.work_packages.map((p) => p.wbs_id), ['2.1']);
+  assert.deepEqual(out.validation.oversized_packages, [{ wbs_id: '2.1', count: 20 }]);
+  const again = guardWbs(out, ann);
+  assert.deepEqual(again.work_packages.map((p) => p.wbs_id), ['2.1']);
+});
+
+test('🔴 guardWbs — 기간이 비어 있어도 문서에 사업기간이 있으면 운영·대행·유지관리·정산 성격 패키지는 그 기간을 쓴다 (duration_source 표시)', () => {
+  const out = guardWbs({ work_packages: [
+    { wbs_id: '1.1', name: '전자결제 대행 서비스 제공', requirement_refs: [svr(1)], effort_mm: [] },
+    { wbs_id: '1.2', name: '정산·수수료 관리 운영', requirement_refs: [svr(13)], effort_mm: [] },
+    { wbs_id: '1.3', name: '시스템 연계·인터페이스 구축', requirement_refs: [svr(23)], effort_mm: [] },
+    { wbs_id: '1.4', name: '보안관제 및 유지보수', requirement_refs: [svr(24)], duration: '착수 후 4주', effort_mm: [] },
+  ] }, bigAnn);
+  const by = Object.fromEntries(out.work_packages.map((p) => [p.wbs_id, p]));
+  assert.equal(by['1.1'].duration, '사업기간 전체 (2025. 7. 1. ~ 2028. 06. 30./ 3년)');
+  assert.equal(by['1.1'].duration_source, 'project_period');
+  assert.equal(by['1.2'].duration_source, 'project_period');
+  assert.equal(by['1.3'].duration, '미 명시', '구축·연계는 문서가 기간을 말하지 않았다');
+  assert.equal(by['1.4'].duration, '착수 후 4주', '모델이 문서에서 읽어 온 기간은 그대로');
+  assert.equal(by['1.4'].duration_source, undefined);
+  // 사업기간이 없으면 아무것도 채우지 않는다
+  const none = guardWbs({ work_packages: [{ wbs_id: '1.1', name: '운영 대행', requirement_refs: [], effort_mm: [] }] }, { requirements: [] });
+  assert.equal(none.work_packages[0].duration, '미 명시');
+});

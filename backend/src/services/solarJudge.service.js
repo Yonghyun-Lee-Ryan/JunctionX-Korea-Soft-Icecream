@@ -130,6 +130,8 @@ const SLICES = {
   eligibility: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'eligibility_rules'],
   plan: [...OVERVIEW_KEYS, 'constraint_deadline', 'constraint_opens_at', 'requirement_count', 'requirement_summary', 'requirements', 'scope_items', 'execution_context'],
   submission: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'submission_requirements', 'evaluation_items'],
+  // 🔴 WBS 호출에는 요구사항 본문을 싣지 않는다 — 145건×본문이면 모델이 패키지 8개로 뭉뚱그렸다(실측). ID·분류·명칭·쪽이면 묶기엔 충분하다
+  wbs: [...OVERVIEW_KEYS, 'constraint_deadline', 'constraint_opens_at', 'requirement_count', 'requirement_summary', 'requirements', 'scope_items', 'execution_context'],
   // 🔴 임계경로는 «마감 전에 남이 시간을 쓰는 일»이다 — 자격 조항(등록·증명)과 입찰 제출물(유효기간·발급)이 재료. 요구사항 본문은 필요 없다
   criticalPath: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'requirement_count', 'eligibility_rules', 'submission_requirements'],
 };
@@ -140,6 +142,9 @@ export function announcementFor(kind, announcement) {
   if (!keys) throw new Error(`unknown slice: ${kind}`);
   const out = {};
   for (const k of keys) if (announcement && announcement[k] !== undefined) out[k] = announcement[k];
+  if (kind === 'wbs' && Array.isArray(out.requirements)) {
+    out.requirements = out.requirements.map((r) => ({ requirement_id: r?.requirement_id ?? '', requirement_category: r?.requirement_category ?? '', requirement_name: r?.requirement_name ?? '', source_page: r?.source_page ?? 0 }));
+  }
   // 계약 후 산출물(COMPLETION 등)은 마감 전 준비가 아니다
   if (kind === 'criticalPath' && Array.isArray(out.submission_requirements)) {
     out.submission_requirements = out.submission_requirements.filter((s) => !s?.submission_stage || s.submission_stage === 'BID');
@@ -212,7 +217,7 @@ export async function judgePlan({ announcement, fetchImpl }) {
   });
   const wbs = guardWbs(await callSolar({
     system: loadPrompt('wbs'),
-    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', doc]]),
+    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', announcementFor('wbs', announcement)]]),
     fetchImpl,
   }), announcement);
   const criticalPath = guardCriticalPath(await callSolar({
@@ -231,6 +236,51 @@ export const WBS_MAX_REFS = 15;   // 한 패키지에 묶는 요구사항 상한
  * 🔴 기간은 문서가 말한 것만 — 비어 있으면 정확히 「미 명시」. M/M 은 전부 추천값.
  * 🔴 검산은 공고 요구사항으로 다시 센다. 공고에 없는 요구사항 ID 는 지어낸 것이라 따로 낸다.
  */
+// 계약기간 내내 이어지는 성격의 패키지 — 문서의 사업기간이 곧 기간이다
+const ONGOING = /(운영|대행|유지보수|유지관리|정산|관제|서비스 제공|상시|모니터링|고객지원|콜센터|헬프데스크|장애 대응)/;
+
+/**
+ * 🔴 16건 초과 패키지를 공고의 절(requirement_category) 기준으로 나눈다 — 실측: 프롬프트로 「15개 이하」를 말해도 8개 패키지에
+ *    20~29건씩 묶어 왔다. 절은 문서가 준 구분이고, M/M 은 어차피 추천값이라 건수 비례로 나눈다. 한 절 안에서 넘치면 나눌 기준이 없다 — 그대로 두고 센다.
+ */
+function splitOversized(packages, categoryOf, pageOf) {
+  const splits = [];
+  const renamed = new Map();   // 원본 id → 마지막 조각 id (선행 참조를 옮긴다)
+  const next = [];
+  for (const p of packages) {
+    if (p.split_from || p.requirement_refs.length <= WBS_MAX_REFS) { next.push(p); continue; }
+    const groups = new Map();
+    for (const r of p.requirement_refs) { const c = categoryOf.get(r) ?? ''; if (!groups.has(c)) groups.set(c, []); groups.get(c).push(r); }
+    if (groups.size < 2) { next.push(p); continue; }
+    const pieces = [...groups];
+    const total = p.requirement_refs.length;
+    const ids = pieces.map((_, i) => `${p.wbs_id}.${i + 1}`);
+    const spent = new Map();   // grade → 앞 조각에 배분한 합
+    pieces.forEach(([cat, refs], i) => {
+      const last = i === pieces.length - 1;
+      const effort_mm = p.effort_mm.map((e) => {
+        const used = spent.get(e.grade) ?? 0;
+        const mm = last ? round1(e.mm - used) : round1(e.mm * refs.length / total);
+        spent.set(e.grade, round1(used + mm));
+        return { grade: e.grade, mm };
+      });
+      next.push({
+        ...p,
+        wbs_id: ids[i],
+        name: cat ? `${p.name} — ${cat}` : p.name,
+        requirement_refs: refs,
+        effort_mm,
+        predecessors: i === 0 ? p.predecessors : [ids[i - 1]],
+        source_page: pageOf.get(refs[0]) || p.source_page,
+        split_from: p.wbs_id,
+      });
+    });
+    splits.push({ wbs_id: p.wbs_id, into: ids });
+    renamed.set(p.wbs_id, ids[ids.length - 1]);
+  }
+  return { packages: next.map((p) => ({ ...p, predecessors: p.predecessors.map((x) => renamed.get(String(x)) ?? x) })), splits };
+}
+
 export function guardWbs(out, announcement) {
   const result = { ...(out ?? {}) };
   const reqs = Array.isArray(announcement?.requirements) ? announcement.requirements : [];
@@ -238,8 +288,11 @@ export function guardWbs(out, announcement) {
   const primaryIds = reqs
     .filter((r) => !r.scope_role || r.scope_role === 'PRIMARY_CONTRACT')
     .map(idOf).filter(Boolean);
+  const categoryOf = new Map(reqs.map((r) => [idOf(r), text(r?.requirement_category).trim()]));
+  const pageOf = new Map(reqs.map((r) => [idOf(r), Number(r?.source_page) || 0]));
+  const period = text(announcement?.project_period).trim();
 
-  const packages = (Array.isArray(result.work_packages) ? result.work_packages : []).map((p) => ({
+  const normalized = (Array.isArray(result.work_packages) ? result.work_packages : []).map((p) => ({
     ...p,
     duration: typeof p?.duration === 'string' && p.duration.trim() ? p.duration.trim() : '미 명시',
     effort_mm: (Array.isArray(p?.effort_mm) ? p.effort_mm : [])
@@ -250,6 +303,16 @@ export function guardWbs(out, announcement) {
     is_recommendation: true,
     source_page: Number(p?.source_page) || 0,
   }));
+  const { packages: split, splits } = splitOversized(normalized, categoryOf, pageOf);
+
+  // 🔴 기간: 모델이 문서에서 읽어 온 값은 그대로. 비어 있고 문서에 사업기간이 있으면, 계약기간 내내 이어지는 성격의
+  //    패키지는 그 사업기간을 쓴다 — 문서가 말한 기간이다. 구축·연계처럼 끝이 있는 일은 그대로 「미 명시」
+  const packages = split.map((p) => {
+    if (p.duration === '미 명시' && period && ONGOING.test(text(p.name))) {
+      return { ...p, duration: `사업기간 전체 (${period})`, duration_source: 'project_period' };
+    }
+    return p;
+  });
 
   const linked = new Set();
   const unknown = new Set();
@@ -265,8 +328,9 @@ export function guardWbs(out, announcement) {
       .filter((p) => !p.requirement_refs.some((r) => known.has(r)))
       .map((p) => p.wbs_id),
     unknown_requirement_refs: [...unknown],
-    // 🔴 실측: 첫 패키지가 요구사항 50개를 한 행에 묶었다 — 쪼개야 할 패키지를 센다 (프롬프트 상한 15)
+    // 🔴 실측: 첫 패키지가 요구사항 50개를 한 행에 묶었다 — 절 기준으로 나눈 뒤에도 넘치는 것만 센다
     oversized_packages: packages.filter((p) => p.requirement_refs.length > WBS_MAX_REFS).map((p) => ({ wbs_id: p.wbs_id, count: p.requirement_refs.length })),
+    split_packages: splits,
   };
   return result;
 }

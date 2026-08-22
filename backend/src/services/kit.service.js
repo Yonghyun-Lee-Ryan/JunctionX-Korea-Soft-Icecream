@@ -141,6 +141,8 @@ function wbsTab(wbs) {
   if (unlinked.length) warnings.push(`요구사항 미연결 ${unlinked.length}건: ${unlinked.join(', ')}`);
   const unknown = Array.isArray(wbs.validation?.unknown_requirement_refs) ? wbs.validation.unknown_requirement_refs : [];
   if (unknown.length) warnings.push(`공고에 없는 요구사항 ID ${unknown.length}건: ${unknown.join(', ')}`);
+  const splits = Array.isArray(wbs.validation?.split_packages) ? wbs.validation.split_packages : [];
+  if (splits.length) warnings.push(`큰 패키지 ${splits.length}개를 공고의 절(분류) 기준으로 나눴습니다: ${splits.map((s) => `${str(s.wbs_id)} → ${(Array.isArray(s.into) ? s.into : []).map(str).join('·')}`).join(', ')}`);
   const oversized = Array.isArray(wbs.validation?.oversized_packages) ? wbs.validation.oversized_packages : [];
   if (oversized.length) warnings.push(`요구사항을 16개 이상 묶은 패키지 ${oversized.length}개 — 쪼개야 합니다: ${oversized.map((o) => `${str(o.wbs_id)}(${num(o.count)}건)`).join(', ')}`);
   return {

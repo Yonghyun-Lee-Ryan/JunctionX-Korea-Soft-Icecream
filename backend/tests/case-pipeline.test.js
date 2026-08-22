@@ -5,6 +5,7 @@ import { createApp } from '../src/app.js';
 import { migrate } from '../src/db/migrate.js';
 import { env } from '../src/config/env.js';
 import * as companyRepo from '../src/repositories/company.repo.js';
+import * as caseRepo from '../src/repositories/case.repo.js';
 import { pickDocuments, companyCardFor, isFresh, PIPELINE_TTL_MS } from '../src/services/casePipeline.service.js';
 import { clearStudioResults } from '../src/repositories/studioResult.repo.js';
 
@@ -312,4 +313,31 @@ test('키가 없으면 데모 케이스는 지금처럼 fixture, 나라장터에
   } finally {
     env.studio.agentApiKey = saved;
   }
+});
+
+// ── 2-2 보강: Solar 없이 저장본에 가드만 다시 적용해 탭을 다시 그린다 ──
+import { rejudge } from '../src/services/casePipeline.service.js';
+
+test('rejudge(reguard) — Solar 를 부르지 않고 저장된 계획에 가드를 다시 적용해 큰 패키지를 나누고 탭을 다시 그린다', async () => {
+  mockAll();
+  await post({ bidPbancNo: 'R25TEST00000006', companyId: COMPANY, refresh: true });
+  const f = await waitDone('R25TEST00000006-000');
+  assert.equal(f.status, 'done');
+  // 저장된 PLAN_V1 을 «옛 가드» 모양으로 바꿔 놓는다: 1.1 에 요구사항 33개를 몰아넣는다 (실측 모양)
+  const plan = caseRepo.listExtractions('R25TEST00000006-000', 'PLAN_V1')[0].payload;
+  const all = rfpParts.agt_03.requirements.map((r) => r.requirement_id);
+  plan.wbs.work_packages = [{ wbs_id: '1.1', name: '전체 구현', deliverable: '시스템', predecessors: [], duration: '미 명시', effort_mm: [{ grade: '고급', mm: 3.3 }], requirement_refs: all, source_page: 13 }];
+  caseRepo.deleteExtraction('R25TEST00000006-000', 'PLAN_V1');
+  caseRepo.insertExtraction('R25TEST00000006-000', { schemaName: 'PLAN_V1', payload: plan });
+
+  const solarBefore = calls.solar.length;
+  const r = await rejudge('R25TEST00000006-000', { parts: ['reguard'] });
+  assert.equal(r.solarCalls, 0);
+  assert.equal(calls.solar.length, solarBefore, 'Solar 를 부르지 않는다');
+  const g = await get('R25TEST00000006-000');
+  const wbs = g.tabs.find((t) => t.id === 'wbs');
+  assert.ok(wbs.rows.length > 1, '요구사항 분류(절) 기준으로 나뉘었다: ' + wbs.rows.length);
+  assert.ok(wbs.rows.every((row) => (row[6].match(/SFR-|PFR-|DAR-|INR-|SER-|QUR-|COR-|PMR-|ECR-|TER-|PSR-|TQR-|[A-Z]{3}-/g) || []).length <= 9));
+  assert.ok(wbs.warnings.some((w) => w.includes('나눴습니다')), JSON.stringify(wbs.warnings));
+  assert.ok(g.meta.pipeline.rejudged.includes('reguard'));
 });

@@ -6,7 +6,7 @@ import * as caseRepo from '../repositories/case.repo.js';
 import * as companyRepo from '../repositories/company.repo.js';
 import { loadFixture } from './fixture.service.js';
 import { decomposeAnnouncement } from './announcement.service.js';
-import { judgeEligibility, judgePlan, judgeSubmission } from './solarJudge.service.js';
+import { judgeEligibility, judgePlan, judgeSubmission, guardWbs, guardCriticalPath, guardSubmissionAudit } from './solarJudge.service.js';
 import { buildKit } from './kit.service.js';
 import { listCaseFiles, latestCaseFile } from '../repositories/caseFile.repo.js';
 
@@ -152,6 +152,21 @@ export async function rejudge(caseId, { parts = [], proposalText } = {}) {
     solarCalls += submission.meta?.calls ?? 0;
     caseRepo.deleteExtraction(caseId, 'SUBMISSION_V1');
     caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });
+  }
+  // 🔴 reguard: Solar 없이 저장본에 가드만 다시 적용한다 — 가드(나누기·기간·임계경로 채우기)를 고친 뒤 탭을 다시 그릴 때
+  if (parts.includes('reguard')) {
+    if (plan?.wbs) {
+      const wbs = guardWbs(plan.wbs, announcement);
+      const criticalPath = guardCriticalPath(plan.criticalPath ?? {}, wbs, announcement);
+      plan = { ...plan, wbs, criticalPath };
+      caseRepo.deleteExtraction(caseId, 'PLAN_V1');
+      caseRepo.insertExtraction(caseId, { schemaName: 'PLAN_V1', payload: plan });
+    }
+    if (submission?.audit) {
+      submission = { ...submission, audit: guardSubmissionAudit(submission.audit, { proposalScan: submission.proposalScan, uploads: listCaseFiles(caseId, 'submission') }) };
+      caseRepo.deleteExtraction(caseId, 'SUBMISSION_V1');
+      caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });
+    }
   }
   if (parts.includes('plan') && announcement.requirements?.length) {
     plan = await judgePlan({ announcement });

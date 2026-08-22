@@ -228,3 +228,15 @@ test('wbsTab — 16개 이상 묶은 패키지 경고 · 근거요구 칸은 「
   assert.ok(refs.endsWith('외 22건'), refs);
   assert.equal((refs.match(/SVR-/g) || []).length, 8);
 });
+
+test('wbsTab — 나눈 패키지는 경고줄로 말한다 (원본 → 조각)', () => {
+  const wbs = {
+    work_packages: [
+      { wbs_id: '1.3.1', name: '결제 — ① 결제 대행', deliverable: '모듈', predecessors: [], duration: '미 명시', effort_mm: [], requirement_refs: ['SFR-001'], source_page: 4, split_from: '1.3' },
+      { wbs_id: '1.3.2', name: '결제 — ② 정산', deliverable: '모듈', predecessors: ['1.3.1'], duration: '미 명시', effort_mm: [], requirement_refs: ['SFR-002'], source_page: 5, split_from: '1.3' },
+    ],
+    validation: { primary_requirement_count: 2, linked_requirement_count: 2, unlinked_requirement_ids: [], packages_without_requirement: [], unknown_requirement_refs: [], oversized_packages: [], split_packages: [{ wbs_id: '1.3', into: ['1.3.1', '1.3.2'] }] },
+  };
+  const tab = buildKit({ announcement, plan: { wbs } }).tabs.find((t) => t.id === 'wbs');
+  assert.ok(tab.warnings.some((w) => w.includes('1.3') && w.includes('나눴습니다')), JSON.stringify(tab.warnings));
+});
