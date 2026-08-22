@@ -5,10 +5,11 @@ import 'package:solar_for_bid/services/document_picker.dart';
 import 'package:solar_for_bid/state/company_registration_controller.dart';
 
 import 'support/fake_api.dart';
+import 'support/scaled.dart';
 
 
-Widget _app({double textScale = 1.0}) => MediaQuery(
-      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+Widget _app({double textScale = 1.0}) => Scaled(
+      textScale: textScale,
       child: SolarForBidApp(
         api: FakeApi(),
         controller: CompanyRegistrationController(FakeApi()),

@@ -150,6 +150,52 @@ class HttpDocsApi implements DocsApi {
         timeout: const Duration(seconds: 30),
       );
 
+  @override
+  Future<void> saveBid(String companyId, ShortlistItem item) => _guard(
+        () async {
+          final res = await _client.post(
+            Uri.parse('$baseUrl/api/companies/$companyId/bids'),
+            headers: const {'Content-Type': 'application/json; charset=utf-8'},
+            body: utf8.encode(jsonEncode({
+              'caseId': item.caseId,
+              'title': item.title,
+              'org': item.org,
+              'deadline': item.deadline,
+              'daysLeft': item.daysLeft,
+              'matched': item.matched,
+              'unverified': item.unverified,
+              'reasons': [
+                for (final r in item.reasons)
+                  {'text': r.text, 'page': r.page, 'docId': r.docId, 'confidence': r.confidence},
+              ],
+            })),
+          );
+          _decode(res, (j) => j);
+        },
+        timeout: const Duration(seconds: 20),
+      );
+
+  @override
+  Future<List<ShortlistItem>> bids(String companyId) => _guard(
+        () async {
+          final res = await _client.get(Uri.parse('$baseUrl/api/companies/$companyId/bids'));
+          return _decode(res, (j) => ((j['bids'] as List?) ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(ShortlistItem.fromJson)
+              .toList(growable: false));
+        },
+        timeout: const Duration(seconds: 20),
+      );
+
+  @override
+  Future<void> dropBid(String companyId, String caseId) => _guard(
+        () async {
+          final res = await _client.delete(Uri.parse('$baseUrl/api/companies/$companyId/bids/$caseId'));
+          _decode(res, (j) => j);
+        },
+        timeout: const Duration(seconds: 20),
+      );
+
   /// 탭 xlsx 주소 — 다운로드는 브라우저/OS에 맡긴다
   String downloadUrl(String caseId, String tabId) => '$baseUrl/api/cases/$caseId/files/$tabId.xlsx';
 

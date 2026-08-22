@@ -39,6 +39,15 @@ abstract interface class DocsApi {
 
   /// 응찰 준비 Bid Kit (화면④)
   Future<Factsheet> factsheet(String caseId);
+
+  /// 🚪 「응찰 준비」를 찍은 공고를 저장한다
+  Future<void> saveBid(String companyId, ShortlistItem item);
+
+  /// 응찰 준비중인 공고 목록
+  Future<List<ShortlistItem>> bids(String companyId);
+
+  /// 응찰 대상에서 뺀다
+  Future<void> dropBid(String companyId, String caseId);
 }
 
 class SaveCardRequest {

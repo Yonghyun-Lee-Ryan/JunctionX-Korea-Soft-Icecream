@@ -10,13 +10,34 @@ import 'app_chip.dart';
 /// 🔴 보류(skip)된 카드는 흐려지고 버튼이 「보류 취소」 하나로 바뀐다 —
 ///    목록에서 지우지 않는다. 사람이 되돌릴 수 있어야 한다.
 class NoticeCard extends StatelessWidget {
-  const NoticeCard({super.key, required this.item, this.onDecide, this.onOpen});
+  const NoticeCard({super.key, required this.item, this.onDecide, this.onOpen})
+      : onGo = null,
+        onDrop = null,
+        saved = false;
+
+  /// 이미 「응찰 준비」를 찍어 **저장된** 공고 (Figma 74:6893).
+  /// 🔴 판정 버튼이 사라지고 「응찰하러 가기」 하나만 남는다 — 여기서 다시 고를 일이 없다.
+  const NoticeCard.saved({
+    super.key,
+    required this.item,
+    required this.onGo,
+    this.onDrop,
+    this.onOpen,
+  })  : onDecide = null,
+        saved = true;
 
   final ShortlistItem item;
   final void Function(BidDecision)? onDecide;
   final VoidCallback? onOpen;
 
-  bool get _held => item.decision == BidDecision.skip;
+  /// 저장된 공고 → Bid Kit
+  final VoidCallback? onGo;
+
+  /// 🔴 응찰 대상에서 뺀다. 지우는 게 아니라 dropped로 남는다
+  final VoidCallback? onDrop;
+  final bool saved;
+
+  bool get _held => !saved && item.decision == BidDecision.skip;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +139,33 @@ class NoticeCard extends StatelessWidget {
       );
 
   Widget _actions() {
+    if (saved) {
+      // 🔴 Figma 74:6893 — 카드 폭을 꽉 채우는 버튼 하나.
+      //    「빼기」는 옆에 작게 둔다. 눌러서 사라지는 게 아니라 목록에서 빠질 뿐이다.
+      return Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: onGo,
+              borderRadius: AppRadius.card,
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: const BoxDecoration(color: AppColors.primary, borderRadius: AppRadius.card),
+                child: Text('응찰하러 가기',
+                    style: AppText.actionButton.copyWith(color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ),
+          if (onDrop != null) ...[
+            const SizedBox(width: 8),
+            _outline('빼기', onDrop!),
+          ],
+        ],
+      );
+    }
     if (_held) {
       return Align(
         alignment: Alignment.centerRight,

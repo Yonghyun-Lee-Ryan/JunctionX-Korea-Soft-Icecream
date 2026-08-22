@@ -143,12 +143,20 @@ class _BidKitScreenState extends State<BidKitScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        InkWell(
-          onTap: widget.onBack,
-          borderRadius: AppRadius.card,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: SvgPicture.asset(AppIcons.back, width: 14.5, height: 29),
+        // 🔴 화살표 하나뿐이라 읽어 주는 이름이 없었다 — 어디로 가는지 말해 준다
+        Tooltip(
+          message: '응찰 목록으로',
+          child: Semantics(
+            button: true,
+            label: '응찰 목록으로',
+            child: InkWell(
+              onTap: widget.onBack,
+              borderRadius: AppRadius.card,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: SvgPicture.asset(AppIcons.back, width: 14.5, height: 29),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 12),

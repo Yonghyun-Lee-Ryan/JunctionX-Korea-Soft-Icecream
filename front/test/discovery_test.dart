@@ -84,17 +84,18 @@ void main() {
     expect(find.text('보류 취소'), findsOneWidget);
   });
 
-  testWidgets('🚪 응찰 준비를 누르면 서버에 go를 남기고 Bid Kit으로 넘어간다', (t) async {
+  testWidgets('🚪 응찰 준비를 누르면 서버에 go를 남기고 응찰 목록으로 넘어간다', (t) async {
     addTearDown(t.view.reset);
     final api = await _pump(t);
     await t.tap(find.text('응찰 준비').first);
     await t.pumpAndSettle();
 
     expect(api.decisions['R25BK00645031-000'], 'go');
-    // 🔴 go를 찍은 건만 다음 단계가 돈다 — 케이스가 만들어지고 화면이 넘어간다
-    expect(api.createdCases.single, 'R25BK00645031-000');
-    expect(find.text('요구사항 체크리스트'), findsOneWidget);
-    expect(find.text('임시저장'), findsOneWidget);
+    // 🔴 go를 찍은 건만 저장된다
+    expect(api.savedBids.single.caseId, 'R25BK00645031-000');
+    expect(find.text('응찰 준비중인 공고'), findsOneWidget);
+    // 🔴 첨부 수집은 아직 시작하지 않는다 — 수십 초가 걸리는 일을 사람 확인 없이 돌리지 않는다
+    expect(api.createdCases, isEmpty);
   });
 
   testWidgets('🚪 보류는 화면을 넘기지 않고 목록에 남긴다', (t) async {

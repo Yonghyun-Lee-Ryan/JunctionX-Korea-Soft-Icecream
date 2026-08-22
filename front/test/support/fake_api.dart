@@ -85,6 +85,27 @@ class FakeApi implements DocsApi {
 
   @override
   Future<Factsheet> factsheet(String caseId) async => sampleFactsheet(caseId);
+
+  /// 🔴 저장된 응찰 대상. 서버처럼 caseId로 덮어쓴다
+  final List<ShortlistItem> savedBids = [];
+
+  /// 저장이 실패하는 상황을 만들 때
+  ApiException? saveBidError;
+
+  @override
+  Future<void> saveBid(String companyId, ShortlistItem item) async {
+    if (saveBidError != null) throw saveBidError!;
+    savedBids.removeWhere((b) => b.caseId == item.caseId);
+    savedBids.add(item.copyWith(decision: BidDecision.go));
+  }
+
+  @override
+  Future<List<ShortlistItem>> bids(String companyId) async => List.of(savedBids);
+
+  @override
+  Future<void> dropBid(String companyId, String caseId) async {
+    savedBids.removeWhere((b) => b.caseId == caseId);
+  }
 }
 
 /// 백엔드 factsheet 봉투 표본. 🔴 제출준비 탭은 «아직 없다» — 다른 팀이 만드는 중이다

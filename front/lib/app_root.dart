@@ -6,6 +6,7 @@ import 'api/models.dart';
 import 'api/screening.dart';
 import 'screens/company_card_screen.dart';
 import 'screens/bid_kit_screen.dart';
+import 'screens/bid_list_screen.dart';
 import 'screens/notice_discovery_screen.dart';
 import 'screens/company_registration_screen.dart';
 import 'services/document_picker.dart';
@@ -38,7 +39,7 @@ class AppRoot extends StatefulWidget {
   State<AppRoot> createState() => _AppRootState();
 }
 
-enum _View { loading, register, card, discovery, bidKit, failed }
+enum _View { loading, register, card, discovery, bids, bidKit, failed }
 
 class _AppRootState extends State<AppRoot> {
   _View _view = _View.loading;
@@ -47,6 +48,7 @@ class _AppRootState extends State<AppRoot> {
   ShortlistItem? _bidItem;
   String? _bidCaseId;
   bool _preparing = false;
+  final _bidListKey = GlobalKey<BidListScreenState>();
 
   @override
   void initState() {
@@ -136,24 +138,20 @@ class _AppRootState extends State<AppRoot> {
                 onNavigate: _navigate,
                 onPrepareBid: _prepareBid,
               ),
-              // 🔴 케이스를 만드는 동안(첨부 수집) 화면을 막고 무엇을 하는지 말한다
-              if (_preparing)
-                ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  child: Center(
-                    child: AppCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CircularProgressIndicator(color: AppColors.primary),
-                          const SizedBox(height: 16),
-                          Text('나라장터에서 첨부를 받는 중입니다', style: AppText.sectionTitle),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              // 🔴 저장하는 동안 화면을 막고 무엇을 하는지 말한다
+              if (_preparing) _busy('응찰 대상으로 저장하는 중입니다'),
+            ],
+          ),
+        _View.bids => Stack(
+            children: [
+              BidListScreen(
+                key: _bidListKey,
+                api: widget.api,
+                companyId: _companyId!,
+                onNavigate: _navigate,
+                onOpenBid: _openBid,
+              ),
+              if (_preparing) _busy('나라장터에서 첨부를 받는 중입니다'),
             ],
           ),
         _View.bidKit => BidKitScreen(
@@ -163,12 +161,56 @@ class _AppRootState extends State<AppRoot> {
             org: _bidItem?.org,
             deadline: _bidItem?.deadline,
             daysLeft: _bidItem?.daysLeft,
-            onBack: () => setState(() => _view = _View.discovery),
+            onBack: () => setState(() => _view = _View.bids),
           ),
       };
 
-  /// 🔴 「응찰 준비」 — 공고번호로 케이스를 만들고(=나라장터 첨부 수집 시작) Bid Kit으로 간다
+  /// 🔴 무엇을 기다리는지 말한다 — 도는 원만 보여 주지 않는다
+  Widget _busy(String label) => ColoredBox(
+        color: Colors.black.withValues(alpha: 0.25),
+        child: Center(
+          child: AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: AppColors.primary),
+                const SizedBox(height: 16),
+                Text(label, style: AppText.sectionTitle),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  /// 🔴 「응찰 준비」 — **먼저 저장하고** 응찰 목록으로 간다.
+  ///    첨부 수집(케이스 생성)은 여기서 하지 않는다. 목록에서 「응찰하러 가기」를 누를 때 한다 —
+  ///    나라장터 첨부는 수십 초가 걸리고, 그동안 사람을 붙잡아 둘 이유가 없다.
   Future<void> _prepareBid(ShortlistItem item) async {
+    setState(() => _preparing = true);
+    try {
+      await widget.api.saveBid(_companyId!, item);
+      if (!mounted) return;
+      setState(() {
+        _bidItem = item;
+        _view = _View.bids;
+      });
+      // 이미 그 화면에 있었다면 다시 읽게 한다
+      _bidListKey.currentState?.reload();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      // 🔴 서버가 준 문장 그대로
+      _toast(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _toast('응찰 대상으로 저장하지 못했습니다.');
+    } finally {
+      if (mounted) setState(() => _preparing = false);
+    }
+  }
+
+  /// 🚪 「응찰하러 가기」 — 여기서 케이스를 만든다(=나라장터 첨부 수집) → Bid Kit
+  Future<void> _openBid(ShortlistItem item) async {
     final parts = item.caseId.split('-');
     final no = parts.first;
     final ord = parts.length > 1 ? parts.last : '000';
@@ -184,19 +226,18 @@ class _AppRootState extends State<AppRoot> {
       });
     } on ApiException catch (e) {
       if (!mounted) return;
-      // 🔴 서버가 준 문장 그대로
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.message, style: AppText.rowSub.copyWith(color: Colors.white)),
-      ));
+      _toast(e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('응찰 준비를 시작하지 못했습니다.', style: AppText.rowSub.copyWith(color: Colors.white)),
-      ));
+      _toast('응찰 준비를 시작하지 못했습니다.');
     } finally {
       if (mounted) setState(() => _preparing = false);
     }
   }
+
+  void _toast(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(msg, style: AppText.rowSub.copyWith(color: Colors.white)),
+      ));
 
   /// 사이드바 내비. 0 회사 카드 · 1 공고 탐색 · 2 응찰 · 3 설정
   void _navigate(int index) {
@@ -206,6 +247,8 @@ class _AppRootState extends State<AppRoot> {
         setState(() => _view = _View.card);
       case 1:
         setState(() => _view = _View.discovery);
+      case 2:
+        setState(() => _view = _View.bids);
       default:
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('${kNavItems[index].label} 화면은 아직 준비 중입니다.',

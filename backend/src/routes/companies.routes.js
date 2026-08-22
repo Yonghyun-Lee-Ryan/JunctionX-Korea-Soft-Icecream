@@ -232,3 +232,71 @@ companiesRouter.get('/companies/card/requirements', asyncHandler(ctrl.getCardReq
  *             schema: { $ref: '#/components/schemas/Error' }
  */
 companiesRouter.post('/companies/card', asyncHandler(ctrl.saveCard));
+
+/**
+ * @openapi
+ * /api/companies/{companyId}/bids:
+ *   get:
+ *     tags: [companies]
+ *     summary: 응찰 준비중인 공고 목록
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [preparing, submitted, dropped, all] }
+ *     responses:
+ *       200: { description: OK }
+ *       404: { $ref: '#/components/responses/Error' }
+ *   post:
+ *     tags: [companies]
+ *     summary: 🚪 「응찰 준비」를 찍은 공고를 저장한다
+ *     description: |
+ *       🔴 목록(screening)과 **따로** 저장한다. 실호출 스크리닝은 조회 창이 좁아
+ *       다음 실행에서 그 공고가 목록에서 빠질 수 있는데, 사람이 하겠다고 정한 건은 남아야 한다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [caseId, title]
+ *             properties:
+ *               caseId:     { type: string }
+ *               title:      { type: string }
+ *               org:        { type: string }
+ *               deadline:   { type: string }
+ *               daysLeft:   { type: integer }
+ *               matched:    { type: integer }
+ *               unverified: { type: integer }
+ *               reasons:    { type: array, items: { type: object } }
+ *     responses:
+ *       201: { description: 저장됨 }
+ *       400: { $ref: '#/components/responses/Error' }
+ *       404: { $ref: '#/components/responses/Error' }
+ */
+companiesRouter.get('/companies/:companyId/bids', asyncHandler(ctrl.listBids));
+companiesRouter.post('/companies/:companyId/bids', asyncHandler(ctrl.createBid));
+
+/**
+ * @openapi
+ * /api/companies/{companyId}/bids/{caseId}:
+ *   delete:
+ *     tags: [companies]
+ *     summary: 응찰 대상에서 뺀다 (🔴 지우지 않고 dropped로 남긴다)
+ *     parameters:
+ *       - in: path
+ *         name: companyId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: caseId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: OK }
+ *       404: { $ref: '#/components/responses/Error' }
+ */
+companiesRouter.delete('/companies/:companyId/bids/:caseId', asyncHandler(ctrl.deleteBid));

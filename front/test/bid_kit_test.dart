@@ -7,7 +7,9 @@ import 'package:solar_for_bid/state/company_registration_controller.dart';
 
 import 'support/fake_api.dart';
 
-/// 회사 카드 → 공고 탐색 → 「응찰 준비」 → Bid Kit
+/// 회사 카드 → 공고 탐색 → 「응찰 준비」(저장) → 응찰 목록 → 「응찰하러 가기」 → Bid Kit
+///
+/// 🔴 「응찰 준비」는 이제 **저장까지만** 한다. 첨부 수집(케이스 생성)은 목록에서 한 번 더 눌러야 시작된다.
 Future<FakeApi> _toKit(WidgetTester t, {double w = 1920, double h = 1080}) async {
   final api = FakeApi(company: const CurrentCompany(exists: true, companyId: 'co_x'));
   t.view.physicalSize = Size(w, h);
@@ -21,6 +23,8 @@ Future<FakeApi> _toKit(WidgetTester t, {double w = 1920, double h = 1080}) async
   await t.tap(find.text('이 카드로 공고 추천'));
   await t.pumpAndSettle();
   await t.tap(find.text('응찰 준비').first);
+  await t.pumpAndSettle();
+  await t.tap(find.text('응찰하러 가기').first);
   await t.pumpAndSettle();
   return api;
 }
@@ -95,12 +99,14 @@ void main() {
     expect(find.text('M/M 예상 원가 (추천).xlsx'), findsNothing);
   });
 
-  testWidgets('뒤로 가면 공고 목록으로 돌아간다', (t) async {
+  // 🔴 왔던 길로 되돌린다 — 추천 목록이 아니라 「응찰 준비중인 공고」다
+  testWidgets('뒤로 가면 응찰 목록으로 돌아간다', (t) async {
     addTearDown(t.view.reset);
     await _toKit(t);
-    await t.tap(find.byType(InkWell).first);
+    await t.tap(find.bySemanticsLabel('응찰 목록으로').first);
     await t.pumpAndSettle();
-    expect(find.textContaining('건 중 ', findRichText: true), findsOneWidget);
+    expect(find.text('응찰 준비중인 공고'), findsOneWidget);
+    expect(find.text('응찰하러 가기'), findsOneWidget);
   });
 
   testWidgets('🔴 폭을 훑어도 오버플로 0건', (t) async {

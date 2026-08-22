@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { AppError } from '../errors/AppError.js';
 import { CARD_REQUIREMENTS, checkCardRequirements } from '../config/cardRequirements.js';
 import { buildCardView, findCurrentCompany } from '../services/cardView.service.js';
+import * as bidRepo from '../repositories/bid.repo.js';
 import { DOC_TYPE_MAP } from '../config/docTypes.js';
 import * as screeningService from '../services/screening.service.js';
 import { companyRepo } from '../services/screening.service.js';
@@ -153,4 +154,40 @@ export function getCurrentCompany(_req, res) {
 /** 저장된 회사 카드를 화면이 그대로 그릴 모양으로 */
 export function getCardView(req, res) {
   res.json(buildCardView(req.params.companyId));
+}
+
+
+// ── 🚪 응찰 대상 ──────────────────────────────────────────
+
+/**
+ * 「응찰 준비」를 찍은 공고를 저장한다.
+ * 🔴 목록(screening_item)과 따로 저장하는 이유 — 실호출 스크리닝은 조회 창이 좁아
+ *    다음 실행에서 그 공고가 목록에서 사라질 수 있다. 사람이 정한 건은 남아야 한다.
+ */
+export function createBid(req, res) {
+  const { companyId } = req.params;
+  if (!companyRepo.findCompany(companyId)) throw new AppError('E_COMPANY_NOT_FOUND');
+
+  const item = req.body ?? {};
+  if (!item.caseId || !item.title) {
+    throw new AppError('E_VALIDATION', '공고번호와 공고명이 필요합니다.');
+  }
+
+  const saved = bidRepo.saveBid(companyId, item);
+  res.status(201).json({ bid: bidRepo.listBids(companyId).find((b) => b.caseId === saved.case_id) });
+}
+
+/** 응찰 준비중인 공고 목록 */
+export function listBids(req, res) {
+  const { companyId } = req.params;
+  if (!companyRepo.findCompany(companyId)) throw new AppError('E_COMPANY_NOT_FOUND');
+  const status = (req.query.status ?? 'preparing').toString();
+  res.json({ companyId, bids: bidRepo.listBids(companyId, { status }) });
+}
+
+/** 응찰 대상에서 뺀다. 🔴 지우지 않고 dropped로 남긴다 */
+export function deleteBid(req, res) {
+  const { companyId, caseId } = req.params;
+  if (!bidRepo.dropBid(companyId, caseId)) throw new AppError('E_CASE_NOT_FOUND');
+  res.json({ companyId, caseId, status: 'dropped' });
 }
