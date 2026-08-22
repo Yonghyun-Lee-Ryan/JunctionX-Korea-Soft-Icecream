@@ -327,6 +327,16 @@ test('guardWbs — 한 절 안에서 16건을 넘으면 나눌 기준이 없다 
   assert.deepEqual(again.work_packages.map((p) => p.wbs_id), ['2.1']);
 });
 
+test('🔴 guardWbs — 가드를 다시 걸어도(reguard) 지난번에 나눈 기록(split_packages)이 사라지지 않는다', () => {
+  const first = guardWbs({ work_packages: [
+    { wbs_id: '1.3', name: '결제·정산', predecessors: [], duration: '', effort_mm: [], requirement_refs: Array.from({ length: 22 }, (_, i) => svr(i + 1)), source_page: 4 },
+  ] }, bigAnn);
+  assert.deepEqual(first.validation.split_packages, [{ wbs_id: '1.3', into: ['1.3.1', '1.3.2'] }]);
+  const again = guardWbs(first, bigAnn);
+  assert.deepEqual(again.validation.split_packages, [{ wbs_id: '1.3', into: ['1.3.1', '1.3.2'] }], '다시 걸어도 기록이 남는다');
+  assert.deepEqual(guardWbs(again, bigAnn).validation.split_packages.length, 1, '중복으로 쌓이지 않는다');
+});
+
 test('🔴 guardWbs — 기간이 비어 있어도 문서에 사업기간이 있으면 운영·대행·유지관리·정산 성격 패키지는 그 기간을 쓴다 (duration_source 표시)', () => {
   const out = guardWbs({ work_packages: [
     { wbs_id: '1.1', name: '전자결제 대행 서비스 제공', requirement_refs: [svr(1)], effort_mm: [] },
@@ -356,4 +366,67 @@ test('guardWbs — 나눈 조각의 M/M 이 반올림으로 0 이 되면 그 등
   assert.equal(pieces.length, 2);
   assert.deepEqual(pieces[0].effort_mm, [{ grade: '중급', mm: 0.5 }]);
   assert.deepEqual(pieces[1].effort_mm, [], '0.5 × 1/21 → 0.0 → 비운다');
+});
+
+// ── 3: AX 진단 케이스 실측 — 공고에 추진일정 6단계(7월~8월 … 12월)가 있는데 29개 패키지 전부 기간 「미 명시」·선행 빈 배열로 왔다 ──
+const schedAnn = {
+  project_period: '계약체결일로부터 2026.12.15',
+  requirements: [1, 2, 3].map((n) => ({ requirement_id: svr(n), requirement_category: '기능', requirement_name: `기능 ${n}`, source_page: 3 })),
+  execution_context: [
+    { context_type: 'GOVERNANCE', title: '추진체계', content: '주관 부서', timing: '' },
+    { context_type: 'SCHEDULE', title: '4. 추진일정', content: '제안 내용 협의', timing: '7월~8월' },
+    { context_type: 'SCHEDULE', title: '4. 추진일정', content: 'DB 구축', timing: '7월~9월' },
+    { context_type: 'SCHEDULE', title: '4. 추진일정', content: '안정화', timing: '' },
+  ],
+};
+
+test('🔴 guardWbs — 공고의 추진일정(SCHEDULE + timing)을 schedule[] 로 붙인다 — 기간 칸의 「미 명시」 옆에 근거가 같이 간다', () => {
+  const out = guardWbs({ work_packages: [{ wbs_id: '1.1', name: 'DB 구축', predecessors: [], duration: '', effort_mm: [], requirement_refs: [svr(1)] }] }, schedAnn);
+  assert.deepEqual(out.schedule, [
+    { title: '4. 추진일정', content: '제안 내용 협의', timing: '7월~8월' },
+    { title: '4. 추진일정', content: 'DB 구축', timing: '7월~9월' },
+  ]);
+  assert.equal(guardWbs({ work_packages: [] }, { requirements: [] }).schedule, undefined, '추진일정이 없으면 필드를 만들지 않는다');
+});
+
+test('🔴 guardWbs — 패키지가 둘 이상인데 선행이 전부 비어 있으면 validation.no_predecessors 로 말한다', () => {
+  const pk = (id) => ({ wbs_id: id, name: id, predecessors: [], duration: '미 명시', effort_mm: [], requirement_refs: [svr(1)] });
+  // 한 단계 안에서 전부 비면 채울 근거가 없다 — 그대로 말한다 (단계가 여럿이면 아래 stage_order 테스트처럼 채운다)
+  assert.equal(guardWbs({ work_packages: [pk('1.1'), pk('1.2'), pk('1.3')] }, schedAnn).validation.no_predecessors, true);
+  assert.equal(guardWbs({ work_packages: [pk('1.1'), { ...pk('1.2'), predecessors: ['1.1'] }] }, schedAnn).validation.no_predecessors, false);
+  assert.equal(guardWbs({ work_packages: [pk('1.1')] }, schedAnn).validation.no_predecessors, false, '하나뿐이면 선행이 없는 게 맞다');
+});
+
+test('🔴 WBS 프롬프트 — 추진일정의 timing 을 그대로 기간으로, 추진일정 순서가 곧 선행이라고 적혀 있다', () => {
+  const p = loadPrompt('wbs');
+  assert.ok(p.includes('timing'), '추진일정의 timing 을 옮긴다');
+  assert.ok(p.includes('추진일정의 순서'), '추진일정 순서 = 선행');
+  assert.ok(p.includes('전부 빈 배열'), '전부 빈 배열로 내지 않는다');
+});
+
+// ── 3 보강: 프롬프트에 선행 규칙을 적어도 실호출(AX 진단 32개)이 전부 [] 로 왔다 → 단계 번호(1단 = 문서의 추진일정 순서)로 채운다 ──
+test('🔴 guardWbs — 선행이 전부 비면 단계 순서로 채운다: 뒤 단계의 패키지는 앞 단계의 마지막 패키지를 선행으로 (predecessor_source: stage_order)', () => {
+  const pk = (id, name) => ({ wbs_id: id, name, predecessors: [], duration: '미 명시', effort_mm: [], requirement_refs: [svr(1)] });
+  const out = guardWbs({ work_packages: [pk('1.1', '착수'), pk('1.2', '분석'), pk('2.1', '설계'), pk('2.2', '구현'), pk('3.1', '시험')] }, schedAnn);
+  const by = Object.fromEntries(out.work_packages.map((p) => [p.wbs_id, p]));
+  assert.deepEqual(by['1.1'].predecessors, []);
+  assert.deepEqual(by['1.2'].predecessors, [], '같은 단계 안은 병행 — 지어내지 않는다');
+  assert.deepEqual(by['2.1'].predecessors, ['1.2']);
+  assert.deepEqual(by['2.2'].predecessors, ['1.2']);
+  assert.deepEqual(by['3.1'].predecessors, ['2.2']);
+  assert.equal(by['2.1'].predecessor_source, 'stage_order');
+  assert.equal(by['1.2'].predecessor_source, undefined);
+  assert.equal(out.validation.no_predecessors, false);
+  assert.equal(out.validation.predecessors_filled, 3);
+  assert.equal(guardWbs(out, schedAnn).validation.predecessors_filled, 3, '다시 걸어도 채운 수가 남는다');
+});
+
+test('guardWbs — 모델이 선행을 하나라도 냈으면 손대지 않는다 · 단계가 하나뿐이면 채울 것이 없어 no_predecessors 그대로', () => {
+  const pk = (id, pred = []) => ({ wbs_id: id, name: id, predecessors: pred, duration: '미 명시', effort_mm: [], requirement_refs: [svr(1)] });
+  const some = guardWbs({ work_packages: [pk('1.1'), pk('2.1', ['1.1']), pk('2.2')] }, schedAnn);
+  assert.deepEqual(some.work_packages.map((p) => p.predecessors), [[], ['1.1'], []]);
+  assert.equal(some.validation.predecessors_filled, 0);
+  const one = guardWbs({ work_packages: [pk('1.1'), pk('1.2'), pk('1.3')] }, schedAnn);
+  assert.equal(one.validation.no_predecessors, true);
+  assert.equal(one.validation.predecessors_filled, 0);
 });

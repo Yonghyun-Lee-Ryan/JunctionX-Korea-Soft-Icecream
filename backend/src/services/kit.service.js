@@ -148,13 +148,23 @@ function wbsTab(wbs) {
   if (splits.length) warnings.push(`큰 패키지 ${splits.length}개를 공고의 절(분류) 기준으로 나눴습니다: ${splits.map((s) => `${str(s.wbs_id)} → ${(Array.isArray(s.into) ? s.into : []).map(str).join('·')}`).join(', ')}`);
   const oversized = Array.isArray(wbs.validation?.oversized_packages) ? wbs.validation.oversized_packages : [];
   if (oversized.length) warnings.push(`요구사항을 16개 이상 묶은 패키지 ${oversized.length}개 — 쪼개야 합니다: ${oversized.map((o) => `${str(o.wbs_id)}(${num(o.count)}건)`).join(', ')}`);
+  // 🔴 선행이 전부 비면 모델이 순서를 안 낸 것 — 「-」로 조용히 두지 않는다 (실측: AX 진단 29개 전부)
+  if (wbs.validation?.no_predecessors) warnings.push(`선행 관계가 비어 있습니다 (패키지 ${rows.length}개 모두) — 공고 추진일정 순서로 WBS 를 다시 받아야 합니다`);
+  // 공고의 추진일정은 요약에 같이 — 「미 명시」 칸 옆에 문서가 말한 일정이 보인다
+  const schedule = Array.isArray(wbs.schedule) ? wbs.schedule : [];
+  const filled = num(wbs.validation?.predecessors_filled);
+  const summary = [
+    '기간은 문서를 참고해주세요. 없으면 「미 명시」로 표기합니다. - M/M은 추천값입니다.',
+    ...(schedule.length ? [`공고 추진일정: ${schedule.map((s) => `${str(s.content)} ${str(s.timing)}`.trim()).join(' · ')}`] : []),
+    ...(filled ? [`선행 ${filled}건은 모델이 비워 보내 단계 순서(앞 단계의 마지막 패키지)로 채웠습니다.`] : []),
+  ].join(' ');
   return {
     id: 'wbs', title: 'WBS', kind: 'table',
     columns: ['ID', '작업 패키지', '산출물', '선행', '기간', 'M/M', '근거요구', 'P'],
     columnAlign: ['left', 'left', 'left', 'left', 'left', 'left', 'left', 'right'],
     rows,
     warnings,
-    summary: '기간은 문서를 참고해주세요. 없으면 「미 명시」로 표기합니다. - M/M은 추천값입니다.',
+    summary,
   };
 }
 

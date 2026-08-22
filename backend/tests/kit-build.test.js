@@ -258,3 +258,24 @@ test('🔴 submitfiles — 파일이 붙은 줄은 상태(준비됨/보완 필�
   const missing = tab.items.find((i) => i.state === 'missing');
   assert.equal(missing.chip, undefined, '파일이 없는 줄은 칩 없이 「업로드」');
 });
+
+// ── 3: WBS 탭 — 선행이 전부 비면 경고, 공고 추진일정은 요약에 같이 ──
+test('🔴 wbs — validation.no_predecessors 면 붉은 경고, schedule[] 이 있으면 요약에 「공고 추진일정」', () => {
+  const wbs = {
+    ...plan.wbs,
+    validation: { ...plan.wbs.validation, no_predecessors: true },
+    schedule: [{ title: '4. 추진일정', content: '제안 내용 협의', timing: '7월~8월' }, { title: '4. 추진일정', content: 'DB 구축', timing: '7월~9월' }],
+  };
+  const tab = tabOf(buildKit({ announcement, plan: { ...plan, wbs } }), 'wbs');
+  assert.ok(tab.warnings.some((w) => w.includes('선행 관계가 비어 있습니다')), JSON.stringify(tab.warnings));
+  assert.ok(tab.summary.includes('공고 추진일정: 제안 내용 협의 7월~8월 · DB 구축 7월~9월'), tab.summary);
+  const plain = tabOf(buildKit({ announcement, plan }), 'wbs');
+  assert.ok(!plain.warnings.some((w) => w.includes('선행')), '선행이 있으면 경고 없음');
+  assert.ok(!plain.summary.includes('추진일정'));
+});
+
+test('wbs — 단계 순서로 채운 선행은 요약에 말한다 (validation.predecessors_filled)', () => {
+  const wbs = { ...plan.wbs, validation: { ...plan.wbs.validation, predecessors_filled: 3 } };
+  const tab = tabOf(buildKit({ announcement, plan: { ...plan, wbs } }), 'wbs');
+  assert.ok(tab.summary.includes('선행 3건은 모델이 비워 보내 단계 순서(앞 단계의 마지막 패키지)로 채웠습니다'), tab.summary);
+});

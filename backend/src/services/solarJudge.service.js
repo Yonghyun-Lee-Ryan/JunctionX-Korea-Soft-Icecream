@@ -216,17 +216,22 @@ export async function judgePlan({ announcement, fetchImpl }) {
     user: buildUserMessage([['DOCUMENT_INFO', doc]]),
     fetchImpl,
   });
-  const wbs = guardWbs(await callSolar({
-    system: loadPrompt('wbs'),
-    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', announcementFor('wbs', announcement)]]),
-    fetchImpl,
-  }), announcement);
+  const wbs = await judgeWbs({ announcement, wpsCp, fetchImpl });
   const criticalPath = guardCriticalPath(await callSolar({
     system: loadPrompt('criticalPath'),
     user: buildUserMessage([['WBS_V1', wbs], ['DOCUMENT_INFO', announcementFor('criticalPath', announcement)]]),
     fetchImpl,
   }), wbs, announcement);
   return { wpsCp, wbs, criticalPath, meta: { ...runMeta(started), calls: 3 } };
+}
+
+/** WBS 한 호출 — 저장된 WPS/CP 로 WBS 만 다시 받을 때도 쓴다(rejudge wbs · Solar 1회) */
+export async function judgeWbs({ announcement, wpsCp, fetchImpl }) {
+  return guardWbs(await callSolar({
+    system: loadPrompt('wbs'),
+    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', announcementFor('wbs', announcement)]]),
+    fetchImpl,
+  }), announcement);
 }
 
 const round1 = (x) => Math.round(x * 10) / 10;
@@ -283,6 +288,35 @@ function splitOversized(packages, categoryOf, pageOf) {
   return { packages: next.map((p) => ({ ...p, predecessors: p.predecessors.map((x) => renamed.get(String(x)) ?? x) })), splits };
 }
 
+/**
+ * 🔴 선행이 전부 비어 오면 단계 순서로 채운다 — 실측(AX 진단): 프롬프트에 「추진일정 순서가 곧 선후」라고 적어도 32개 전부 [] 로 왔다.
+ *    wbs_id 의 1단(「2.1」의 2)은 프롬프트 규칙상 문서의 추진일정 단계다 — 뒤 단계 패키지는 앞 단계의 마지막 패키지를 선행으로 둔다.
+ *    같은 단계 안은 병행으로 두고(지어내지 않는다), 모델이 하나라도 냈으면 손대지 않는다. 채운 것은 predecessor_source 로 표시한다.
+ */
+function fillStageOrder(packages) {
+  if (packages.length < 2 || packages.some((p) => p.predecessors.length)) return { packages, filled: 0 };
+  const stageOf = (p) => String(p.wbs_id).split('.')[0];
+  const lastOfStage = new Map();
+  for (const p of packages) lastOfStage.set(stageOf(p), p.wbs_id);   // 순서대로 덮어써 마지막이 남는다
+  const stages = [...lastOfStage.keys()];
+  if (stages.length < 2) return { packages, filled: 0 };
+  let filled = 0;
+  const next = packages.map((p) => {
+    const i = stages.indexOf(stageOf(p));
+    if (i <= 0) return p;
+    filled += 1;
+    return { ...p, predecessors: [lastOfStage.get(stages[i - 1])], predecessor_source: 'stage_order' };
+  });
+  return { packages: next, filled };
+}
+
+/** 나눈 기록 — 조각의 split_from 으로 다시 센다. 원본 순서대로 */
+function splitRecords(packages) {
+  const groups = new Map();
+  for (const p of packages) if (p.split_from) (groups.get(p.split_from) ?? groups.set(p.split_from, []).get(p.split_from)).push(p.wbs_id);
+  return [...groups].map(([wbs_id, into]) => ({ wbs_id, into }));
+}
+
 export function guardWbs(out, announcement) {
   const result = { ...(out ?? {}) };
   const reqs = Array.isArray(announcement?.requirements) ? announcement.requirements : [];
@@ -309,16 +343,24 @@ export function guardWbs(out, announcement) {
 
   // 🔴 기간: 모델이 문서에서 읽어 온 값은 그대로. 비어 있고 문서에 사업기간이 있으면, 계약기간 내내 이어지는 성격의
   //    패키지는 그 사업기간을 쓴다 — 문서가 말한 기간이다. 구축·연계처럼 끝이 있는 일은 그대로 「미 명시」
-  const packages = split.map((p) => {
+  const timed = split.map((p) => {
     if (p.duration === '미 명시' && period && ONGOING.test(text(p.name))) {
       return { ...p, duration: `사업기간 전체 (${period})`, duration_source: 'project_period' };
     }
     return p;
   });
+  const { packages } = fillStageOrder(timed);
 
   const linked = new Set();
   const unknown = new Set();
   for (const p of packages) for (const r of p.requirement_refs) (known.has(r) ? linked : unknown).add(r);
+
+  // 🔴 공고의 추진일정(SCHEDULE + timing)을 같이 싣는다 — 기간 칸의 「미 명시」 옆에 근거가 간다. 실측(AX 진단): 추진일정 6단계가 있는데
+  //    29개 패키지 전부 「미 명시」로 왔다. 정산주기·장애 복구 시간 같은 SLA 는 일정이 아니라 뺀다(제목에 일정·기간이 있는 것만)
+  const schedule = (Array.isArray(announcement?.execution_context) ? announcement.execution_context : [])
+    .filter((c) => c?.context_type === 'SCHEDULE' && text(c?.timing).trim() && /일정|기간/.test(text(c?.title)))
+    .map((c) => ({ title: text(c.title).trim(), content: text(c.content).trim(), timing: text(c.timing).trim() }));
+  if (schedule.length) result.schedule = schedule;
 
   result.work_packages = packages;
   result.validation = {
@@ -332,7 +374,12 @@ export function guardWbs(out, announcement) {
     unknown_requirement_refs: [...unknown],
     // 🔴 실측: 첫 패키지가 요구사항 50개를 한 행에 묶었다 — 절 기준으로 나눈 뒤에도 넘치는 것만 센다
     oversized_packages: packages.filter((p) => p.requirement_refs.length > WBS_MAX_REFS).map((p) => ({ wbs_id: p.wbs_id, count: p.requirement_refs.length })),
-    split_packages: splits,
+    // 🔴 가드를 다시 걸어도(reguard) 나눈 기록은 남는다 — 기록을 따로 믿지 않고 조각의 split_from 에서 다시 센다 (덮어써진 저장본도 복구된다)
+    split_packages: splitRecords(packages),
+    // 🔴 둘 이상인데 선행이 전부 비면 모델이 순서를 안 낸 것이다 — 숨기지 않고 탭이 붉게 말한다 (실측: AX 진단 29개 전부 [])
+    no_predecessors: packages.length >= 2 && packages.every((p) => !p.predecessors.length),
+    // 채운 선행도 표시(predecessor_source)에서 다시 센다 — 두 번째 가드에서 0 으로 떨어지던 실측
+    predecessors_filled: packages.filter((p) => p.predecessor_source === 'stage_order').length,
   };
   return result;
 }

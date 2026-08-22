@@ -6,7 +6,7 @@ import * as caseRepo from '../repositories/case.repo.js';
 import * as companyRepo from '../repositories/company.repo.js';
 import { loadFixture } from './fixture.service.js';
 import { decomposeAnnouncement } from './announcement.service.js';
-import { judgeEligibility, judgePlan, judgeSubmission, guardWbs, guardCriticalPath, guardSubmissionAudit } from './solarJudge.service.js';
+import { judgeEligibility, judgePlan, judgeWbs, judgeSubmission, guardWbs, guardCriticalPath, guardSubmissionAudit } from './solarJudge.service.js';
 import { scanForbidden, forbiddenFromRules } from './proposalScan.service.js';
 import { buildKit } from './kit.service.js';
 import { listCaseFiles, latestCaseFile } from '../repositories/caseFile.repo.js';
@@ -173,6 +173,15 @@ export async function rejudge(caseId, { parts = [], proposalText } = {}) {
       caseRepo.deleteExtraction(caseId, 'SUBMISSION_V1');
       caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });
     }
+  }
+  // 🔴 wbs: 저장된 WPS/CP 를 입력으로 WBS 만 다시 받는다 — Solar 1회. 프롬프트·입력을 고친 뒤 계획 전체(3회)를 다시 사지 않게
+  if (parts.includes('wbs') && plan?.wpsCp) {
+    const wbs = await judgeWbs({ announcement, wpsCp: plan.wpsCp });
+    solarCalls += 1;
+    const criticalPath = guardCriticalPath(plan.criticalPath ?? {}, wbs, announcement);
+    plan = { ...plan, wbs, criticalPath, meta: { ...(plan.meta ?? {}), wbsRejudgedAt: new Date().toISOString() } };
+    caseRepo.deleteExtraction(caseId, 'PLAN_V1');
+    caseRepo.insertExtraction(caseId, { schemaName: 'PLAN_V1', payload: plan });
   }
   if (parts.includes('plan') && announcement.requirements?.length) {
     plan = await judgePlan({ announcement });

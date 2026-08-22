@@ -341,3 +341,21 @@ test('rejudge(reguard) — Solar 를 부르지 않고 저장된 계획에 가드
   assert.ok(wbs.warnings.some((w) => w.includes('나눴습니다')), JSON.stringify(wbs.warnings));
   assert.ok(g.meta.pipeline.rejudged.includes('reguard'));
 });
+
+// ── 3: WBS 만 다시 — 프롬프트·입력을 고친 뒤 Solar 1회로 WBS 를 다시 받고 임계경로 가드를 다시 건다 ──
+test('🔴 rejudge(wbs) — Solar 를 WBS 한 번만 부르고, 저장된 WPS/CP 를 입력으로 WBS 를 갈아 끼운다', async () => {
+  mockAll();
+  await post({ bidPbancNo: 'R25TEST00000007', companyId: COMPANY, refresh: true });
+  const f = await waitDone('R25TEST00000007-000');
+  assert.equal(f.status, 'done');
+  calls.solar.length = 0;
+  const r = await rejudge('R25TEST00000007-000', { parts: ['wbs'] });
+  assert.equal(r.solarCalls, 1);
+  assert.deepEqual(calls.solar, ['WBS_V1']);
+  const plan = caseRepo.listExtractions('R25TEST00000007-000', 'PLAN_V1')[0].payload;
+  assert.ok(plan.wpsCp && plan.wbs && plan.criticalPath, 'WPS/CP·임계경로는 그대로, WBS 는 새것');
+  assert.ok(plan.wbs.work_packages.length >= 1);
+  const g = await get('R25TEST00000007-000');
+  assert.ok(g.meta.pipeline.rejudged.includes('wbs'));
+  assert.ok(g.tabs.find((t) => t.id === 'wbs').rows.length >= 1);
+});
