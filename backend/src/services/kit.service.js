@@ -159,7 +159,10 @@ function criticalpathTab(cp) {
     columns: ['작업', '남은 일'],
     columnAlign: ['left', 'right'],
     rows: path.map((c) => [str(c.item), cell(str(c.due_label) || '[확인필요]', str(c.severity) || 'default')]),
-    warnings: ['리드타임은 공고가 명시한 처리기간만 반영했습니다 — 없으면 [확인필요]'],
+    warnings: [
+      '리드타임은 공고가 명시한 처리기간만 반영했습니다 — 없으면 [확인필요]',
+      ...(cp.synthesized && str(cp.synthesized_note) ? [str(cp.synthesized_note)] : []),
+    ],
   };
 }
 
@@ -175,7 +178,7 @@ function costTab(cp) {
       unit: 'M/M',
       caption: byGrade.map((g) => `${str(g.grade)} ${mm(g.mm)}`).join('・'),
       note: `금액 환산 - ${str(cost.amount_note).trim() || '단가 미입력 · 회사 카드에 등급별 단가가 있을 때만'}`,
-      evidence: refs.map((r) => `${str(r.label)}・공고 p${num(r.page)}`),
+      evidence: refs.map((r) => (num(r.page) ? `${str(r.label)}・공고 p${num(r.page)}` : str(r.label))),
     },
     summary: '투찰가 아님',
   };

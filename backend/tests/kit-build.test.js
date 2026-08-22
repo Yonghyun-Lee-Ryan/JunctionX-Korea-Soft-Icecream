@@ -197,3 +197,18 @@ test('POST /api/judge/kit — announcement 없으면 400', async () => {
   assert.equal(res.status, 400);
   assert.equal((await res.json()).error.code, 'E_VALIDATION');
 });
+
+// ── 2-1 채워 넣은 임계경로는 그 사실을 말하고, 원가 근거에 p0 를 찍지 않는다 ──
+test('criticalpathTab — 채워 넣은 항목이면 경고줄로 말한다 · costTab — 쪽이 0 인 근거는 「공고 p0」로 그리지 않는다', () => {
+  const cp = {
+    critical_path: [{ item: '입찰서·제안서 제출 마감', due_label: '2025년 3월 14일(금) 11:00까지', severity: 'danger', lead_time_days: 0, source_page: 2 }],
+    synthesized: true, synthesized_note: '공고가 처리기간을 명시하지 않아 리드타임은 [확인필요] — 항목은 자격 조항·제출 서류에서 뽑았습니다',
+    cost_estimate: { total_mm: 1, by_grade: [{ grade: '특급', mm: 1 }], references: [{ label: '예산 16,048,200,000원', page: 0 }, { label: '추정가격', page: 3 }] },
+  };
+  const kit = buildKit({ announcement, plan: { wbs: plan.wbs, criticalPath: cp } });
+  const tab = kit.tabs.find((t) => t.id === 'criticalpath');
+  assert.ok(tab.warnings.some((w) => w.includes('자격 조항·제출 서류에서 뽑았습니다')));
+  assert.deepEqual(tab.rows[0][1], { text: '2025년 3월 14일(금) 11:00까지', tone: 'danger', chip: false });
+  const cost = kit.tabs.find((t) => t.id === 'cost');
+  assert.deepEqual(cost.metric.evidence, ['예산 16,048,200,000원', '추정가격・공고 p3']);
+});

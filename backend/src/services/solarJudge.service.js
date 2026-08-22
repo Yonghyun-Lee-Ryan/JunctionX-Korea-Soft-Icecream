@@ -130,6 +130,8 @@ const SLICES = {
   eligibility: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'eligibility_rules'],
   plan: [...OVERVIEW_KEYS, 'constraint_deadline', 'constraint_opens_at', 'requirement_count', 'requirement_summary', 'requirements', 'scope_items', 'execution_context'],
   submission: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'submission_requirements', 'evaluation_items'],
+  // 🔴 임계경로는 «마감 전에 남이 시간을 쓰는 일»이다 — 자격 조항(등록·증명)과 입찰 제출물(유효기간·발급)이 재료. 요구사항 본문은 필요 없다
+  criticalPath: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'requirement_count', 'eligibility_rules', 'submission_requirements'],
 };
 
 /** 판정 종류별로 공고에서 필요한 필드만 — 없는 필드는 만들지 않는다 */
@@ -138,6 +140,10 @@ export function announcementFor(kind, announcement) {
   if (!keys) throw new Error(`unknown slice: ${kind}`);
   const out = {};
   for (const k of keys) if (announcement && announcement[k] !== undefined) out[k] = announcement[k];
+  // 계약 후 산출물(COMPLETION 등)은 마감 전 준비가 아니다
+  if (kind === 'criticalPath' && Array.isArray(out.submission_requirements)) {
+    out.submission_requirements = out.submission_requirements.filter((s) => !s?.submission_stage || s.submission_stage === 'BID');
+  }
   return out;
 }
 
@@ -211,9 +217,9 @@ export async function judgePlan({ announcement, fetchImpl }) {
   }), announcement);
   const criticalPath = guardCriticalPath(await callSolar({
     system: loadPrompt('criticalPath'),
-    user: buildUserMessage([['WBS_V1', wbs], ['DOCUMENT_INFO', doc]]),
+    user: buildUserMessage([['WBS_V1', wbs], ['DOCUMENT_INFO', announcementFor('criticalPath', announcement)]]),
     fetchImpl,
-  }), wbs);
+  }), wbs, announcement);
   return { wpsCp, wbs, criticalPath, meta: { ...runMeta(started), calls: 3 } };
 }
 
@@ -267,17 +273,59 @@ export function guardWbs(out, announcement) {
  * 🔴 severity 는 화면 tone 어휘(danger/warn/default)로, 리드타임에서 결정한다 — 모델의 낱말을 믿지 않는다.
  * 🔴 원가는 WBS 의 effort_mm 을 합산한 M/M 이다. 투찰가가 아니고, 단가 없이 금액으로 바꾸지 않는다.
  */
-export function guardCriticalPath(out, wbs) {
+// ── 임계경로가 비어 오면 공고에서 채운다 ──
+//    실측(2026-08-23, PG 대행 용역): 공고가 처리기간을 명시하지 않으면 Solar 가 0건을 돌려줬고 화면이 비었다.
+//    🔴 리드타임은 여전히 지어내지 않는다([확인필요]). 다만 «무엇을 준비해야 하는지»는 공고가 말하고 있다 —
+//    등록·증명·확인서가 걸린 자격 조항과, 유효기간·발급이 걸린 입찰 제출물. 마감 자체는 날짜가 있으니 그대로 적는다.
+const PREP_RULE = /(등록|신고|지정|증명서|확인서|인증|면허|허가)/;
+const NOT_PREP = /(아니한|아닌|없는|없을|배제|제한|금지)/;
+const PREP_DOC = /(보증|증권|등록증|확인서|증명서|인감|신고서|지정서|면허|허가증|납세)/;
+const shortLabel = (s) => text(s).replace(/\s+/g, ' ').trim().replace(/[.。]$/, '').slice(0, 48);
+
+export function synthesizeCriticalPath(ann) {
+  const items = [];
+  const deadline = text(ann?.constraint_deadline).trim();
+  const method = text(ann?.constraint_method).split(/[,·(（]/)[0].trim();
+  items.push({
+    item: `입찰서·제안서 제출 마감${method ? ` (${method})` : ''}`,
+    lead_time_days: 0, due_label: deadline || '[확인필요]', severity: 'danger',
+    blocking_reason: '마감 후 제출은 무효', source_page: Number(ann?.constraint_source_page) || 0, synthesized: true,
+  });
+  const seen = new Set();
+  const push = (item, extra) => { const k = item.replace(/\s+/g, ''); if (seen.has(k)) return; seen.add(k); items.push({ item, lead_time_days: 0, due_label: '[확인필요]', severity: 'default', synthesized: true, ...extra }); };
+  for (const r of Array.isArray(ann?.eligibility_rules) ? ann.eligibility_rules : []) {
+    const cond = text(r?.condition); const type = text(r?.rule_type);
+    if (type === 'RESTRICTION' || NOT_PREP.test(cond)) continue;
+    if (!(type === 'REGISTRATION' || type === 'CERTIFICATE' || PREP_RULE.test(cond))) continue;
+    push(`${shortLabel(cond)} — 등록·증빙 준비`, { blocking_reason: '입찰참가자격 — 갖추지 못하면 입찰 무효', source_page: Number(r?.source_page) || 0, rule_id: text(r?.rule_id) });
+  }
+  for (const s of Array.isArray(ann?.submission_requirements) ? ann.submission_requirements : []) {
+    if (s?.submission_stage && s.submission_stage !== 'BID') continue;
+    const name = shortLabel(s?.name); const validity = text(s?.validity_basis).trim();
+    if (!name || !(validity || PREP_DOC.test(name))) continue;
+    push(`${name} 발급·준비`, { blocking_reason: validity ? `유효기간: ${validity}` : '발급 기관의 처리기간이 걸린다', source_page: Number(s?.source_page) || 0 });
+  }
+  return items.slice(0, 10);
+}
+
+export function guardCriticalPath(out, wbs, announcement) {
   const result = { ...(out ?? {}) };
 
-  result.critical_path = (Array.isArray(result.critical_path) ? result.critical_path : [])
+  const given = Array.isArray(result.critical_path) ? result.critical_path : [];
+  if (given.length === 0 && announcement) {
+    result.synthesized = true;
+    result.synthesized_note = '공고가 처리기간을 명시하지 않아 리드타임은 [확인필요] — 항목은 자격 조항·제출 서류에서 뽑았습니다';
+  }
+  result.critical_path = (given.length ? given : (announcement ? synthesizeCriticalPath(announcement) : []))
     .map((c) => {
       const lead = Math.max(0, Math.round(Number(c?.lead_time_days) || 0));
+      // 채워 넣은 마감 줄은 날짜가 곧 라벨이다 — 「N일 전」으로 바꾸지 않는다
+      const isDeadline = c?.synthesized && lead === 0 && text(c?.due_label) && c.due_label !== '[확인필요]';
       return {
         ...c,
         lead_time_days: lead,
-        due_label: lead > 0 ? `${lead}일 전` : '[확인필요]',
-        severity: lead >= 7 ? 'danger' : lead >= 3 ? 'warn' : 'default',
+        due_label: isDeadline ? c.due_label : (lead > 0 ? `${lead}일 전` : '[확인필요]'),
+        severity: isDeadline ? 'danger' : (lead >= 7 ? 'danger' : lead >= 3 ? 'warn' : 'default'),
         source_page: Number(c?.source_page) || 0,
       };
     })
@@ -298,7 +346,10 @@ export function guardCriticalPath(out, wbs) {
     amount_convertible: false,
     amount_note: typeof cost.amount_note === 'string' && cost.amount_note.trim()
       ? cost.amount_note : '단가 미입력 — 회사 카드에 등급별 단가가 있을 때만 환산한다',
-    references: Array.isArray(cost.references) ? cost.references : [],
+    // 근거가 없으면 공고의 예산을 근거로 — 쪽은 모르니 0 (화면이 p0 를 찍지 않는다)
+    references: Array.isArray(cost.references) && cost.references.length
+      ? cost.references
+      : (text(announcement?.budget).trim() ? [{ label: `예산 ${text(announcement.budget).trim()}`, page: 0 }] : []),
   };
   return result;
 }

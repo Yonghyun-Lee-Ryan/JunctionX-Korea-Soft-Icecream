@@ -161,3 +161,77 @@ test('POST /api/judge/plan — announcement 없으면 400', async () => {
   assert.equal(res.status, 400);
   assert.equal((await res.json()).error.code, 'E_VALIDATION');
 });
+
+// ── 2-1 임계경로가 0건으로 오는 실측 — 공고에서 «남이 시간을 쓰는 일»을 찾아 채운다 ──
+import { announcementFor } from '../src/services/solarJudge.service.js';
+
+const noticeAnn = {
+  schema_version: 'ANNOUNCEMENT_CORE_V1', procurement_project_name: 'PG 대행', issuer: '공단', budget: '16,048,200,000원', project_period: '3년',
+  requirements: [{ requirement_id: 'SVR-001' }], scope_items: [{ a: 1 }], execution_conditions: [{ b: 1 }], evaluation_items: [{ c: 1 }],
+  eligibility_rules: [
+    { rule_id: 'ELIG_001', rule_type: 'REGISTRATION', condition: '조달청에 전자입찰 참가자격 등록을 한 자', gate_level: 'HARD_GATE', mandatory: 'YES', source_page: 1 },
+    { rule_id: 'ELIG_003', rule_type: 'RESTRICTION', condition: '부정당업자로 지정되지 아니한 자', gate_level: 'HARD_GATE', mandatory: 'YES', source_page: 14 },
+    { rule_id: 'ELIG_005', rule_type: 'REGISTRATION', condition: '전자금융거래법 제28조에 의한 전자금융업자로 전자지급결제대행 업무를 등록한 자', gate_level: 'HARD_GATE', mandatory: 'YES', source_page: 14 },
+  ],
+  submission_requirements: [
+    { name: '입찰보증금(입찰보증증권)', submission_stage: 'BID', validity_basis: '', source_page: 4 },
+    { name: '중소기업확인서', submission_stage: 'BID', validity_basis: '제안서 마감일 전일까지 유효', source_page: 4 },
+    { name: '제안서', submission_stage: 'BID', validity_basis: '', source_page: 4 },
+    { name: '최종보고서', submission_stage: 'COMPLETION', validity_basis: '', source_page: 30 },
+  ],
+  constraint_deadline: '2025년 3월 14일(금) 11:00까지', constraint_method: '전자입찰', constraint_source_page: 2,
+};
+
+test('announcementFor(criticalPath) — 마감·자격 조항·입찰 제출물을 보내고 요구사항 본문·범위·수행조건은 보내지 않는다', () => {
+  const a = announcementFor('criticalPath', noticeAnn);
+  assert.equal(a.constraint_deadline, noticeAnn.constraint_deadline);
+  assert.equal(a.eligibility_rules.length, 3);
+  assert.deepEqual(a.submission_requirements.map((s) => s.name), ['입찰보증금(입찰보증증권)', '중소기업확인서', '제안서'], '계약 후 산출물(COMPLETION)은 마감 전 준비가 아니다');
+  for (const k of ['requirements', 'scope_items', 'execution_conditions', 'evaluation_items']) assert.equal(k in a, false, k);
+});
+
+test('🔴 guardCriticalPath — Solar 가 0건이면 공고에서 채운다: 마감 한 줄 + 등록·증명서·유효기간 서류. 리드타임은 [확인필요]', () => {
+  const out = guardCriticalPath({ agent: 'CRITICAL_PATH_COST_V1', critical_path: [], cost_estimate: {} }, { work_packages: [] }, noticeAnn);
+  const items = out.critical_path;
+  assert.ok(items.length >= 4, JSON.stringify(items.map((i) => i.item)));
+  assert.ok(items[0].item.includes('제출 마감'), '마감이 맨 위');
+  assert.equal(items[0].due_label, '2025년 3월 14일(금) 11:00까지');
+  assert.equal(items[0].severity, 'danger');
+  assert.equal(items[0].source_page, 2);
+  const names = items.map((i) => i.item);
+  assert.ok(names.some((n) => n.includes('전자입찰 참가자격 등록')), '등록 조항');
+  assert.ok(names.some((n) => n.includes('전자금융업자')), '등록 조항 2');
+  assert.ok(!names.some((n) => n.includes('부정당업자')), '제한 조항은 준비할 일이 아니다');
+  assert.ok(names.some((n) => n.includes('입찰보증')), '보증증권 발급');
+  assert.ok(names.some((n) => n.includes('중소기업확인서')), '유효기간 있는 서류');
+  assert.ok(!names.some((n) => n === '제안서 준비'), '제안서 자체는 항목이 아니다');
+  for (const i of items.slice(1)) {
+    assert.equal(i.due_label, '[확인필요]', '리드타임을 지어내지 않는다');
+    assert.equal(i.lead_time_days, 0);
+    assert.ok(i.source_page > 0, '근거 쪽');
+  }
+  assert.equal(out.synthesized, true);
+  assert.ok(out.synthesized_note.includes('공고'));
+});
+
+test('guardCriticalPath — Solar 가 항목을 줬으면 채우지 않는다 (synthesized 없음)', () => {
+  const out = guardCriticalPath(cpReply(), { work_packages: [] }, noticeAnn);
+  assert.equal(out.synthesized, undefined);
+  assert.equal(out.critical_path.length, 2);
+});
+
+test('guardCriticalPath — 원가 근거가 없으면 공고 예산을 근거로 (쪽은 0 = 모름)', () => {
+  const out = guardCriticalPath({ critical_path: [], cost_estimate: { references: [] } }, { work_packages: [] }, noticeAnn);
+  assert.deepEqual(out.cost_estimate.references, [{ label: '예산 16,048,200,000원', page: 0 }]);
+});
+
+test('judgePlan — 임계경로 호출에는 자격 조항·제출물이 실려 간다 (계획 호출과 다른 조각)', async () => {
+  mockSolarSequence([wpsCpReply(), wbsReply(), cpReply()]);
+  await judgePlan({ announcement: noticeAnn });
+  const cpUser = calls[2].messages[1].content;   // mockSolarSequence 는 body 를 그대로 쌓는다
+  assert.ok(cpUser.includes('ELIG_005'), '자격 조항');
+  assert.ok(cpUser.includes('입찰보증금'), '제출물');
+  assert.ok(!cpUser.includes('"execution_conditions"'), '수행조건은 안 보낸다');
+  const wbsUser = calls[1].messages[1].content;
+  assert.ok(!wbsUser.includes('ELIG_005'), 'WBS 호출에는 자격 조항이 없다');
+});
