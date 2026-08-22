@@ -202,3 +202,51 @@ test('POST /api/judge/eligibility — 키가 없으면 503 E_NOT_CONFIGURED', as
     env.solar.apiKey = saved;
   }
 });
+
+// ── 🔴 입력 다이어트 — 실측(PG 대행 용역 RFP): 공고 전체 91KB(약 7.7만 토큰)를 매 판정에 보내니 120초 안에 답이 안 왔다 ──
+import { announcementFor } from '../src/services/solarJudge.service.js';
+
+const fat = {
+  schema_version: 'ANNOUNCEMENT_CORE_V1', procurement_project_name: 'PG 대행', issuer: '공단', budget: '160억', project_period: '3년',
+  requirements: [{ requirement_id: 'SVR-001', requirement_name: '결제' }],
+  scope_items: [{ scope_item: '정산' }], execution_context: [{ item: '흐름' }],
+  execution_conditions: Array.from({ length: 189 }, (_, i) => ({ condition: `조건 ${i}` })),
+  evaluation_items: [{ item: '기술' }],
+  eligibility_rules: [{ rule_id: 'ELIG_001', condition: '전자금융업자', source_page: 14 }],
+  submission_requirements: [{ name: '입찰참가신청서', submission_stage: 'BID' }],
+  constraint_deadline: '2025년 3월 14일(금) 11:00까지', constraint_method: '전자입찰', constraint_page_limit: '50페이지', constraint_source_page: 2,
+  _warnings: ['x'], meta: { jobs: [] },
+};
+
+test('announcementFor — 자격 판정에는 자격 조항·제약·개요만, 범위·수행조건·요구사항은 보내지 않는다', () => {
+  const a = announcementFor('eligibility', fat);
+  assert.deepEqual(a.eligibility_rules, fat.eligibility_rules);
+  assert.equal(a.constraint_deadline, fat.constraint_deadline);
+  assert.equal(a.procurement_project_name, 'PG 대행');
+  for (const k of ['execution_conditions', 'scope_items', 'requirements', 'evaluation_items', 'execution_context', '_warnings', 'meta']) assert.equal(k in a, false, k);
+});
+
+test('announcementFor — 계획(WBS)에는 요구사항·범위·맥락·기간, 수행조건 189건은 보내지 않는다', () => {
+  const a = announcementFor('plan', fat);
+  assert.deepEqual(a.requirements, fat.requirements);
+  assert.deepEqual(a.scope_items, fat.scope_items);
+  assert.deepEqual(a.execution_context, fat.execution_context);
+  assert.equal(a.constraint_deadline, fat.constraint_deadline);
+  for (const k of ['execution_conditions', 'evaluation_items', 'eligibility_rules', 'submission_requirements']) assert.equal(k in a, false, k);
+});
+
+test('announcementFor — 제출 검사에는 제출물·제약·평가항목, 범위·수행조건은 보내지 않는다', () => {
+  const a = announcementFor('submission', fat);
+  assert.deepEqual(a.submission_requirements, fat.submission_requirements);
+  assert.deepEqual(a.evaluation_items, fat.evaluation_items);
+  assert.equal(a.constraint_page_limit, '50페이지');
+  for (const k of ['execution_conditions', 'scope_items', 'execution_context', 'requirements']) assert.equal(k in a, false, k);
+});
+
+test('judgeEligibility — Solar 에 보내는 DOCUMENT_INFO 는 잘라낸 공고다', async () => {
+  mockSolar({ agent: 'ELIGIBILITY_SCREENING_V1', verdict: '추천', checks: [] });
+  await judgeEligibility({ companyCard: { documents: [] }, announcement: fat });
+  const user = calls[0].body.messages[1].content;
+  assert.ok(user.includes('ELIG_001'));
+  assert.equal(user.includes('조건 188'), false, '수행조건 189건이 자격 판정에 실려 가면 안 된다');
+});

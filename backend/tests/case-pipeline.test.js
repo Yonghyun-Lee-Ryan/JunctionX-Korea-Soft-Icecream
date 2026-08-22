@@ -6,6 +6,7 @@ import { migrate } from '../src/db/migrate.js';
 import { env } from '../src/config/env.js';
 import * as companyRepo from '../src/repositories/company.repo.js';
 import { pickDocuments, companyCardFor, isFresh, PIPELINE_TTL_MS } from '../src/services/casePipeline.service.js';
+import { clearStudioResults } from '../src/repositories/studioResult.repo.js';
 
 const fx = (f) => JSON.parse(fs.readFileSync(new URL(`../fixtures/studio/${f}`, import.meta.url), 'utf8'));
 const rfpParts = {
@@ -65,7 +66,7 @@ const solarReplies = {
 };
 
 let calls;
-function mockAll({ solarStatus = 200, g2bFiles = G2B_FILES } = {}) {
+function mockAll({ solarStatus = 200, g2bFiles = G2B_FILES, classifyOnly = new Set() } = {}) {
   calls = { g2b: 0, studioJobs: [], solar: [] };
   const files = new Map();
   const jobs = new Map();
@@ -73,10 +74,12 @@ function mockAll({ solarStatus = 200, g2bFiles = G2B_FILES } = {}) {
     const u = String(url);
     if (u.startsWith(env.g2b.downloadUrl)) {
       calls.g2b += 1;
-      const seq = Number(new URL(u).searchParams.get('fileSeq'));
+      const params = new URL(u).searchParams;
+      const seq = Number(params.get('fileSeq'));
       const name = g2bFiles[seq - 1];
       if (!name) return new Response('없음', { status: 422 });
-      return new Response(Buffer.from(`%HWP ${name}`), {
+      // 🔴 공고마다 파일 내용이 다르다 — 같은 내용이면 Studio 결과 캐시가 맞아 다른 케이스의 결과를 재사용해 버린다
+      return new Response(Buffer.from(`%HWP ${name} ${params.get('bidPbancNo')}`), {
         status: 200, headers: { 'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}` },
       });
     }
@@ -97,6 +100,9 @@ function mockAll({ solarStatus = 200, g2bFiles = G2B_FILES } = {}) {
       }
       const m = u.match(/\/v2\/responses\/(job_\d+)$/);
       const { agentId, filename } = jobs.get(m[1]);
+      if (classifyOnly.has(agentId)) {
+        return Response.json({ id: m[1], status: 'completed', output: [{ type: 'message', model: 'step_2_classify', content: [{ type: 'output_text', text: 'OTHER_REVIEW_REQUIRED', additional_values: {} }] }] });
+      }
       const data = agentId === 'agt_04' && filename.includes('공고') ? noticePart : rfpParts[agentId];
       return Response.json({ id: m[1], status: 'completed', output: [{ type: 'message', model: agentId, content: [{ type: 'output_text', text: JSON.stringify(data), additional_values: {} }] }] });
     }
@@ -114,6 +120,7 @@ test.afterEach(() => { globalThis.fetch = nativeFetch; });
 
 // ── 회사 한 곳 (다온피엠씨 · 실물 8장의 추출값) ─────────────────────────────
 migrate();
+clearStudioResults(); // 🔴 지난 실행의 Studio 캐시가 job 수 검증을 가리지 않게
 const COMPANY = 'co_pipeline_test';
 companyRepo.upsertCompany({ id: COMPANY, name: '주식회사 다온피엠씨', bizNo: '120-86-01230', card: { savedAt: '2026-08-23T00:00:00Z' } });
 companyRepo.replaceCompanyDocuments(COMPANY, flatCard.documents.map((d, i) => ({
@@ -228,7 +235,11 @@ test('🔴 크레딧 — 7일 안에 같은 케이스를 다시 열면 Upstage �
   assert.equal(again.status, 202);
   const g = await waitDone('R25TEST00000001-000');
   assert.equal(g.status, 'done');
-  assert.equal(calls.studioJobs.length, 6);
+  // 🔴 refresh 는 판정(Solar)만 다시 돈다 — 공고 파일이 그대로면 Studio 결과는 캐시에서 (무료 실행 10회를 지킨다)
+  assert.equal(calls.studioJobs.length, 0);
+  assert.equal(calls.solar.length, 6);
+  assert.equal(g.meta.pipeline.studioRuns, 0);
+  assert.equal(g.meta.pipeline.studioJobs, 6);
   assert.ok(calls.g2b >= 4);
 });
 
@@ -241,6 +252,21 @@ test('회사가 없으면 자격·제출 판정은 건너뛰고 공고·계획 �
   assert.ok(f.tabs.find((t) => t.id === 'submitfiles').items.every((i) => i.state === 'missing'));
   assert.deepEqual([...calls.solar].sort(), ['CRITICAL_PATH_COST_V1', 'WBS_V1', 'WPS_CP_V1']);
   assert.equal(f.verdict.badge, 'eligible');
+});
+
+test('🔴 일부 Agent 가 추출을 안 하면(실측: 용역 RFP) 있는 것으로만 판정하고 빠진 탭·이유를 남긴다', async () => {
+  mockAll({ classifyOnly: new Set(['agt_01', 'agt_02', 'agt_03', 'agt_05']) });
+  await post({ bidPbancNo: 'R25TEST00000005', companyId: COMPANY, refresh: true });
+  const f = await waitDone('R25TEST00000005-000');
+  assert.equal(f.status, 'done', JSON.stringify(f.error));
+  assert.equal(f.meta.cached, false, '부분 성공은 실패가 아니다 — fixture 로 떨어지지 않는다');
+  assert.deepEqual(f.tabs.map((t) => t.id), ['submitfiles', 'compliance', 'constraints', 'checklist', 'rework', 'phrases']);
+  assert.equal(f.tabs.find((t) => t.id === 'compliance').rows.length, 0, '요구사항은 못 읽었다 — 0건으로 «그려진다»가 아니라 비어 있다');
+  assert.deepEqual(f.meta.pipeline.partial, ['overview', 'scopeContext', 'requirements', 'conditionsEvaluation']);
+  assert.ok(f.progress[1].detail.includes('미추출 4'), f.progress[1].detail);
+  assert.deepEqual([...calls.solar].sort(), ['ELIGIBILITY_SCREENING_V1', 'SUBMISSION_AUDIT_V1', 'SUBMISSION_RULES_V2'], '요구사항이 없으면 계획(WBS)은 돌리지 않는다');
+  assert.equal(f.verdict.badge, 'eligible');
+  assert.equal(f.title ?? '', '', '개요를 못 읽었으면 제목도 지어내지 않는다');
 });
 
 test('판정이 실패하면 케이스는 failed 고 어느 단계에서 죽었는지 남는다', async () => {

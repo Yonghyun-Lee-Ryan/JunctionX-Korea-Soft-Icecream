@@ -52,7 +52,8 @@ export const env = {
     chatUrl: str('SOLAR_CHAT_URL', 'https://api.upstage.ai/v1/chat/completions'),
     model: str('SOLAR_MODEL', 'solar-pro3'),
     reasoningEffort: str('SOLAR_REASONING_EFFORT', 'medium'),
-    timeoutMs: Math.max(1000, int('SOLAR_TIMEOUT_MS', 120000)),
+    // 🔴 실측: 큰 공고는 판정 한 번에 2분을 넘긴다. Studio 폴링 예산(300초)과 같은 급으로 — 화면은 폴링하므로 길어도 된다
+    timeoutMs: Math.max(1000, int('SOLAR_TIMEOUT_MS', 300000)),
   },
 
   g2b: {

@@ -119,6 +119,29 @@ const runMeta = (started) => ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 🔴 입력 다이어트 — 판정마다 공고의 «필요한 부분»만 보낸다.
+//    실측(2026-08-23, PG 대행 용역 RFP): 공고 해부 결과 전체가 91KB(수행조건 189건·범위 121건 …)라 매 판정에
+//    ~7.7만 토큰이 실려 갔고, Solar 가 120초 안에 답을 못 냈다. 자격 판정에 수행조건 189건은 필요 없다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const OVERVIEW_KEYS = ['schema_version', 'document_type', 'document_form', 'procurement_project_name', 'issuer', 'project_period', 'budget', 'bid_method', 'contract_method', 'primary_supplier_role', 'project_objectives', 'source_documents'];
+const CONSTRAINT_KEYS = ['constraint_method', 'constraint_deadline', 'constraint_opens_at', 'constraint_place', 'constraint_page_limit', 'constraint_summary_page_limit', 'constraint_price_sealed', 'constraint_proposal_copies', 'constraint_source_page', 'constraint_source_doc'];
+const SLICES = {
+  eligibility: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'eligibility_rules'],
+  plan: [...OVERVIEW_KEYS, 'constraint_deadline', 'constraint_opens_at', 'requirement_count', 'requirement_summary', 'requirements', 'scope_items', 'execution_context'],
+  submission: [...OVERVIEW_KEYS, ...CONSTRAINT_KEYS, 'submission_requirements', 'evaluation_items'],
+};
+
+/** 판정 종류별로 공고에서 필요한 필드만 — 없는 필드는 만들지 않는다 */
+export function announcementFor(kind, announcement) {
+  const keys = SLICES[kind];
+  if (!keys) throw new Error(`unknown slice: ${kind}`);
+  const out = {};
+  for (const k of keys) if (announcement && announcement[k] !== undefined) out[k] = announcement[k];
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 판정 1 — 자격 (화면③④)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -126,7 +149,7 @@ export async function judgeEligibility({ companyCard, announcement, fetchImpl })
   const started = Date.now();
   const out = await callSolar({
     system: loadPrompt('eligibility'),
-    user: buildUserMessage([['COMPANY_CARD', companyCard], ['DOCUMENT_INFO', announcement]]),
+    user: buildUserMessage([['COMPANY_CARD', companyCard], ['DOCUMENT_INFO', announcementFor('eligibility', announcement)]]),
     fetchImpl,
   });
   return { ...guardEligibility(out, announcement), meta: runMeta(started) };
@@ -175,19 +198,20 @@ export function guardEligibility(out, announcement) {
 
 export async function judgePlan({ announcement, fetchImpl }) {
   const started = Date.now();
+  const doc = announcementFor('plan', announcement);
   const wpsCp = await callSolar({
     system: loadPrompt('wpsCp'),
-    user: buildUserMessage([['DOCUMENT_INFO', announcement]]),
+    user: buildUserMessage([['DOCUMENT_INFO', doc]]),
     fetchImpl,
   });
   const wbs = guardWbs(await callSolar({
     system: loadPrompt('wbs'),
-    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', announcement]]),
+    user: buildUserMessage([['WPS_CP_V1', wpsCp], ['DOCUMENT_INFO', doc]]),
     fetchImpl,
   }), announcement);
   const criticalPath = guardCriticalPath(await callSolar({
     system: loadPrompt('criticalPath'),
-    user: buildUserMessage([['WBS_V1', wbs], ['DOCUMENT_INFO', announcement]]),
+    user: buildUserMessage([['WBS_V1', wbs], ['DOCUMENT_INFO', doc]]),
     fetchImpl,
   }), wbs);
   return { wpsCp, wbs, criticalPath, meta: { ...runMeta(started), calls: 3 } };
@@ -292,7 +316,7 @@ export async function judgeSubmission({ announcement, companyCard, proposalText,
   const [rules, proposalScan] = await Promise.all([
     callSolar({
       system: loadPrompt('submissionRules'),
-      user: buildUserMessage([['DOCUMENT_INFO', announcement]]),
+      user: buildUserMessage([['DOCUMENT_INFO', announcementFor('submission', announcement)]]),
       fetchImpl,
     }),
     hasProposal

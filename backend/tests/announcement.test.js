@@ -5,6 +5,7 @@ import { createApp } from '../src/app.js';
 import { migrate } from '../src/db/migrate.js';
 import { env } from '../src/config/env.js';
 import { mergeAnnouncement, decomposeAnnouncement } from '../src/services/announcement.service.js';
+import { clearStudioResults } from '../src/repositories/studioResult.repo.js';
 
 const fx = (f) => JSON.parse(fs.readFileSync(new URL(`../fixtures/studio/${f}`, import.meta.url), 'utf8'));
 const rfpParts = {
@@ -31,10 +32,11 @@ const REPLY = {
   agt_05: () => rfpParts.conditionsEvaluation,
 };
 let studioCalls;
-function mockStudio() {
-  studioCalls = { uploads: [], jobs: [], authHeaders: new Set() };
+// classifyOnly: 이 Agent 들은 Classify 가 OTHER_REVIEW_REQUIRED 로 갈라 Extract 를 안 탄다 (실측: PG 대행 용역 RFP 에서 01·02·03·05)
+function mockStudio({ classifyOnly = new Set(), neverComplete = false, knownJobs = new Map() } = {}) {
+  studioCalls = { uploads: [], jobs: [], jobIds: new Map(), authHeaders: new Set() };
   const files = new Map();
-  const jobs = new Map();
+  const jobs = new Map(knownJobs);   // 지난 mock 이 시작한 job — 이어받기 검증용
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url);
     if (!u.startsWith(MOCK)) return nativeFetch(url, init);
@@ -49,14 +51,22 @@ function mockStudio() {
     if (u.endsWith('/v2/responses')) {
       const body = JSON.parse(init.body);
       const fileId = body.input[0].content[0].file_id;
-      const id = `job_${jobs.size + 1}`;
+      const id = `job_${process.pid}_${Date.now()}_${jobs.size + 1}`;
       jobs.set(id, { agentId: body.model, filename: files.get(fileId) });
+      studioCalls.jobIds.set(id, jobs.get(id));
       studioCalls.jobs.push({ agentId: body.model, filename: files.get(fileId) });
       return Response.json({ id, status: 'in_progress' });
     }
-    const m = u.match(/\/v2\/responses\/(job_\d+)$/);
+    const m = u.match(/\/v2\/responses\/(job_[\w]+)$/);
     if (m) {
+      if (neverComplete) return Response.json({ id: m[1], status: 'in_progress' });
       const { agentId, filename } = jobs.get(m[1]);
+      if (classifyOnly.has(agentId)) {
+        return Response.json({
+          id: m[1], status: 'completed',
+          output: [{ type: 'message', model: 'step_2_classify', content: [{ type: 'output_text', text: 'OTHER_REVIEW_REQUIRED', additional_values: { previous_step_name: 'step_1_parse', cache_hit: false } }] }],
+        });
+      }
       const data = REPLY[agentId](filename);
       return Response.json({
         id: m[1], status: 'completed',
@@ -159,8 +169,89 @@ test('decomposeAnnouncement — Agent ID 가 비어 있으면 E_AGENT_NOT_SET �
   }
 });
 
+// ── 부분 추출 · Studio 결과 캐시 ───────────────────────────────────────────
+const unique = (tag) => ({ buffer: Buffer.from(`%HWP ${tag} ${process.pid} ${Date.now()}`), filename: `${tag}.hwp`, mimeType: 'application/x-hwp' });
+
+test('decomposeAnnouncement — 일부 Agent 가 분류만 하고 추출을 안 해도 나머지로 병합하고 meta.unextracted 에 남긴다', async () => {
+  mockStudio({ classifyOnly: new Set(['agt_01', 'agt_02', 'agt_03', 'agt_05']) });
+  const out = await decomposeAnnouncement({ rfp: unique('제안요청서-부분'), notice: unique('입찰공고문-부분') });
+  assert.equal(out.requirements.length, 0, '03 이 추출을 안 했다');
+  assert.ok(out.eligibility_rules.length > 0, '04 는 추출했다');
+  assert.equal(out.constraint_deadline, '2026. 08. 24(월) 10:30');
+  assert.equal(out.meta.partial, true);
+  assert.deepEqual(out.meta.unextracted, [
+    { key: 'overview', doc: 'rfp', classification: 'OTHER_REVIEW_REQUIRED' },
+    { key: 'scopeContext', doc: 'rfp', classification: 'OTHER_REVIEW_REQUIRED' },
+    { key: 'requirements', doc: 'rfp', classification: 'OTHER_REVIEW_REQUIRED' },
+    { key: 'conditionsEvaluation', doc: 'rfp', classification: 'OTHER_REVIEW_REQUIRED' },
+  ]);
+  assert.equal(out.meta.studioRuns, 6);
+});
+
+test('decomposeAnnouncement — 전부 분류만 하면 E_ANNOUNCEMENT_UNREADABLE 로 어느 갈래였는지 말한다', async () => {
+  mockStudio({ classifyOnly: new Set(['agt_01', 'agt_02', 'agt_03', 'agt_04', 'agt_05']) });
+  await assert.rejects(decomposeAnnouncement({ rfp: unique('제안요청서-전부') }), (e) =>
+    e.code === 'E_ANNOUNCEMENT_UNREADABLE' && e.message.includes('OTHER_REVIEW_REQUIRED'));
+});
+
+test('🔴 Studio 결과 캐시 — 같은 파일·같은 Agent 는 다시 돌리지 않는다 (업로드도 없다)', async () => {
+  mockStudio();
+  const rfp = unique('제안요청서-캐시');
+  const notice = unique('입찰공고문-캐시');
+  const first = await decomposeAnnouncement({ rfp, notice });
+  assert.equal(studioCalls.jobs.length, 6);
+  assert.equal(first.meta.studioRuns, 6);
+
+  mockStudio();
+  const second = await decomposeAnnouncement({ rfp, notice });
+  assert.equal(studioCalls.uploads.length, 0);
+  assert.equal(studioCalls.jobs.length, 0);
+  assert.equal(second.meta.studioRuns, 0);
+  assert.ok(second.meta.jobs.every((j) => j.fromCache === true));
+  assert.deepEqual(second.requirements, first.requirements);
+  assert.equal(second.constraint_deadline, first.constraint_deadline);
+});
+
+test('Studio 결과 캐시 — 분류만 한 결과는 캐시하지 않는다 (갈래를 고친 뒤 다시 돌 수 있게)', async () => {
+  const rfp = unique('제안요청서-부분캐시');
+  mockStudio({ classifyOnly: new Set(['agt_03']) });
+  const first = await decomposeAnnouncement({ rfp });
+  assert.equal(first.requirements.length, 0);
+
+  mockStudio();
+  const second = await decomposeAnnouncement({ rfp });
+  assert.deepEqual(studioCalls.jobs.map((j) => j.agentId), ['agt_03'], '03 만 다시 돈다');
+  assert.equal(second.requirements.length, 33);
+  assert.equal(second.meta.partial, false);
+});
+
+test('🔴 폴링 예산을 넘겨 놓친 job 은 다음 실행에서 새로 사지 않고 이어서 기다린다', async () => {
+  const rfp = unique('제안요청서-이어받기');
+  // 1회차: job 은 시작됐지만 완료되지 않는다 → E_STUDIO_TIMEOUT
+  mockStudio({ neverComplete: true });
+  const savedTimeout = env.studio.pollTimeoutMs;
+  env.studio.pollTimeoutMs = 30;
+  try {
+    await assert.rejects(decomposeAnnouncement({ rfp }), (e) => e.code === 'E_STUDIO_TIMEOUT');
+  } finally {
+    env.studio.pollTimeoutMs = savedTimeout;
+  }
+  const startedJobs = studioCalls.jobs.map((j) => j.agentId);
+  assert.equal(startedJobs.length, 5);
+
+  // 2회차: 같은 파일 — 업로드도 실행도 없이 그 job 들을 다시 폴링해 결과를 받는다
+  mockStudio({ knownJobs: studioCalls.jobIds });
+  const out = await decomposeAnnouncement({ rfp });
+  assert.equal(studioCalls.uploads.length, 0, '다시 올리지 않는다');
+  assert.equal(studioCalls.jobs.length, 0, '다시 사지 않는다');
+  assert.equal(out.requirements.length, 33);
+  assert.equal(out.meta.studioRuns, 0);
+  assert.ok(out.meta.jobs.every((j) => j.resumed === true));
+});
+
 // ── HTTP ────────────────────────────────────────────────────────────────
 migrate();
+clearStudioResults(); // 🔴 테스트 DB 는 실행 간에 남는다 — 지난 실행의 캐시가 「6 job」 검증을 가리지 않게
 const app = createApp();
 const server = app.listen(0);
 await new Promise((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });

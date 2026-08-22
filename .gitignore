@@ -57,3 +57,6 @@ plan/.DS_Store
 .DS_Store
 .DS_Store
 plan/.DS_Store
+
+# 테스트 전용 SQLite (tests/setup.js)
+backend/data/test.sqlite*

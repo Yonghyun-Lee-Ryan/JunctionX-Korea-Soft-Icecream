@@ -89,6 +89,14 @@ const toUpload = (f) => ({
   mimeType: MIME[s(f.filename).split('.').pop().toLowerCase()] ?? 'application/octet-stream',
 });
 
+const AGENT_LABEL = { overview: '개요', scopeContext: '범위·맥락', requirements: '요구사항', eligibilitySubmission: '자격·제출', conditionsEvaluation: '수행조건·평가' };
+
+const NO_RULES_VERDICT = {
+  badge: 'eligible', excluded: false, unverified: 0, decision: 'pending',
+  headline: '참가자격 조항을 공고에서 읽지 못해 판정하지 않았습니다 — 공고문을 직접 확인해 주세요.',
+  reasons: [],
+};
+
 const NO_COMPANY_VERDICT = {
   badge: 'eligible', excluded: false, unverified: 0, decision: 'pending',
   headline: '회사 카드가 없어 참가자격은 판정하지 않았습니다 — 회사 서류를 올리면 판정합니다.',
@@ -111,8 +119,12 @@ export async function runPipeline(caseId, files, { companyId = null } = {}) {
     if (notice) caseRepo.upsertAttachment(caseId, { file_seq: notice.fileSeq, filename: notice.filename, bytes: notice.bytes, doc_class: 'notice' });
     for (const f of others) caseRepo.upsertAttachment(caseId, { file_seq: f.fileSeq, filename: f.filename, bytes: f.bytes, doc_class: 'other' });
 
+    // 🔴 일부 Agent 가 분류만 하고 추출을 안 했어도(실측: 용역 RFP) 있는 것으로 간다 — 빠진 것은 숨기지 않고 적는다
+    const unextracted = announcement.meta?.unextracted ?? [];
+    const partial = unextracted.map((u) => u.key);
     caseRepo.updateProgressStep(caseId, 1, 'done',
-      `요구사항 ${announcement.requirements.length}건 · 참가자격 ${announcement.eligibility_rules.length}건 · 제출물 ${announcement.submission_requirements.length}건`);
+      `요구사항 ${announcement.requirements.length}건 · 참가자격 ${announcement.eligibility_rules.length}건 · 제출물 ${announcement.submission_requirements.length}건`
+      + (partial.length ? ` · 미추출 ${partial.length}: ${unextracted.map((u) => `${AGENT_LABEL[u.key] ?? u.key}(${u.doc === 'notice' ? '공고문' : '제안요청서'}·${u.classification})`).join(', ')}` : ''));
     caseRepo.updateProgressStep(caseId, 2, 'done',
       notice ? `제안요청서 「${rfp.filename}」 · 입찰공고문 「${notice.filename}」` : `제안요청서 「${rfp.filename}」 — 입찰공고문 없음`);
 
@@ -121,9 +133,11 @@ export async function runPipeline(caseId, files, { companyId = null } = {}) {
     caseRepo.setCaseStatus(caseId, 'judging');
 
     const companyCard = companyCardFor(companyId);
+    const canPlan = announcement.requirements.length > 0;          // 요구사항이 없으면 WBS 를 지어낼 수 없다
+    const canScreen = Boolean(companyCard) && announcement.eligibility_rules.length > 0;
     const [eligibility, plan, submission] = await Promise.all([
-      companyCard ? judgeEligibility({ companyCard, announcement }) : null,
-      judgePlan({ announcement }),
+      canScreen ? judgeEligibility({ companyCard, announcement }) : null,
+      canPlan ? judgePlan({ announcement }) : null,
       companyCard ? judgeSubmission({ announcement, companyCard }) : null,
     ]);
     const kit = buildKit({ announcement, eligibility, plan, submission, caseId });
@@ -137,7 +151,7 @@ export async function runPipeline(caseId, files, { companyId = null } = {}) {
     caseRepo.deleteExtractions(caseId);
     caseRepo.insertExtraction(caseId, { schemaName: 'ANNOUNCEMENT_CORE_V1', payload: announcement });
     if (eligibility) caseRepo.insertExtraction(caseId, { schemaName: 'ELIGIBILITY_SCREENING_V1', payload: eligibility });
-    caseRepo.insertExtraction(caseId, { schemaName: 'PLAN_V1', payload: plan });
+    if (plan) caseRepo.insertExtraction(caseId, { schemaName: 'PLAN_V1', payload: plan });
     if (submission) caseRepo.insertExtraction(caseId, { schemaName: 'SUBMISSION_V1', payload: submission });
 
     const row = caseRepo.findCase(caseId);
@@ -154,18 +168,21 @@ export async function runPipeline(caseId, files, { companyId = null } = {}) {
       ttlMs: PIPELINE_TTL_MS,
       source: announcement.meta?.source === 'fixture' ? 'fixture+solar' : 'studio+solar',
       announcementCached: Boolean(announcement.meta?.cached),
+      partial,
+      unextracted,
       studioJobs: announcement.meta?.jobs?.length ?? 0,
-      solarCalls: (eligibility ? 1 : 0) + (plan.meta?.calls ?? 3) + (submission?.meta?.calls ?? 0),
+      studioRuns: announcement.meta?.studioRuns ?? 0,
+      solarCalls: (eligibility ? 1 : 0) + (plan?.meta?.calls ?? 0) + (submission?.meta?.calls ?? 0),
       companyId: companyId ?? null,
       documents: { rfp: rfp.filename, notice: notice?.filename ?? null, others: others.map((f) => f.filename) },
     };
     caseRepo.setCaseResult(caseId, {
-      verdict: kit.verdict ?? NO_COMPANY_VERDICT,
+      verdict: kit.verdict ?? (companyCard ? NO_RULES_VERDICT : NO_COMPANY_VERDICT),
       meta: { ...meta, header: Object.fromEntries(Object.entries(header).filter(([, v]) => v)), pipeline },
     });
     caseRepo.updateProgressStep(caseId, 3, 'done',
-      `${eligibility ? `자격 ${eligibility.verdict}` : '자격 미판정(회사 없음)'} · WBS ${plan.wbs?.work_packages?.length ?? 0}건 · 탭 ${kit.tabs.length}개`);
-    logger.info('case_pipeline_done', { caseId, elapsedMs, tabs: kit.tabs.length, studioJobs: pipeline.studioJobs, solarCalls: pipeline.solarCalls });
+      `${eligibility ? `자격 ${eligibility.verdict}` : (companyCard ? '자격 미판정(조항 없음)' : '자격 미판정(회사 없음)')} · ${plan ? `WBS ${plan.wbs?.work_packages?.length ?? 0}건` : 'WBS 미수행(요구사항 없음)'} · 탭 ${kit.tabs.length}개`);
+    logger.info('case_pipeline_done', { caseId, elapsedMs, tabs: kit.tabs.length, partial, studioJobs: pipeline.studioJobs, studioRuns: pipeline.studioRuns, solarCalls: pipeline.solarCalls });
   } catch (err) {
     const e = err instanceof AppError ? err : new AppError('E_INTERNAL', undefined, { message: err?.message });
     caseRepo.updateProgressStep(caseId, step, 'failed', e.message);
