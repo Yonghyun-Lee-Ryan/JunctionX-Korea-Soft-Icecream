@@ -27,6 +27,68 @@ export const components = {
       },
     },
 
+    CompanyCardView: {
+      type: 'object',
+      required: ['companyId', 'name', 'stats', 'sections'],
+      properties: {
+        companyId: { type: 'string' },
+        name: { type: 'string', example: '주식회사 다온피엠씨' },
+        bizNo: { type: 'string', nullable: true },
+        savedAt: { type: 'string' },
+        stats: {
+          type: 'array',
+          description: '상단 지표 타일 4개',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'pmo' },
+              label: { type: 'string', example: '공공 정보화 PMO 실적' },
+              value: { type: 'string', nullable: true, example: '8건' },
+              sub: { type: 'string', nullable: true, example: '최근 3년' },
+              status: { type: 'string', enum: ['confirmed', 'unverified', 'missing'] },
+            },
+          },
+        },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['id', 'title', 'rows'],
+            properties: {
+              id: { type: 'string' },
+              title: { type: 'string' },
+              column: { type: 'integer', description: '🔴 희망 열(0~2). 좁은 화면에서는 프론트가 접는다' },
+              note: { type: 'string', description: '🔴 서버가 만든 문장. 프론트는 그대로 렌더한다' },
+              chips: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    label: { type: 'string', example: '공공 PMO 8' },
+                    tone: { type: 'string', enum: ['success', 'danger', 'info', 'neutral'] },
+                  },
+                },
+              },
+              rows: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    label: { type: 'string' },
+                    value: { type: 'string', nullable: true },
+                    source: { type: 'string', nullable: true, description: '근거 파일명' },
+                    status: { type: 'string', enum: ['confirmed', 'unverified', 'missing'] },
+                    action: { type: 'string', enum: ['manual'], description: '「직접 입력」 버튼을 붙인다' },
+                  },
+                },
+              },
+            },
+          },
+        },
+        documents: { type: 'array', items: { type: 'object' } },
+      },
+    },
+
     DocUpload: {
       type: 'object',
       required: ['uploadId', 'filename', 'docType', 'extraction'],

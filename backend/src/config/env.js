@@ -1,9 +1,15 @@
-import 'dotenv/config';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, '..', '..');
+
+// 🔴 `dotenv/config`는 **실행 위치(cwd)** 기준으로 .env를 찾는다.
+//    레포 루트에서 `node backend/src/server.js`로 띄우면 조용히 아무것도 못 읽고,
+//    그러면 에이전트 ID가 비어 모든 업로드가 E_AGENT_NOT_SET(503)으로 죽는다.
+//    패키지 루트를 기준으로 읽는다. 이미 들어온 환경변수는 덮어쓰지 않는다(Docker 우선).
+dotenv.config({ path: path.join(ROOT, '.env') });
 
 const str = (key, fallback = '') => (process.env[key] ?? fallback).trim();
 const int = (key, fallback) => {
@@ -34,6 +40,10 @@ export const env = {
     userAgent: str('G2B_USER_AGENT', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'),
     maxFileSeq: int('G2B_MAX_FILE_SEQ', 30),
     serviceKey: str('DATA_GO_KR_SERVICE_KEY'),
+    // 🔴 `/1230000/ad/...` 만 유효하다. 구 경로 `/1230000/...` 는 코드 12로 폐기됐다(실호출 확인)
+    openApiBase: str('DATA_GO_KR_BASE', 'https://apis.data.go.kr/1230000/ad'),
+    listWindowDays: int('G2B_LIST_WINDOW_DAYS', 14),
+    listMaxRows: int('G2B_LIST_MAX_ROWS', 300),
   },
 
   demo: {
@@ -49,7 +59,8 @@ export const env = {
  */
 export function envReport() {
   return {
-    studioReady: Boolean(env.studio.apiKey && env.studio.agentId),
+    hasApiKey: Boolean(env.studio.apiKey),
+    studioReady: Boolean(env.studio.apiKey),
     listSourceReady: Boolean(env.g2b.serviceKey),
     databaseFile: env.databaseFile,
   };

@@ -2,6 +2,7 @@ import { parseJson } from '../db/index.js';
 import * as repo from '../repositories/case.repo.js';
 import { AppError } from '../errors/AppError.js';
 import { loadFixture, stripComments } from './fixture.service.js';
+import { KIT_PAGES, KIT_PRIMARY_ACTION } from '../config/kitPages.js';
 import { env } from '../config/env.js';
 
 /** caseId = 공고번호-차수 */
@@ -48,6 +49,9 @@ export function getFactsheet(caseId, { live = false } = {}) {
       configVersion: env.studio.configVersion || undefined,
       ...meta,
       attachments: repo.listAttachments(caseId),
+      // 🔴 탭 배치도 서버가 준다 — 프론트가 tab id로 분기하지 않게
+      kitPages: KIT_PAGES,
+      kitPrimaryAction: KIT_PRIMARY_ACTION,
     },
   };
   const error = parseJson(row.error_json, null);
@@ -60,7 +64,12 @@ function cachedFactsheet(caseId) {
   if (!fx) return null;
   const clean = stripComments(fx);
   if (clean.caseId && clean.caseId !== caseId) return null;
-  clean.meta = { ...(clean.meta ?? {}), cached: true };
+  clean.meta = {
+    ...(clean.meta ?? {}),
+    cached: true,
+    kitPages: KIT_PAGES,
+    kitPrimaryAction: KIT_PRIMARY_ACTION,
+  };
   return clean;
 }
 

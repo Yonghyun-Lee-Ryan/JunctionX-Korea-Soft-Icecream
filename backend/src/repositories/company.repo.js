@@ -1,5 +1,10 @@
 import { getDb, parseJson } from '../db/index.js';
 
+/** 🔴 가장 최근에 저장된 회사. 첫 진입 화면을 정하는 데 쓴다 */
+export function findLatestCompany() {
+  return getDb().prepare('SELECT * FROM company ORDER BY updated_at DESC, created_at DESC LIMIT 1').get();
+}
+
 export function findCompany(companyId) {
   return getDb().prepare('SELECT * FROM company WHERE id = ?').get(companyId);
 }
@@ -23,6 +28,15 @@ export function insertCompanyDocument(companyId, doc) {
     extracted_json: null, confidence: null,
     company_id: companyId, ...doc,
   });
+}
+
+/** 🔴 다시 저장할 때 이전 목록을 갈아 끼운다 */
+export function replaceCompanyDocuments(companyId, docs) {
+  const db = getDb();
+  db.transaction(() => {
+    db.prepare('DELETE FROM company_document WHERE company_id = ?').run(companyId);
+    for (const d of docs) insertCompanyDocument(companyId, d);
+  })();
 }
 
 export function listCompanyDocuments(companyId) {

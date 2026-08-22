@@ -59,3 +59,105 @@ export async function collectAttachments(bidPbancNo, bidPbancOrd = '000', { maxF
   if (files.length === 0) throw new AppError('E_NO_ATTACHMENT');
   return files;
 }
+
+// ─────────────────────────────────────────────────────────────
+// 조달청 OpenAPI — 공고 목록
+// 🔴 2026-08-22 실호출로 확정한 것:
+//    · `/1230000/**ad**/BidPublicInfoService/...` 만 유효하다.
+//      구 경로 `/1230000/BidPublicInfoService/...` 는 **코드 12로 폐기**됐다.
+//    · resultCode "00" 이 정상. 오류는 HTTP 200으로도 온다 — 본문을 봐야 한다.
+//    · 응답 한 건에 필드가 113개다. 우리가 쓰는 것만 골라 좁힌다.
+// ─────────────────────────────────────────────────────────────
+
+const pad = (n) => String(n).padStart(2, '0');
+const stamp = (d, end = false) =>
+  `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${end ? '2359' : '0000'}`;
+
+export function hasOpenApiKey() {
+  return Boolean(env.g2b.serviceKey);
+}
+
+/**
+ * 용역 공고 목록. 여러 쪽을 이어 받되 listMaxRows에서 멈춘다.
+ * @returns {Promise<{scanned:number, total:number, items:object[]}>}
+ */
+export async function fetchNoticeList({ windowDays = env.g2b.listWindowDays, maxRows = env.g2b.listMaxRows } = {}) {
+  if (!hasOpenApiKey()) throw new AppError('E_NOT_CONFIGURED', '나라장터 인증키가 없습니다.');
+
+  const to = new Date();
+  const from = new Date(to.getTime() - windowDays * 86400000);
+  const rowsPerPage = Math.min(100, maxRows);
+
+  const items = [];
+  let total = 0;
+
+  for (let page = 1; items.length < maxRows; page += 1) {
+    const url = new URL(`${env.g2b.openApiBase}/BidPublicInfoService/getBidPblancListInfoServcPPSSrch`);
+    url.searchParams.set('serviceKey', env.g2b.serviceKey);
+    url.searchParams.set('pageNo', String(page));
+    url.searchParams.set('numOfRows', String(rowsPerPage));
+    url.searchParams.set('type', 'json');
+    url.searchParams.set('inqryDiv', '1');
+    url.searchParams.set('inqryBgnDt', stamp(from));
+    url.searchParams.set('inqryEndDt', stamp(to, true));
+
+    const res = await fetch(url, { headers: { 'User-Agent': env.g2b.userAgent } });
+    if (!res.ok) throw new AppError('E_UPSTREAM_G2B', undefined, { stage: 'list', status: res.status, page });
+
+    const json = await res.json().catch(() => null);
+    // 🔴 오류가 HTTP 200으로 온다 — resultCode를 반드시 본다
+    const header = json?.response?.header;
+    if (!header) {
+      const err = json?.OpenAPI_ServiceResponse?.cmmMsgHeader;
+      throw new AppError('E_UPSTREAM_G2B',
+        `나라장터 목록 조회에 실패했습니다. (${err?.returnAuthMsg ?? '응답 형식 오류'})`,
+        { stage: 'list', code: err?.returnReasonCode });
+    }
+    if (header.resultCode !== '00') {
+      throw new AppError('E_UPSTREAM_G2B',
+        `나라장터가 오류를 돌려주었습니다. (${header.resultMsg ?? header.resultCode})`,
+        { stage: 'list', code: header.resultCode });
+    }
+
+    const body = json.response.body ?? {};
+    total = Number(body.totalCount ?? 0) || total;
+    const page_items = Array.isArray(body.items) ? body.items : [];
+    if (page_items.length === 0) break;
+
+    items.push(...page_items);
+    if (items.length >= total) break;
+  }
+
+  logger.info('g2b_list', { total, fetched: items.length, windowDays });
+  return { scanned: items.length, total, items: items.slice(0, maxRows) };
+}
+
+/** 113개 필드에서 우리가 쓰는 것만 */
+export function normalizeNotice(raw) {
+  const s = (k) => (raw[k] ?? '').toString().trim();
+  return {
+    bidNtceNo: s('bidNtceNo'),
+    bidNtceOrd: s('bidNtceOrd') || '000',
+    title: s('bidNtceNm'),
+    org: s('dminsttNm') || s('ntceInsttNm'),
+    noticeInstitution: s('ntceInsttNm'),
+    noticeAt: s('bidNtceDt'),
+    closeAt: s('bidClseDt') || s('opengDt'),
+    openAt: s('opengDt'),
+    presumedPrice: s('presmptPrce'),
+    budget: s('asignBdgtAmt'),
+    contractMethod: s('cntrctCnclsMthdNm'),
+    noticeKind: s('ntceKindNm'),
+    successMethod: s('sucsfbidMthdNm'),
+    detailUrl: s('bidNtceDtlUrl'),
+    // 자격 제한 플래그 — 🔴 제외 판정의 «근거»가 되는 칸들
+    regionLimitYn: s('cmmnSpldmdCorpRgnLmtYn'),
+    regionName: [s('jntcontrctDutyRgnNm1'), s('jntcontrctDutyRgnNm2'), s('jntcontrctDutyRgnNm3')]
+      .filter(Boolean).join(' · '),
+    regionBasisName: s('rgnLmtBidLocplcJdgmBssNm'),
+    bidLimitYn: s('bidPrtcptLmtYn'),
+    industryLimitYn: s('indstrytyLmtYn'),
+    designatedCompetitionYn: s('dsgntCmptYn'),
+    performanceCompetitionYn: s('arsltCmptYn'),
+  };
+}

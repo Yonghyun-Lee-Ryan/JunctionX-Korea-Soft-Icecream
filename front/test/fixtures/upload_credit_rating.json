@@ -1,0 +1,157 @@
+{
+  "uploadId": "up_fixture_credit_rating",
+  "filename": "신용평가등급확인서_다온피엠씨_가상.pdf",
+  "bytes": 100000,
+  "docType": {
+    "key": "credit_rating",
+    "label": "신용평가등급확인서",
+    "confidence": "high",
+    "score": 22,
+    "margin": 21,
+    "matched": [
+      "신용평가등급확인서"
+    ],
+    "candidates": [
+      {
+        "key": "credit_rating",
+        "label": "신용평가등급확인서",
+        "score": 22
+      }
+    ]
+  },
+  "extraction": {
+    "data": {
+      "certificate_number": "제 2026-0000000 호",
+      "evaluated_company_name": "주식회사 다온피엠씨",
+      "evaluated_company_business_registration_number": "120-86-01230",
+      "evaluated_company_representative_name": "강민서",
+      "evaluated_company_corporate_registration_number": "110111-0000000",
+      "evaluated_company_address": "서울특별시 강남구 테헤란로 501, 11층 (삼성동)",
+      "company_credit_rating": "A0",
+      "evaluation_basis": "제17기 (2025.12.31) 결산 재무제표",
+      "evaluation_date": "2026-03-02",
+      "rating_valid_from_date": "2026-03-02",
+      "rating_valid_to_date": "2027-03-01",
+      "rating_definition": "상거래 신용도가 우수하고 채무이행 능력이 높으나, 급격한 환경변화에 다소 영향을 받을 수 있음",
+      "issuer_name": "마 루 신 용 평 가 정 보 주 식 회 사",
+      "issue_date": "2026-03-02",
+      "issuer_representative_title": "대 표 이 사",
+      "rating_scale_table": [
+        {
+          "rating_scale_grade": "AAA",
+          "rating_scale_definition": "채무이행 능력이 최고 수준이며 환경변화에 영향을 받지 않음"
+        },
+        {
+          "rating_scale_grade": "AA+ · AAO · AA-",
+          "rating_scale_definition": "채무이행 능력이 매우 우수하며 환경변화에 거의 영향을 받지 않음"
+        },
+        {
+          "rating_scale_grade": "A+・A0・A-",
+          "rating_scale_definition": "채무이행 능력이 우수하나 급격한 환경변화에 다소 영향을 받을 수 있음"
+        },
+        {
+          "rating_scale_grade": "BBB+ · BBBO · BBB-",
+          "rating_scale_definition": "채무이행 능력이 양호하나 환경변화에 따라 저하 가능성이 있음"
+        },
+        {
+          "rating_scale_grade": "BB+ · BBO · BB-",
+          "rating_scale_definition": "채무이행 능력에 당면 문제는 없으나 장래 안정성은 미흡함"
+        },
+        {
+          "rating_scale_grade": "B+ · BO · B-",
+          "rating_scale_definition": "채무이행 능력이 있으나 환경 악화 시 저하 가능성이 큼"
+        },
+        {
+          "rating_scale_grade": "CCC・CC・C",
+          "rating_scale_definition": "현재 채무불이행 발생 가능성을 내포하고 있음"
+        },
+        {
+          "rating_scale_grade": "D",
+          "rating_scale_definition": "현재 채무불이행 상태에 있음"
+        }
+      ]
+    },
+    "fields": {
+      "certificate_number": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluated_company_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluated_company_business_registration_number": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluated_company_representative_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluated_company_corporate_registration_number": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluated_company_address": {
+        "confidence": "high",
+        "page": 1
+      },
+      "company_credit_rating": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluation_basis": {
+        "confidence": "high",
+        "page": 1
+      },
+      "evaluation_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "rating_valid_from_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "rating_valid_to_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "rating_definition": {
+        "confidence": "high",
+        "page": 1
+      },
+      "issuer_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "issue_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "issuer_representative_title": {
+        "confidence": "high",
+        "page": 1
+      },
+      "rating_scale_table": {
+        "confidence": "unknown",
+        "page": 0
+      }
+    },
+    "confidence": "unknown",
+    "confidenceCounts": {
+      "high": 15,
+      "low": 0,
+      "unknown": 1
+    },
+    "lowFields": []
+  },
+  "meta": {
+    "source": "agent",
+    "cached": false,
+    "agentId": "agt_fixture",
+    "configId": "1",
+    "pages": 1,
+    "textChars": 1000,
+    "elapsedMs": 8000
+  }
+}

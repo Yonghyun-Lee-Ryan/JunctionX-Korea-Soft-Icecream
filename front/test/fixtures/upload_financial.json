@@ -1,0 +1,616 @@
+{
+  "uploadId": "up_fixture_financial",
+  "filename": "재무제표_다온피엠씨_가상.pdf",
+  "bytes": 100000,
+  "docType": {
+    "key": "financial",
+    "label": "재무제표",
+    "confidence": "high",
+    "score": 22,
+    "margin": 21,
+    "matched": [
+      "재무제표"
+    ],
+    "candidates": [
+      {
+        "key": "financial",
+        "label": "재무제표",
+        "score": 22
+      }
+    ]
+  },
+  "extraction": {
+    "data": {
+      "company_name": "주식회사 다온피엠씨",
+      "balance_sheet_statement_name": "재 무 상 태 표",
+      "balance_sheet_current_period_label": "제17(당)기",
+      "balance_sheet_current_period_as_of_date": "2025-12-31",
+      "balance_sheet_prior_period_label": "제16(전)기",
+      "balance_sheet_prior_period_as_of_date": "2024-12-31",
+      "income_statement_name": "손 익 계 산 서",
+      "income_statement_current_period_label": "제17(당)기",
+      "income_statement_current_period_start_date": "2025-01-01",
+      "income_statement_current_period_end_date": "2025-12-31",
+      "income_statement_prior_period_label": "제16(전)기",
+      "income_statement_prior_period_start_date": "2024-01-01",
+      "income_statement_prior_period_end_date": "2024-12-31",
+      "financial_ratio_report_name": "주 요 재 무 비 율",
+      "financial_statements_unit": "원",
+      "financial_ratio_report_unit": "원, %",
+      "balance_sheet_line_items": [
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "I. 유동자산",
+          "current_period_amount": 5329800000,
+          "prior_period_amount": 4474400000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "현금및현금성자산",
+          "current_period_amount": 1842000000,
+          "prior_period_amount": 1506000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "단기금융상품",
+          "current_period_amount": 900000000,
+          "prior_period_amount": 700000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "매출채권",
+          "current_period_amount": 2156000000,
+          "prior_period_amount": 1932000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "대손충당금",
+          "current_period_amount": -43100000,
+          "prior_period_amount": -38600000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "미청구공사",
+          "current_period_amount": 384000000,
+          "prior_period_amount": 296000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "선급금",
+          "current_period_amount": 62500000,
+          "prior_period_amount": 54200000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "I. 유동자산",
+          "account_name": "선급비용",
+          "current_period_amount": 28400000,
+          "prior_period_amount": 24800000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "II. 비유동자산",
+          "current_period_amount": 1142100000,
+          "prior_period_amount": 1152200000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "장기금융상품",
+          "current_period_amount": 300000000,
+          "prior_period_amount": 300000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "비품",
+          "current_period_amount": 210000000,
+          "prior_period_amount": 186000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "감가상각누계액",
+          "current_period_amount": -128400000,
+          "prior_period_amount": -111800000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "차량운반구",
+          "current_period_amount": 96000000,
+          "prior_period_amount": 96000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "감가상각누계액",
+          "current_period_amount": -61200000,
+          "prior_period_amount": -50400000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "소프트웨어",
+          "current_period_amount": 148000000,
+          "prior_period_amount": 148000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "상각누계액",
+          "current_period_amount": -89300000,
+          "prior_period_amount": -76600000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "임차보증금",
+          "current_period_amount": 620000000,
+          "prior_period_amount": 620000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "II. 비유동자산",
+          "account_name": "이연법인세자산",
+          "current_period_amount": 47000000,
+          "prior_period_amount": 41000000
+        },
+        {
+          "section_name": "자산",
+          "row_header_level_1": "",
+          "account_name": "자산총계",
+          "current_period_amount": 6471900000,
+          "prior_period_amount": 5626600000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "I. 유동부채",
+          "current_period_amount": 2725800000,
+          "prior_period_amount": 2534900000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "매입채무",
+          "current_period_amount": 1048000000,
+          "prior_period_amount": 912300000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "미지급금",
+          "current_period_amount": 386400000,
+          "prior_period_amount": 341000000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "미지급비용",
+          "current_period_amount": 274500000,
+          "prior_period_amount": 248700000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "선수금",
+          "current_period_amount": 312000000,
+          "prior_period_amount": 268000000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "예수금",
+          "current_period_amount": 68900000,
+          "prior_period_amount": 61400000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "단기차입금",
+          "current_period_amount": 500000000,
+          "prior_period_amount": 600000000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "I. 유동부채",
+          "account_name": "미지급법인세",
+          "current_period_amount": 136000000,
+          "prior_period_amount": 103500000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "II. 비유동부채",
+          "account_name": "II. 비유동부채",
+          "current_period_amount": 1012300000,
+          "prior_period_amount": 869200000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "II. 비유동부채",
+          "account_name": "장기차입금",
+          "current_period_amount": 400000000,
+          "prior_period_amount": 350000000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "II. 비유동부채",
+          "account_name": "퇴직급여충당부채",
+          "current_period_amount": 612300000,
+          "prior_period_amount": 519200000
+        },
+        {
+          "section_name": "부채",
+          "row_header_level_1": "",
+          "account_name": "부채총계",
+          "current_period_amount": 3738100000,
+          "prior_period_amount": 3404100000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "I. 자본금",
+          "account_name": "I. 자본금",
+          "current_period_amount": 500000000,
+          "prior_period_amount": 500000000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "I. 자본금",
+          "account_name": "보통주자본금 (100,000주 × @5,000)",
+          "current_period_amount": 500000000,
+          "prior_period_amount": 500000000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "II. 자본잉여금",
+          "account_name": "II. 자본잉여금",
+          "current_period_amount": 180000000,
+          "prior_period_amount": 180000000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "III. 이익잉여금",
+          "account_name": "III. 이익잉여금",
+          "current_period_amount": 2053800000,
+          "prior_period_amount": 1542500000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "III. 이익잉여금",
+          "account_name": "미처분이익잉여금",
+          "current_period_amount": 2053800000,
+          "prior_period_amount": 1542500000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "",
+          "account_name": "자본총계",
+          "current_period_amount": 2733800000,
+          "prior_period_amount": 2222500000
+        },
+        {
+          "section_name": "자본",
+          "row_header_level_1": "",
+          "account_name": "부채와자본총계",
+          "current_period_amount": 6471900000,
+          "prior_period_amount": 5626600000
+        }
+      ],
+      "income_statement_line_items": [
+        {
+          "row_header_level_1": "I. 매출액",
+          "account_name": "I. 매출액",
+          "current_period_amount": 8420000000,
+          "prior_period_amount": 7634000000
+        },
+        {
+          "row_header_level_1": "I. 매출액",
+          "account_name": "용역매출 - 사업관리(PMO)",
+          "current_period_amount": 6142000000,
+          "prior_period_amount": 5480000000
+        },
+        {
+          "row_header_level_1": "I. 매출액",
+          "account_name": "용역매출 - 정보시스템 감리",
+          "current_period_amount": 1038000000,
+          "prior_period_amount": 974000000
+        },
+        {
+          "row_header_level_1": "I. 매출액",
+          "account_name": "용역매출 -ISP·컨설팅",
+          "current_period_amount": 986000000,
+          "prior_period_amount": 918000000
+        },
+        {
+          "row_header_level_1": "I. 매출액",
+          "account_name": "용역매출 - 개인정보 영향평가",
+          "current_period_amount": 254000000,
+          "prior_period_amount": 262000000
+        },
+        {
+          "row_header_level_1": "II. 매출원가",
+          "account_name": "II. 매출원가",
+          "current_period_amount": 6148600000,
+          "prior_period_amount": 5637500000
+        },
+        {
+          "row_header_level_1": "II. 매출원가",
+          "account_name": "용역원가 - 인건비",
+          "current_period_amount": 5236400000,
+          "prior_period_amount": 4802100000
+        },
+        {
+          "row_header_level_1": "II. 매출원가",
+          "account_name": "용역원가 - 외주비",
+          "current_period_amount": 648200000,
+          "prior_period_amount": 602300000
+        },
+        {
+          "row_header_level_1": "II. 매출원가",
+          "account_name": "용역원가 - 경비",
+          "current_period_amount": 264000000,
+          "prior_period_amount": 233100000
+        },
+        {
+          "row_header_level_1": "III. 매출총이익",
+          "account_name": "III. 매출총이익",
+          "current_period_amount": 2271400000,
+          "prior_period_amount": 1996500000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "IV. 판매비와관리비",
+          "current_period_amount": 1608300000,
+          "prior_period_amount": 1472900000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "급여",
+          "current_period_amount": 742600000,
+          "prior_period_amount": 681400000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "퇴직급여",
+          "current_period_amount": 146800000,
+          "prior_period_amount": 132500000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "복리후생비",
+          "current_period_amount": 168400000,
+          "prior_period_amount": 154200000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "지급임차료",
+          "current_period_amount": 204000000,
+          "prior_period_amount": 198000000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "감가상각비 및 무형자산상각비",
+          "current_period_amount": 40100000,
+          "prior_period_amount": 38700000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "대손상각비",
+          "current_period_amount": 4500000,
+          "prior_period_amount": 6200000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "교육훈련비",
+          "current_period_amount": 62300000,
+          "prior_period_amount": 48900000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "지급수수료",
+          "current_period_amount": 128700000,
+          "prior_period_amount": 114600000
+        },
+        {
+          "row_header_level_1": "IV. 판매비와관리비",
+          "account_name": "기타 판매관리비",
+          "current_period_amount": 110900000,
+          "prior_period_amount": 98400000
+        },
+        {
+          "row_header_level_1": "V. 영업이익",
+          "account_name": "V. 영업이익",
+          "current_period_amount": 663100000,
+          "prior_period_amount": 523600000
+        },
+        {
+          "row_header_level_1": "VI. 영업외수익",
+          "account_name": "VI. 영업외수익",
+          "current_period_amount": 42800000,
+          "prior_period_amount": 31500000
+        },
+        {
+          "row_header_level_1": "VI. 영업외수익",
+          "account_name": "이자수익",
+          "current_period_amount": 38200000,
+          "prior_period_amount": 27900000
+        },
+        {
+          "row_header_level_1": "VI. 영업외수익",
+          "account_name": "잡이익",
+          "current_period_amount": 4600000,
+          "prior_period_amount": 3600000
+        },
+        {
+          "row_header_level_1": "VII. 영업외비용",
+          "account_name": "VII. 영업외비용",
+          "current_period_amount": 58600000,
+          "prior_period_amount": 62400000
+        },
+        {
+          "row_header_level_1": "VII. 영업외비용",
+          "account_name": "이자비용",
+          "current_period_amount": 56300000,
+          "prior_period_amount": 60100000
+        },
+        {
+          "row_header_level_1": "VII. 영업외비용",
+          "account_name": "잡손실",
+          "current_period_amount": 2300000,
+          "prior_period_amount": 2300000
+        },
+        {
+          "row_header_level_1": "VIII. 법인세비용차감전순이익",
+          "account_name": "VIII. 법인세비용차감전순이익",
+          "current_period_amount": 647300000,
+          "prior_period_amount": 492700000
+        },
+        {
+          "row_header_level_1": "IX. 법인세비용",
+          "account_name": "IX. 법인세비용",
+          "current_period_amount": 136000000,
+          "prior_period_amount": 103500000
+        },
+        {
+          "row_header_level_1": "X. 당기순이익",
+          "account_name": "X. 당기순이익",
+          "current_period_amount": 511300000,
+          "prior_period_amount": 389200000
+        }
+      ],
+      "recent_3_year_sales": [
+        {
+          "fiscal_year_label": "제15기 (2023)",
+          "period_start_date": "2023-01-01",
+          "period_end_date": "2023-12-31",
+          "sales_amount": 6981000000,
+          "change_rate_text": "-"
+        },
+        {
+          "fiscal_year_label": "제16기 (2024)",
+          "period_start_date": "2024-01-01",
+          "period_end_date": "2024-12-31",
+          "sales_amount": 7634000000,
+          "change_rate_text": "9.4"
+        },
+        {
+          "fiscal_year_label": "제17기 (2025)",
+          "period_start_date": "2025-01-01",
+          "period_end_date": "2025-12-31",
+          "sales_amount": 8420000000,
+          "change_rate_text": "10.3"
+        },
+        {
+          "fiscal_year_label": "3개년 합계",
+          "period_start_date": "",
+          "period_end_date": "",
+          "sales_amount": 23035000000,
+          "change_rate_text": "연평균 9.9"
+        }
+      ]
+    },
+    "fields": {
+      "company_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "balance_sheet_statement_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "balance_sheet_current_period_label": {
+        "confidence": "high",
+        "page": 1
+      },
+      "balance_sheet_current_period_as_of_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "balance_sheet_prior_period_label": {
+        "confidence": "high",
+        "page": 1
+      },
+      "balance_sheet_prior_period_as_of_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_current_period_label": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_current_period_start_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_current_period_end_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_prior_period_label": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_prior_period_start_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "income_statement_prior_period_end_date": {
+        "confidence": "high",
+        "page": 1
+      },
+      "financial_ratio_report_name": {
+        "confidence": "high",
+        "page": 1
+      },
+      "financial_statements_unit": {
+        "confidence": "high",
+        "page": 1
+      },
+      "financial_ratio_report_unit": {
+        "confidence": "high",
+        "page": 1
+      },
+      "balance_sheet_line_items": {
+        "confidence": "unknown",
+        "page": 0
+      },
+      "income_statement_line_items": {
+        "confidence": "unknown",
+        "page": 0
+      },
+      "recent_3_year_sales": {
+        "confidence": "unknown",
+        "page": 0
+      }
+    },
+    "confidence": "unknown",
+    "confidenceCounts": {
+      "high": 16,
+      "low": 0,
+      "unknown": 3
+    },
+    "lowFields": []
+  },
+  "meta": {
+    "source": "agent",
+    "cached": false,
+    "agentId": "agt_fixture",
+    "configId": "1",
+    "pages": 1,
+    "textChars": 1000,
+    "elapsedMs": 8000
+  }
+}

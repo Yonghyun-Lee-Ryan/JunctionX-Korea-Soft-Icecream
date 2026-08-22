@@ -1,0 +1,5 @@
+tags:
+  # 🔴 실제 백엔드가 필요한 테스트. 꺼져 있으면 스스로 skip한다.
+  #    flutter test --exclude-tags live   로 통째로 뺄 수 있다.
+  live:
+    description: 라이브 백엔드(API_BASE_URL)에 붙는 테스트
