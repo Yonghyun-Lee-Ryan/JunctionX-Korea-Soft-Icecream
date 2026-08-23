@@ -4,7 +4,7 @@ Reads public procurement notices for you, picks the ones you can actually bid on
 
 Upload your company documents once and the notices that match your eligibility get shortlisted. For the ones you decide to pursue, you get a requirements checklist, a WBS, a critical path, an effort estimate in man-months, and a submission checklist. The last screen answers a single question: what has to be submitted, by when, and where.
 
-JunctionX Korea 2026 · Upstage track · Team soft icecream (planning Jeong-un, engineering Yonghyun Lee and Jeongmin Kil, design Yejin Joo)
+JunctionX Korea 2026 · Upstage track · Team soft icecream (planning and AI engineering Jeong-Woon, code engineering Yonghyun Lee and Jeongmin Kil, design Yejin Joo)
 
 ## Why we built it
 

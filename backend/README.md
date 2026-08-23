@@ -1,180 +1,180 @@
 # Solar for Bid — backend
 
-나라장터 공고를 제안 착수 패키지로 바꾸는 파이프라인의 API 서버입니다.
-Node.js 20.11 이상, Express, SQLite(better-sqlite3), Swagger 로 되어 있습니다.
+The API server for the pipeline that turns a public procurement notice into a proposal kickoff package.
+Node.js 20.11 or newer, Express, SQLite (better-sqlite3), Swagger.
 
-## 실행
+## Running it
 
 ```bash
-cp .env.example .env      # 키가 비어 있어도 그대로 뜹니다
+cp .env.example .env      # it boots fine with empty keys
 npm install
 npm run dev               # http://localhost:3000/docs
 ```
 
-부팅할 때 마이그레이션이 자동으로 돕니다. `npm run seed` 는 선택인데, 커밋된 DB 에 실호출 결과가 들어 있어서 seed 를 돌리면 손으로 만든 픽스처로 덮어씁니다.
+Migrations run automatically on boot. `npm run seed` is optional, and since the committed DB already holds results from real calls, running seed overwrites them with hand-made fixtures.
 
-`.env.example` 에는 Studio 에이전트 ID 가 이미 채워져 있습니다. 직접 넣을 것은 셋뿐입니다.
+`.env.example` already has the Studio agent IDs filled in. Only three values are yours to add.
 
-| 키 | 비어 있으면 |
+| Key | If empty |
 |---|---|
-| `UPSTAGE_API_KEY` | `POST /api/docs/upload` 이 `fixtures/extract/` 표본으로 응답합니다 |
-| `UPSTAGE_AGENT_API_KEY` | 공고 해부와 회사 카드가 `fixtures/studio/` 로 떨어지고 `/api/judge/*` 는 503 입니다 |
-| `DATA_GO_KR_SERVICE_KEY` | 공고 목록이 캐시본입니다. 첨부 수집은 이 키 없이도 됩니다 |
+| `UPSTAGE_API_KEY` | `POST /api/docs/upload` responds with the samples in `fixtures/extract/` |
+| `UPSTAGE_AGENT_API_KEY` | Notice parsing and the company card fall back to `fixtures/studio/`, and `/api/judge/*` returns 503 |
+| `DATA_GO_KR_SERVICE_KEY` | The notice list is a cached copy. Attachment collection works without this key |
 
-키가 하나도 없어도 서버는 뜹니다. `src/config/env.js` 는 어떤 경우에도 throw 하지 않고, 무엇이 없는지는 `GET /health` 의 `hasApiKey`, `agentKeyReady`, `solarReady`, `listSourceReady` 로 드러납니다.
+The server boots with no keys at all. `src/config/env.js` never throws under any circumstance, and what is missing shows up in `GET /health` as `hasApiKey`, `agentKeyReady`, `solarReady`, and `listSourceReady`.
 
-키가 둘로 갈린 것은 계정이 다르기 때문입니다. 팀 공용 `UPSTAGE_API_KEY` 는 서류 갈래별 에이전트에 쓰고, 공고 해부 5종과 회사 카드, Solar 판정은 에이전트를 만든 개인 계정 키인 `UPSTAGE_AGENT_API_KEY` 를 씁니다. 서로 대신하지 못합니다.
+There are two keys because there are two accounts. The team's shared `UPSTAGE_API_KEY` is for the per-document-type agents, while the five notice-parsing agents, the company card, and Solar judgment use `UPSTAGE_AGENT_API_KEY`, the personal account key that owns those agents. Neither substitutes for the other.
 
-## 명령
+## Commands
 
-| 명령 | 하는 일 |
+| Command | What it does |
 |---|---|
-| `npm run dev` | `--watch` 로 실행 |
-| `npm start` | 실행 |
-| `npm run migrate` | `src/db/migrations/*.sql` 을 `_migration` 기준으로 한 번씩 적용 |
-| `npm run seed` | 마이그레이션 뒤 `fixtures/*.demo.json` 적재 |
-| `npm run reset` | sqlite 파일을 지우고 다시 만듭니다. 커밋된 데모 스냅샷도 사라집니다 |
-| `npm test` | node:test, 158건 |
-| `node scripts/mock-upstage.js` | 모의 Upstage 서버(포트 3999) |
-| `docker compose up --build` | 컨테이너와 `sfb-data` 볼륨 |
+| `npm run dev` | Run with `--watch` |
+| `npm start` | Run |
+| `npm run migrate` | Apply `src/db/migrations/*.sql` once each, tracked against `_migration` |
+| `npm run seed` | Load `fixtures/*.demo.json` after migrating |
+| `npm run reset` | Delete the sqlite file and build it again. The committed demo snapshot goes with it |
+| `npm test` | node:test, 158 tests |
+| `node scripts/mock-upstage.js` | Mock Upstage server (port 3999) |
+| `docker compose up --build` | Container and the `sfb-data` volume |
 
-## 라우트
+## Routes
 
-전체 목록은 `GET /docs` 와 `GET /openapi.json` 이 정본입니다. 갈래만 적으면 이렇습니다.
+`GET /docs` and `GET /openapi.json` are authoritative for the full list. Grouped, it looks like this.
 
-| 갈래 | 라우트 |
+| Group | Routes |
 |---|---|
-| 헬스 | `GET /health` |
-| 서류 | `GET /api/docs/types` · `POST /api/docs/upload` |
-| 회사 | `POST /api/companies` · `GET /api/companies/current` · `GET /api/companies/{id}` · `GET /api/companies/{id}/card` · `GET /api/companies/card/requirements` · `POST /api/companies/card` |
-| 추천 | `GET /api/companies/{id}/screening` · `PUT /api/companies/{id}/screening/{caseId}/decision` |
-| 응찰 목록 | `GET·POST /api/companies/{id}/bids` · `DELETE /api/companies/{id}/bids/{caseId}` |
-| 케이스 | `GET·POST /api/cases` · `GET /api/cases/{caseId}` · `GET·POST /api/cases/{caseId}/files` · `POST /api/cases/{caseId}/proposal` · `PUT /api/cases/{caseId}/checks/{tabId}` · `GET /api/cases/{caseId}/files/{tab}.xlsx` |
-| 해부·카드 | `POST /api/announcements/decompose` · `POST /api/company-card/build` |
-| 판정 | `POST /api/judge/eligibility` · `/plan` · `/submission` · `/kit` |
+| Health | `GET /health` |
+| Documents | `GET /api/docs/types` · `POST /api/docs/upload` |
+| Company | `POST /api/companies` · `GET /api/companies/current` · `GET /api/companies/{id}` · `GET /api/companies/{id}/card` · `GET /api/companies/card/requirements` · `POST /api/companies/card` |
+| Recommendation | `GET /api/companies/{id}/screening` · `PUT /api/companies/{id}/screening/{caseId}/decision` |
+| Bidding list | `GET·POST /api/companies/{id}/bids` · `DELETE /api/companies/{id}/bids/{caseId}` |
+| Cases | `GET·POST /api/cases` · `GET /api/cases/{caseId}` · `GET·POST /api/cases/{caseId}/files` · `POST /api/cases/{caseId}/proposal` · `PUT /api/cases/{caseId}/checks/{tabId}` · `GET /api/cases/{caseId}/files/{tab}.xlsx` |
+| Parsing and card | `POST /api/announcements/decompose` · `POST /api/company-card/build` |
+| Judgment | `POST /api/judge/eligibility` · `/plan` · `/submission` · `/kit` |
 
-응답 계약은 `plan/Solar_for_Bid/04_계약/` 의 봉투 두 벌이 정본입니다. 계약은 응답의 바깥 구조이고, 개별 Extract 필드는 계약이 아닙니다. 프론트는 `progress[].step` 문자열이나 `tabs[].columns` 내용으로 분기하지 않습니다. 오류도 `error.code` 를 화면에서 문장으로 바꾸지 않고, 서버가 만든 `error.message` 를 그대로 렌더합니다.
+The two envelope schemas in `plan/Solar_for_Bid/04_계약/` are authoritative for the response contract. The contract is the outer shape of a response; individual Extract fields are not part of it. The frontend does not branch on the `progress[].step` string or on the contents of `tabs[].columns`. Errors work the same way: the screen never turns an `error.code` into a sentence, it renders the `error.message` the server composed.
 
-## 서류 업로드
+## Document upload
 
-`POST /api/docs/upload` 은 PDF 한 장을 받아 아홉 갈래 중 어느 것인지 가르고, 그 갈래의 Studio 에이전트로 값을 뽑아 동기로 돌려줍니다.
+`POST /api/docs/upload` takes one PDF, decides which of the nine document types it is, extracts the values with that type's Studio agent, and returns synchronously.
 
 ```bash
 curl -X POST -F "file=@사업자등록증.pdf" http://localhost:3000/api/docs/upload
 ```
 
-갈래 판정은 백엔드가 규칙으로 합니다. PDF 텍스트를 읽어 표제로 가르므로 API 호출이 없고 100ms 안쪽입니다. 여기서 물린 것이 셋 있었습니다.
+The backend classifies the document type by rule. It reads the PDF text and sorts on the title, so there is no API call and it finishes inside 100ms. Three things bit us here.
 
-- 매칭 전에 공백을 모두 지웁니다. 이 서식들은 제목에 자간이 들어가 추출 결과가 「사 업 자 등 록 증」으로 나오는데, 공백을 두면 하나도 걸리지 않습니다.
-- 표제는 문서 앞부분에서 걸릴 때만 제 무게를 갖습니다. 지정서 각주의 "현재 현황은 「기술인력 보유현황」을 따릅니다" 가 실제로 남의 갈래를 가져갔습니다.
-- 판정이 서지 않으면 아무 에이전트도 돌리지 않고 422 와 후보를 돌려줍니다. 엉뚱한 에이전트를 돌리면 그럴듯하게 틀린 JSON 이 나오는데, 그게 제일 나쁩니다.
+- Strip every space before matching. These forms put letter spacing in the title, so the extraction comes out as 「사 업 자 등 록 증」 (business registration certificate, spaced out), and if you leave the spaces in, nothing matches at all.
+- A title only carries its weight when it is found near the front of the document. A footnote in a designation certificate reading "현재 현황은 「기술인력 보유현황」을 따릅니다" (current status follows the technical staff roster) actually stole another type's classification.
+- When the classification does not hold, we run no agent at all and return 422 with the candidates. Running the wrong agent produces plausible, wrong JSON, and that is the worst outcome there is.
 
-갈래는 아홉입니다. 사업자등록증, 중소기업확인서, 신용평가등급확인서, 개인정보 영향평가기관 지정서, 소프트웨어사업자 신고확인서, 직접생산확인증명서, 실적증명서, 재무제표, 기술인력 보유현황. 이 중 직접생산확인증명서는 에이전트를 아직 붙이지 못해 `/api/docs/types` 에서 `agentConfigured: false` 로 나옵니다.
+There are nine types: business registration certificate (사업자등록증), SME confirmation (중소기업확인서), credit rating certificate (신용평가등급확인서), privacy impact assessment agency designation (개인정보 영향평가기관 지정서), software business operator report confirmation (소프트웨어사업자 신고확인서), direct production confirmation certificate (직접생산확인증명서), track-record statement (실적증명서), financial statements (재무제표), and technical staff roster (기술인력 보유현황). Of these, the direct production confirmation certificate has no agent wired up yet, so `/api/docs/types` reports it as `agentConfigured: false`.
 
-Studio 호출은 v2 responses API 를 씁니다. `POST /v2/files` 로 올리고 `POST /v2/responses` 에 에이전트 ID 를 `model` 로 넣어 job 을 만든 뒤 폴링합니다. webhook 이 없어서 폴링이고, 실측으로 건당 8~10초입니다. 결과 JSON 은 `output[].content[].text` 에 문자열로 오고, 같은 자리 `additional_values` 에 필드별 confidence 와 page, coordinates 가 실려 옵니다.
+Studio calls use the v2 responses API. Upload with `POST /v2/files`, create a job with `POST /v2/responses` passing the agent ID as `model`, then poll. There is no webhook, hence the polling, and we measured 8 to 10 seconds per job. The result JSON arrives as a string in `output[].content[].text`, and `additional_values` in the same position carries per-field confidence, page, and coordinates.
 
-배열 필드에는 confidence 가 실려 오지 않아 `unknown` 이 남습니다. 그 수를 숨기지 않고 `confidenceCounts` 로 내보냅니다. 「16개 중 low 0건, unknown 1건」이 `unknown` 한 단어보다 정직합니다.
+Array fields come back with no confidence attached, so `unknown` stays. We do not hide that count; it goes out as `confidenceCounts`. "0 low and 1 unknown out of 16" is more honest than the single word `unknown`.
 
-## 케이스 파이프라인
+## Case pipeline
 
-`POST /api/cases` 는 202 로 곧장 돌아오고 뒤에서 이렇게 이어집니다.
+`POST /api/cases` returns 202 right away and continues behind it like this.
 
 ```
-첨부 수집(나라장터)
-  → 공고 해부   Studio job 6개  (제안요청서 × 에이전트 5종, 입찰공고문 × 자격·제출 1종)
-  → 판정        Solar 6회       (자격 1 · 계획 3 · 제출 2)
+Attachment collection (procurement portal)
+  → Notice parsing   6 Studio jobs  (RFP × 5 agents, bid notice × 1 eligibility/submission agent)
+  → Judgment         6 Solar calls  (eligibility 1 · planning 3 · submission 2)
   → buildKit → case_tab · case_download · extraction
 ```
 
-화면은 `GET /api/cases/{caseId}` 봉투 하나만 폴링합니다. 커밋된 실행 기록으로는 캐시 없이 처음부터 돌 때 10분 22초, 해부 결과가 캐시에 있을 때 4분 11초였습니다.
+The screen polls one envelope, `GET /api/cases/{caseId}`. In the committed run records, a cold run from scratch took 10 minutes 22 seconds, and a run with the parsing results already cached took 4 minutes 11 seconds.
 
-호출을 아끼는 층이 셋입니다.
+Three layers keep the call count down.
 
-- 케이스 7일 캐시. 7일 안에 끝난 케이스는 `POST /api/cases` 가 202 가 아니라 200 으로 저장된 봉투를 그대로 줍니다. 다시 돌리려면 `{"refresh": true}` 를 보냅니다.
-- Studio 결과 캐시. `(에이전트 ID, 파일 sha256)` 단위로 `studio_result` 에 남습니다. 같은 파일을 같은 에이전트로 다시 올리지 않습니다. 분류만 하고 추출하지 않은 결과는 저장하지 않습니다.
-- job 이어받기. 폴링 예산(기본 300초)을 넘겨도 job 은 Studio 에서 계속 돕니다. job_id 를 남겨 두었다가 다음 실행이 새로 사지 않고 그 job 을 이어서 기다립니다.
+- Seven-day case cache. For a case that finished within seven days, `POST /api/cases` answers 200 instead of 202 and hands back the stored envelope as is. Send `{"refresh": true}` to run it again.
+- Studio result cache. Results are kept in `studio_result` keyed by `(agent ID, file sha256)`. The same file never goes to the same agent twice. A result that was only classified and never extracted is not stored.
+- Job resume. A job keeps running on Studio even after the polling budget (300 seconds by default) is spent. We leave the job_id behind so the next run waits on that job instead of paying for a new one.
 
-서류를 올리거나 프롬프트를 고쳤을 때는 `rejudge(caseId, { parts })` 로 판정 일부만 다시 돕니다. 제출 검사는 저장된 규칙을 재사용해 Solar 1회, WBS 만 다시 받으면 1회, 가드만 다시 걸면 0회입니다.
+When a document is added or a prompt is edited, `rejudge(caseId, { parts })` re-runs only part of the judgment. The submission review reuses the stored rules for one Solar call, re-fetching just the WBS is one call, and re-applying only the guards is zero.
 
-## 판정 층
+## Judgment layer
 
-판정은 Studio 의 Instruct 노드가 아니라 백엔드가 Solar Chat API 를 직접 부릅니다. 그렇게 된 경위는 `agent/README.md` 3-1 부터 3-3 절에 있습니다.
+Judgment does not run in Studio's Instruct nodes; the backend calls the Solar Chat API directly. How that came about is in `agent/README.md`, sections 3-1 through 3-3.
 
-프롬프트의 정본은 `backend/` 밖의 `agent/*.json` 입니다. `src/services/solarJudge.service.js` 가 실행할 때 그 파일의 Instruct 노드를 읽어 system 메시지로 보냅니다. 파일 이름과 노드 이름이 코드에 문자열로 박혀 있어서, 옮기거나 이름을 바꾸면 판정이 멈춥니다. 프롬프트를 메모리에 캐시하므로 JSON 을 고친 뒤에는 서버를 다시 띄워야 합니다.
+The prompts live authoritatively in `agent/*.json`, outside `backend/`. At run time `src/services/solarJudge.service.js` reads the Instruct node out of that file and sends it as the system message. The file name and the node name are hardcoded as strings, so moving or renaming either one stops judgment. Prompts are cached in memory, so restart the server after editing the JSON.
 
-모델이 낸 JSON 은 그대로 쓰지 않습니다. 자격 판정의 개수를 다시 세고, 공고에 없는 쪽번호는 0 으로 되돌리고, WBS 는 요구사항을 열여섯 건 이상 묶은 패키지를 분류 기준으로 쪼개고, 임계경로가 비면 공고의 마감과 등록 서류로 채웁니다. 금지 표현은 모델이 놓친 자리를 백엔드가 원고 전문에서 다시 찾아 보탭니다.
+The JSON the model returns is not used as is. We recount the eligibility judgment, reset page numbers that do not exist in the notice back to zero, split any WBS package holding sixteen or more requirements along the notice's own categories, and fill an empty critical path from the notice's deadline and registration documents. For forbidden phrases, the backend re-scans the full manuscript and adds the spots the model missed.
 
-자세한 입력과 출력, 가드는 `HANDOFF-solar-judgment.md` 에 있습니다.
+Detailed inputs, outputs, and guards are in `HANDOFF-solar-judgment.md`.
 
-## 구조
+## Structure
 
 ```
 src/
-├── server.js            마이그레이션 뒤 listen, SIGTERM 처리
-├── app.js               express 조립. 테스트가 listen 없이 씁니다
-├── config/              env · docTypes(9갈래) · agents · kitPages · kitCells · cardRequirements · logger
-├── db/                  index(WAL) · migrate · seed · reset · migrations/*.sql 7개
-├── repositories/        SQL 만 담당합니다. 봉투를 모릅니다 (6개)
-├── services/            봉투 조립과 외부 연동 (20개)
-├── controllers/         HTTP 와 서비스 사이 (8개)
-├── routes/              @openapi 주석이 여기 있습니다 (7개)
-├── docs/                swagger-jsdoc, 계약 봉투 스키마 사본
+├── server.js            listen after migrations, SIGTERM handling
+├── app.js               express assembly. Tests use it without listen
+├── config/              env · docTypes (9 types) · agents · kitPages · kitCells · cardRequirements · logger
+├── db/                  index (WAL) · migrate · seed · reset · 7 migrations/*.sql
+├── repositories/        SQL only. They know nothing about envelopes (6)
+├── services/            envelope assembly and external integration (20)
+├── controllers/         between HTTP and the services (8)
+├── routes/              the @openapi comments live here (7)
+├── docs/                swagger-jsdoc, copies of the contract envelope schemas
 ├── middlewares/         asyncHandler · errorHandler · notFound
-└── errors/              codes(20개) · AppError
+└── errors/              codes (20) · AppError
 ```
 
-데이터 모델은 이렇습니다. `case` 가 SQL 예약어라 테이블 이름은 `bid_case` 입니다.
+The data model looks like this. `case` is a SQL reserved word, so the table is named `bid_case`.
 
 ```
 company ─┬─ company_document
          └─ screening ── screening_item (shortlist | excluded, decision)
 
-bid_case ─┬─ case_progress   (seq 순서가 의미입니다)
+bid_case ─┬─ case_progress   (the seq order is the meaning)
           ├─ attachment
           ├─ extraction      (schema_name + payload_json)
           ├─ case_tab        (columns_json · rows_json · warnings_json)
-          ├─ case_file       (제출 서류 · 제안서 원고)
-          ├─ case_check      (체크리스트 체크)
+          ├─ case_file       (submission documents · proposal manuscript)
+          ├─ case_check      (checklist checks)
           └─ case_download
 
-bid            사람이 응찰 준비를 찍은 건
-studio_result  (에이전트 ID, 파일 sha256) 캐시
+bid            a notice a person marked for bidding
+studio_result  (agent ID, file sha256) cache
 ```
 
-개별 Extract 필드로 컬럼을 만들지 않고 `payload_json` 에 통째로 넣습니다. 필드가 바뀌어도 마이그레이션이 필요 없습니다.
+We do not create a column per Extract field; the whole thing goes into `payload_json`. Fields can change without a migration.
 
-## 테스트
+## Tests
 
 ```bash
-npm test    # 158건
+npm test    # 158 tests
 ```
 
-테스트는 프로세스마다 `os.tmpdir()` 아래 임시 SQLite 를 써서 개발 DB 를 건드리지 않습니다. 분류 테스트는 `plan/Solar_for_Bid/06_데모입력/` 의 실제 PDF 여덟 장을 읽습니다.
+Tests use a temporary SQLite file under `os.tmpdir()` per process, so the development database is never touched. The classification tests read eight real PDFs from `plan/Solar_for_Bid/06_데모입력/`.
 
-## 확장 지점
+## Extension points
 
-다음 버전이 들어올 자리를 미리 정해 두었습니다. 어디를 건드리면 되는지 적어 둡니다.
+We decided in advance where the next version goes. Here is what to touch.
 
-서류 갈래를 늘리려면 `src/config/docTypes.js` 에 갈래 하나와 표제 단서를 넣고 `.env` 에 에이전트 ID 를 더하면 됩니다. 분류기와 업로드 경로, 화면은 그대로입니다. 직접생산확인증명서가 지금 갈래만 정의된 채로 그 자리에 있습니다.
+To add a document type, put the type and its title cues in `src/config/docTypes.js` and add the agent ID to `.env`. The classifier, the upload path, and the screen stay as they are. The direct production confirmation certificate sits in that spot right now with only the type defined.
 
-탭을 늘리려면 `src/services/kit.service.js` 에 탭 빌더를 하나 더하고 `src/config/kitPages.js` 의 배치에 끼웁니다. 화면은 서버가 준 `kind` 대로 그리므로 프론트 코드는 바뀌지 않습니다. 모르는 `kind` 는 표로 떨어지도록 되어 있어서 서버가 먼저 나가도 안전합니다.
+To add a tab, add one tab builder to `src/services/kit.service.js` and slot it into the layout in `src/config/kitPages.js`. The screen draws whatever `kind` the server sends, so no frontend code changes. An unknown `kind` falls back to a table, which makes it safe for the server to ship first.
 
-판정을 늘리려면 `agent/` 에 프롬프트 JSON 을 두고 `solarJudge.service.js` 의 `PROMPTS` 맵에 파일과 노드 이름을 등록합니다. 판정 로직이 코드가 아니라 프롬프트 파일에 있어서, 도메인이 넓어질 때 코드 변경 없이 프롬프트만 늘립니다.
+To add a judgment, drop a prompt JSON into `agent/` and register the file and node name in the `PROMPTS` map in `solarJudge.service.js`. The judgment logic lives in prompt files rather than in code, so widening the domain means adding prompts, not changing code.
 
-공고 종류를 늘리는 것도 같은 방식입니다. 지금 부르는 목록 API 는 `getBidPblancListInfoServcPPSSrch` 로 이름에 용역(Servc)이 들어 있습니다. 나라장터가 갈래별로 같은 모양의 오퍼레이션을 두고 있으므로, `g2b.service.js` 의 엔드포인트를 바꾸는 것으로 물품이나 공사까지 넓힐 수 있습니다.
+Adding notice categories works the same way. The list API we call today is `getBidPblancListInfoServcPPSSrch`, with services (Servc) in the name. The procurement portal offers the same shape of operation for each category, so changing the endpoint in `g2b.service.js` widens coverage to goods or construction.
 
-Studio 의 Instruct 노드가 이 계정에서 열리면 판정 층을 Studio 안으로 되돌릴 수 있습니다. 그때를 위해 프롬프트의 파일 입력 계약과 JSON 출력 계약을 바꾸지 않았습니다.
+If Studio's Instruct nodes ever open up on this account, the judgment layer can move back inside Studio. For that day we left the prompts' file-input contract and JSON-output contract unchanged.
 
-## 배포할 때
+## Deploying
 
-컨테이너로 올릴 때 손봐야 할 자리가 둘 있습니다.
+Two places need work before this goes up in a container.
 
-판정 층이 `../agent/*.json` 을 읽는데 Dockerfile 이 `agent/` 를 복사하지 않습니다. 판정까지 컨테이너에서 돌리려면 그 폴더를 이미지에 넣어야 합니다.
+The judgment layer reads `../agent/*.json`, and the Dockerfile does not copy `agent/`. To run judgment in the container too, that folder has to go into the image.
 
-`docker-compose.yml` 은 서류 갈래별 에이전트 시절에 쓴 것이라 `UPSTAGE_AGENT_API_KEY` 와 `STUDIO_AGENT_ANNOUNCEMENT_*`, `SOLAR_*` 를 전달하지 않습니다. 그대로 띄우면 해부와 판정이 픽스처로 떨어집니다. 로컬 개발은 `npm run dev` 로 하고 있어서 아직 맞추지 않았습니다.
+`docker-compose.yml` dates from the per-document-type agent era, so it does not pass `UPSTAGE_AGENT_API_KEY`, `STUDIO_AGENT_ANNOUNCEMENT_*`, or `SOLAR_*`. Bring it up as is and parsing and judgment fall back to fixtures. We develop locally with `npm run dev`, so we have not fixed it yet.
 
-## 알아 둘 것
+## Things to know
 
-- 읽는 `.env` 는 `backend/.env` 하나입니다. `env.js` 가 cwd 가 아니라 패키지 루트를 기준으로 dotenv 를 부르므로, 레포 루트에서 `node backend/src/server.js` 로 띄워도 정상입니다. 다만 `npm test` 는 `backend/` 안에서 돌려야 합니다.
-- `data/solar-for-bid.sqlite` 는 데모 스냅샷이 든 채로 커밋돼 있습니다. `npm run reset` 은 그것까지 지웁니다.
-- 나라장터는 User-Agent 가 없으면 500 을 돌려주고, 첨부 목록의 끝을 422 로 알립니다. 파일명은 percent-encoded UTF-8 이라 `decodeFilename()` 이 RFC 5987 과 평문을 모두 풉니다.
+- `backend/.env` is the only `.env` that gets read. `env.js` calls dotenv against the package root rather than cwd, so starting it from the repo root with `node backend/src/server.js` works fine. `npm test`, though, has to run inside `backend/`.
+- `data/solar-for-bid.sqlite` is committed with the demo snapshot inside it. `npm run reset` deletes that too.
+- The procurement portal returns 500 when there is no User-Agent, and signals the end of an attachment list with 422. File names are percent-encoded UTF-8, so `decodeFilename()` unwraps both RFC 5987 and plain text.

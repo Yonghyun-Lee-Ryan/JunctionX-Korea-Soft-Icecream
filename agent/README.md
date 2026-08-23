@@ -1,68 +1,68 @@
-# Studio 에이전트 (Solar for Bid)
+# Studio Agents (Solar for Bid)
 
-화면에 들어가는 값을 만드는 Upstage Studio 에이전트 11개의 설정 원본과, 올리고 돌려 본 기록입니다.
+The source configuration for the eleven Upstage Studio agents that produce the values on screen, plus the record of uploading them and running them.
 
-- 설정 원본은 이 폴더의 JSON 파일이고, 생성기는 `build_agents.py` 입니다.
-- 전체 목록과 단계, 입력 파일은 `manifest.json` 에 정리해 뒀습니다.
-- 2026-08-22 Studio 계정에서 만들었습니다.
+- The configuration source is the JSON files in this folder, and the generator is `build_agents.py`.
+- The full list, the stages, and the input files are collected in `manifest.json`.
+- Built on a Studio account on 2026-08-22.
 
-JSON 을 손으로 고치지 마세요. 스키마나 프롬프트를 바꿀 때는 `build_agents.py` 를 고친 뒤 다시 뽑습니다.
+Do not hand-edit the JSON. To change a schema or a prompt, edit `build_agents.py` and generate again.
 
 ```bash
 python3 agent/build_agents.py
 ```
 
-01·02·05 는 팀원이 Studio 에서 직접 만들어 내보낸 원본이라 생성기가 건드리지 않습니다.
+01, 02, and 05 were built by hand in Studio by a teammate and exported, so the generator leaves them alone.
 
 ---
 
-## 1. Studio 에 올리기
+## 1. Uploading to Studio
 
-Studio → 「에이전트 만들기」 옆 ⌄ → 「에이전트 설정 일괄 가져오기」 → JSON 선택.
+Studio → the ⌄ next to 「에이전트 만들기」 (create agent) → 「에이전트 설정 일괄 가져오기」 (bulk import agent configuration) → pick the JSON.
 
-직접 해 보면서 알게 된 것들:
+What we learned doing it ourselves:
 
-- 임포트는 정확합니다. 내보내기로 다시 받아 보면 추출 스키마의 description 까지 그대로입니다.
-- 한 번에 파일 하나만 들어갑니다. 여러 개를 골라도 첫 파일만 올라갑니다.
-- `agent_name` 은 따라오지 않습니다. 전부 「Agent」라는 이름으로 생기니 목록에서 ⋮ → 이름 편집으로 바꿔야 합니다.
-- Studio 가 `outputFormats` 에 `text` 를, `base64Encoding` 에 `figure` 를 추가하고 `confidenceThreshold` 는 버립니다. `nodeMode` 도 무시합니다. 동작에는 영향이 없었습니다.
+- The import is faithful. Export it back out and even the descriptions in the extraction schema come through unchanged.
+- One file goes in at a time. Select several and only the first one uploads.
+- `agent_name` does not come along. Everything is created under the name 「Agent」, so you have to rename each one from the list with ⋮ → 이름 편집 (rename).
+- Studio adds `text` to `outputFormats` and `figure` to `base64Encoding`, and throws `confidenceThreshold` away. It ignores `nodeMode` too. None of that affected behavior.
 
-## 2. 무료 실행 횟수
+## 2. Free run quota
 
-에디터 우상단의 `0/10` 은 계정이 아니라 에이전트 단위입니다 (03 이 1/10 일 때 04 는 0/10 이었습니다). 파일 하나를 돌리면 1회 소모됩니다. 다 쓰면 에이전트를 복사해서 (목록 ⋮ → 에이전트 복사) 10회를 더 쓸 수 있습니다.
+The `0/10` in the top right of the editor is per agent, not per account (when 03 was at 1/10, 04 was still at 0/10). Running one file spends one. Once it is used up, copy the agent (list ⋮ → 에이전트 복사, duplicate agent) and you get another 10.
 
-## 3. 돌려 본 결과 (2026-08-22)
+## 3. Run results (2026-08-22)
 
-| 에이전트 | 입력 | 결과 |
+| Agent | Input | Result |
 |---|---|---|
-| 01-Overview | 제안요청서.hwp | 사업명·기관·기간·예산(7,000만원)·협상에 의한 계약·목표 7개 |
+| 01-Overview | 제안요청서.hwp (the RFP) | Project name, agency, period, budget (70,000,000 KRW), contract by negotiation, 7 objectives |
 | 02-Scope-Context | 제안요청서.hwp | scope_items 32, execution_context 34 |
-| 03-Requirements | 제안요청서.hwp (77쪽) | `BUILD_IMPLEMENTATION_RFP` 로 분류, 요구사항 33건. 총괄표 8분류 합계와 일치. SFR-010 의 「※ 세부 기능 구현 사항은 발주기관과 협의 하에…」가 `note_clause` 로 분리됐고 `source_page` 는 13~26쪽 실제 값 |
-| 04-Eligibility-Submission | 입찰공고서(재공고).hwp (8쪽) | `BID_NOTICE` 로 분류, 자격 20개 조항 + 쪽번호. 직접생산확인증명, SW사업자 등록, 대기업 배제, 공동수급(5개사/10%) 모두 잡힘. `constraint_deadline` = 2026. 08. 24(월) 10:30 |
-| 04-Eligibility-Submission | 제안요청서.hwp | 자격 12, 제출서식 13(붙임2 가·나·다), 분량 100쪽/요약 50쪽. `proposal_copies=5` 는 「최종보고서 5부」를 잘못 가져온 것이라 프롬프트를 고쳤습니다 |
-| 05-Conditions-Evaluation | 제안요청서.hwp | 수행조건 182, 평가항목 32 (기술 90/가격 10/협상적격 85%) |
-| Company Card Builder | 회사 서류 PDF 8종 | 8종 모두 갈래별로 추출됨. 모아보기 YAML 로 한 번에 내려받았습니다 |
-| Submission Auditor | 제안서 PDF | Classify 는 `OUR_PROPOSAL` 로 정확히 갈랐지만 뒤의 Instruct 노드 두 개는 스텁 출력 (3-1 참고) |
+| 03-Requirements | 제안요청서.hwp (77 pages) | Classified as `BUILD_IMPLEMENTATION_RFP`, 33 requirements. Matches the sum of the 8 categories in the summary table. SFR-010's 「※ 세부 기능 구현 사항은 발주기관과 협의 하에…」 (detailed feature implementation subject to agreement with the contracting agency) was split off into `note_clause`, and `source_page` holds the real values, pages 13 to 26 |
+| 04-Eligibility-Submission | 입찰공고서(재공고).hwp (the re-issued bid notice, 8 pages) | Classified as `BID_NOTICE`, 20 eligibility clauses with page numbers. Direct production confirmation certificate (직접생산확인증명), software business registration, large-company exclusion, and consortium terms (5 companies / 10%) all caught. `constraint_deadline` = 2026. 08. 24(월) 10:30 |
+| 04-Eligibility-Submission | 제안요청서.hwp | 12 eligibility items, 13 submission forms (붙임2 가·나·다, attachment 2 sections a, b, c), 100-page limit with a 50-page summary. `proposal_copies=5` had been pulled from 「최종보고서 5부」 (5 copies of the final report) by mistake, so we fixed the prompt |
+| 05-Conditions-Evaluation | 제안요청서.hwp | 182 execution conditions, 32 evaluation items (technical 90 / price 10 / negotiation eligibility 85%) |
+| Company Card Builder | 8 company document PDFs | All 8 extracted, each into its own branch. We downloaded them in one go as 모아보기 (combined view) YAML |
+| Submission Auditor | Proposal PDF | Classify sorted it correctly as `OUR_PROPOSAL`, but the two Instruct nodes behind it returned stub output (see 3-1) |
 
-실제 출력 파일은 `backend/fixtures/studio/` 에 있고, 백엔드 쪽 인수 내용은 `backend/HANDOFF-solar-judgment.md` 에 있습니다.
+The actual output files are in `backend/fixtures/studio/`, and the backend handover notes are in `backend/HANDOFF-solar-judgment.md`.
 
-HWP 는 변환 없이 그대로 올려도 됩니다. 77쪽 2MB 파일이 Parse(Enhanced)에서 바로 열렸습니다.
+HWP files go up as they are, with no conversion. A 77-page, 2MB file opened directly in Parse (Enhanced).
 
-### 돌려 보고 고친 것
+### What we fixed after running it
 
-**04 에만 `BID_NOTICE` 갈래를 추가했습니다.**
-입찰공고서를 넣었더니 Classify 가 `OTHER_REVIEW_REQUIRED` 로 보내서 Extract 가 돌지 않았습니다. 분류기가 틀린 건 아닙니다. 공유 갈래는 「제안요청서 또는 과업문서」만 BUILD 로 정의하는데 공고서는 둘 다 아니니까요. 문제는 마감일시와 전자입찰 여부가 공고서에만 있다는 점이어서 04 에만 갈래를 더했습니다. 03 은 그대로 뒀습니다. 공고서에는 상세 요구사항이 없으니 OTHER 로 보내는 게 맞습니다.
+We added the `BID_NOTICE` branch to 04 only.
+We fed in the bid notice and Classify sent it to `OTHER_REVIEW_REQUIRED`, so Extract never ran. The classifier was not wrong. The shared branch defines only 「제안요청서 또는 과업문서」 (an RFP or a statement of work) as BUILD, and a bid notice is neither. The problem is that the deadline and the electronic-bidding flag exist only in the notice, so we added the branch to 04 alone. We left 03 as it was. A bid notice carries no detailed requirements, so sending it to OTHER is correct.
 
-**최상위 object 필드는 Studio 가 버립니다.**
-`submission_constraints` 를 중첩 객체로 뒀더니 결과에서 사라졌습니다. `schemaLayout` 이 표 지향이라 열로 선언되지 않은 객체는 살아남지 못하는 것 같습니다. 그래서 최상위는 `constraint_deadline` 처럼 스칼라로 평탄화했습니다. 03 의 `requirement_count` 가 최상위 스칼라라서 살아남은 게 힌트였습니다.
+Studio drops top-level object fields.
+We declared `submission_constraints` as a nested object and it vanished from the result. `schemaLayout` is table-oriented, so an object that is not declared as a column seems unable to survive. So we flattened the top level into scalars like `constraint_deadline`. The hint was that 03's `requirement_count` survived because it is a top-level scalar.
 
-### 남은 것: `source_document` 는 백엔드가 채웁니다
+### Still open: the backend fills in `source_document`
 
-Company Card Builder 의 `source_document` 가 빈 값으로 나옵니다. Studio 가 Extract 프롬프트에 파일명을 넘겨주지 않아서 프롬프트로는 해결이 안 됩니다. 화면 ①②는 값마다 「사업자 등록증_다온피엠씨.pdf」 같은 파일명을 붙여 보여 주므로, 파일명을 아는 쪽(업로드한 백엔드)에서 채워 넣습니다.
+Company Card Builder returns an empty `source_document`. Studio does not hand the filename to the Extract prompt, so no prompt can fix it. Screens ① and ② show a filename such as 「사업자 등록증_다온피엠씨.pdf」 next to every value, so the side that knows the filename, the backend that took the upload, fills it in.
 
-## 3-1. Instruct 노드가 프롬프트를 태우지 않았습니다
+## 3-1. The Instruct node never ran our prompt
 
-Eligibility Screener 를 돌리면 프롬프트와 상관없이 항상 아래 64자만 나옵니다.
+Run Eligibility Screener and, whatever the prompt says, you always get the same 64 characters.
 
 ```
 ### 1. invoice_total
@@ -70,31 +70,31 @@ RAW: Total: 656.5 USD
 BASE_DATE: 2025-11-12
 ```
 
-Studio Instruct 노드의 기본 예시 출력입니다. 우리 입력(회사 카드, 공고)과는 아무 관계가 없습니다.
+That is the Studio Instruct node's default sample output. It has nothing to do with our input, the company card and the notice.
 
-설정 문제는 아닌 것으로 확인했습니다.
+We confirmed it is not a configuration problem.
 
-| 확인한 것 | 결과 |
+| What we checked | Result |
 |---|---|
-| 임포트된 프롬프트가 설정에 있는지 | 있음. 내보내기하면 2,876자 프롬프트가 그대로 나옴 |
-| UI 편집기에 보이는지 | 보임. `인식(Parse) → screen-eligibility(Instruct)` 배선도 정상 |
-| 노드 모드·모델 | `생성만 하기`(자유 형식 텍스트), 모델 `기본형` |
-| 입력이 너무 큰지 | 아님. 28쪽을 12쪽으로 줄여도 같음 |
-| 설정 버전 문제인지 | 아님. UI 에서 프롬프트를 건드려 설정 #2 로 저장해도 같음 |
-| 캐시인지 | 아님. `cache_hit: false`, job 3건 모두 같은 출력 |
-| 입력이 JSON/HTML 이라서인지 | 아님. Submission Auditor 에 실제 제안서 PDF 를 넣어도 Classify 만 맞고 뒤 Instruct 둘은 같은 64자 |
+| Whether the imported prompt is in the configuration | It is. Export it and the 2,876-character prompt comes back intact |
+| Whether it shows in the UI editor | It does. The `인식(Parse) → screen-eligibility(Instruct)` wiring is fine too |
+| Node mode and model | `생성만 하기` (generate only, free-form text), model `기본형` (standard) |
+| Whether the input is too large | No. Cutting 28 pages to 12 changed nothing |
+| Whether it is a configuration-version problem | No. Editing the prompt in the UI and saving it as configuration #2 changed nothing |
+| Whether it is a cache | No. `cache_hit: false`, and all 3 jobs returned the same output |
+| Whether it is because the input is JSON or HTML | No. Feed a real proposal PDF to Submission Auditor and Classify still gets it right while the two Instruct nodes behind it return the same 64 characters |
 
-이 계정에서는 Instruct 노드가 입력 형식과 관계없이 모델을 태우지 않고 예시 응답을 돌려줍니다. 플랜이나 베타 권한 문제로 보이고, 설정 쪽에서 손댈 수 있는 게 없었습니다. 에이전트 3개, job 4건, PDF/HTML 입력 모두 같았습니다.
+On this account the Instruct node returns the sample response without ever running the model, whatever the input format. It looks like a plan or beta-access issue, and there was nothing left to touch on the configuration side. 3 agents, 4 jobs, PDF and HTML input, all identical.
 
-대안은 기획안 4절에 적어 둔 대로입니다. 여러 문서를 합쳐야 하는 판정은 백엔드 Node 층에서 Solar API 로 직접 합니다. 프롬프트 5벌은 그대로 쓸 수 있습니다. `agent/*.json` 의 `instructConfiguration.nodes[].prompt` 를 백엔드에서 Solar 에 그대로 보내면 되고, Studio 를 거치지 않을 뿐 판정 로직은 이미 다 들어 있습니다.
+The fallback is the one written into section 4 of the product plan. Judgments that have to combine several documents happen in the backend Node layer, calling the Solar API directly. All 5 prompts can be used as they are. The backend sends `instructConfiguration.nodes[].prompt` from `agent/*.json` straight to Solar; it simply does not go through Studio, and the judgment logic is already all in there.
 
-Parse·Classify·Extract 층은 영향이 없습니다. 공고 해부 5종과 회사 카드는 정상 동작합니다.
+The Parse, Classify, and Extract layers are unaffected. The five notice-parsing agents and the company card work fine.
 
-## 3-2. JSON 을 파일로 넘기면 Parse 가 구조를 깨뜨립니다
+## 3-2. Hand JSON in as a file and Parse breaks the structure
 
-Instruct 입력은 앞 단계 JSON 을 이어 붙인 파일입니다. 백엔드에서 하던 대로 `<pre>` 로 감싼 HTML 로 올렸더니 Document Parse 가 그걸 문서로 보고 레이아웃 분석을 해서 구조를 부숩니다.
+The Instruct input is a file made by concatenating the JSON from the previous stages. We uploaded it as HTML wrapped in `<pre>`, the way the backend had been doing it, and Document Parse treated it as a document, ran layout analysis on it, and broke the structure.
 
-`in_wps_cp.html`(공고 해부 JSON 21쪽)의 Parse 결과 일부:
+Part of the Parse result for `in_wps_cp.html` (21 pages of notice-parsing JSON):
 
 ```
 2 - Paragraph   진단컨설팅 통합 서비스 개발 / 한국과학기술정보연구원
@@ -104,181 +104,181 @@ Instruct 입력은 앞 단계 JSON 을 이어 붙인 파일입니다. 백엔드�
 13 - List       요구사항 / 모드 선택 기능 구현 / 시작 화면범용피지컬종 모드 선택 구분 제공세션
 ```
 
-따옴표, 콜론, 중괄호가 사라지고 키와 값이 다른 블록으로 흩어집니다. `"requirement_id": "SFR-001"` 같은 쌍이 남지 않으니 판정 노드가 읽을 수 있는 입력이 아닙니다.
+Quotes, colons, and braces are gone, and keys and values scatter into separate blocks. No pair like `"requirement_id": "SFR-001"` survives, so it is not an input a judgment node can read.
 
-그래서 JSON 을 파일로 태우지 않기로 했습니다. 판정 층을 백엔드 Solar API 로 옮기면 JSON 을 문자열 그대로 프롬프트에 넣으니 Parse 를 거치지 않고 이 문제가 사라집니다. 꼭 Studio 를 거쳐야 한다면 JSON 이 아니라 표 형태 문서로 만들어 올려야 합니다.
+So we stopped feeding JSON in as a file. Move the judgment layer onto the backend Solar API and the JSON goes into the prompt as a plain string, never touching Parse, and the problem disappears. If you must go through Studio, build a table-shaped document instead of JSON and upload that.
 
-## 3-3. 해결 방법: 판정 층을 백엔드 + Solar API 로
+## 3-3. The fix: judgment layer moves to the backend plus the Solar API
 
-3-1 과 3-2 는 같은 방법으로 풀었습니다. Instruct 노드가 하던 일을 Studio 밖으로 꺼내서, 백엔드가 Solar Pro 3 chat API 를 직접 호출합니다. 이 폴더 기준으로 달라지는 점은 아래와 같습니다.
+3-1 and 3-2 were solved the same way. We pulled the Instruct node's job out of Studio, and the backend calls the Solar Pro 3 chat API directly. From this folder's point of view, here is what changes.
 
-**프롬프트 원본은 그대로 이 폴더의 JSON 입니다.** 백엔드는 실행 시점에 `agent/*.json` 을 열어 `instructConfiguration.nodes[].prompt` 를 system 프롬프트로 씁니다. 파일과 노드 이름을 백엔드가 고정해서 보고 있으니 이름을 바꾸면 안 됩니다.
+The prompt source is still the JSON in this folder. At run time the backend opens `agent/*.json` and uses `instructConfiguration.nodes[].prompt` as the system prompt. The backend looks up the file and node names as fixed strings, so do not rename them.
 
-| 판정 | JSON 파일 | 노드 이름 |
+| Judgment | JSON file | Node name |
 |---|---|---|
-| 참가자격 | `Eligibility Screener.json` | `screen-eligibility` |
-| WPS/CP 분해 | `WPS CP Decomposer.json` | `decompose-wps-cp` |
+| Eligibility | `Eligibility Screener.json` | `screen-eligibility` |
+| WPS/CP decomposition | `WPS CP Decomposer.json` | `decompose-wps-cp` |
 | WBS | `WBS Planner.json` | `build-wbs` |
-| 임계경로·M/M | `Critical Path and Cost.json` | `estimate-path-cost` |
-| 제출 규칙 정리 | `Submission Auditor.json` | `prepare-document-info` |
-| 원고 금지 표현 스캔 | `Submission Auditor.json` | `scan-proposal-language` |
-| 제출 패키지 검사 | `Submission Auditor.json` | `audit-submission-package` |
+| Critical path and M/M | `Critical Path and Cost.json` | `estimate-path-cost` |
+| Submission rule collation | `Submission Auditor.json` | `prepare-document-info` |
+| Forbidden-phrase scan of the manuscript | `Submission Auditor.json` | `scan-proposal-language` |
+| Submission package audit | `Submission Auditor.json` | `audit-submission-package` |
 
-프롬프트를 고칠 때의 순서도 같습니다. `build_agents.py` 수정 → `python3 agent/build_agents.py` 로 JSON 재생성 → 백엔드 재시작(프롬프트를 메모리에 캐시합니다). Studio 에 다시 올리지 않아도 됩니다.
+The order for changing a prompt is unchanged too. Edit `build_agents.py` → regenerate the JSON with `python3 agent/build_agents.py` → restart the backend (it caches prompts in memory). No need to upload to Studio again.
 
-**입력은 파일이 아니라 문자열입니다.** 앞 단계 JSON(`COMPANY_CARD`, `ANNOUNCEMENT_CORE_V1`, `WPS_CP_V1`, `WBS_V1`, `PROPOSAL_SCAN_V1`)을 user 메시지에 이름표를 붙여 그대로 넣습니다. Parse 를 거치지 않으니 3-2 의 구조 깨짐은 생기지 않고, 두 문서를 한 파일로 이어 붙일 필요도 없습니다. 프롬프트의 `[파일 입력 계약]` 절은 이름표가 같아서 그대로 읽힙니다.
+The input is a string, not a file. The previous stage's JSON (`COMPANY_CARD`, `ANNOUNCEMENT_CORE_V1`, `WPS_CP_V1`, `WBS_V1`, `PROPOSAL_SCAN_V1`) goes into the user message as is, under a label. Nothing passes through Parse, so the structure breakage from 3-2 does not happen, and two documents no longer need to be concatenated into one file. The `[파일 입력 계약]` (file input contract) section of the prompt still reads correctly because the labels are the same.
 
-**공고 전체를 보내지 않고 판정마다 필요한 칸만 보냅니다.** 공고 해부 결과가 90KB 정도라 통째로 보내면 응답이 2분을 넘겨 끊겼습니다. 자격 판정에는 개요·제약·자격 조항, 제출 검사에는 제출물·평가항목, WBS 에는 요구사항의 ID·분류·이름·쪽만, 임계경로에는 자격 조항과 입찰 제출물만 보냅니다. 모델은 `solar-pro3`, 응답 대기는 기본 300초입니다.
+We send only the fields each judgment needs, not the whole notice. The notice-parsing result runs about 90KB, and sending it whole pushed the response past 2 minutes until it was cut off. Eligibility gets the overview, the constraints, and the eligibility clauses; the submission audit gets the deliverables and the evaluation items; the WBS gets only requirement ID, category, name, and page; the critical path gets only the eligibility clauses and the bid deliverables. The model is `solar-pro3` and the response timeout defaults to 300 seconds.
 
-**출력은 JSON 만 받고, 백엔드가 검산합니다.** 프롬프트 끝의 JSON-only 계약은 그대로이고, 받은 뒤에는 백엔드가 한 번 더 손봅니다. 자격 판정의 충족/미충족/확인필요 개수를 다시 세고 근거 쪽이 공고에 없는 값이면 0 으로 되돌리고, WBS 는 요구사항 미연결과 16건 넘는 패키지를 세고 기간이 비면 「미 명시」로 두고, 임계경로가 비어 오면 공고의 마감·등록 서류로 채우고, 금지 표현은 모델이 놓친 자리를 백엔드가 전문 검색으로 보탭니다. 모델이 틀려도 화면에 거짓이 올라가지 않게 하는 장치입니다.
+We accept JSON only, and the backend rechecks it. The JSON-only contract at the end of the prompt is unchanged, and once an answer comes back the backend works it over once more. It recounts the 충족 / 미충족 / 확인필요 (met / unmet / needs verification) totals in the eligibility judgment and resets any evidence page that does not exist in the notice back to 0; for the WBS it counts unlinked requirements and packages holding 16 or more requirements, and leaves the duration as 「미 명시」 (not specified) when it is empty; if the critical path comes back empty it fills it from the notice's deadline and registration documents; and for forbidden phrases the backend adds the spots the model missed by searching the full text. It is the mechanism that keeps a false value off the screen when the model is wrong.
 
-**Studio 가 맡는 층은 그대로입니다.** Company Card Builder 와 01~05 는 여전히 Studio 의 `/v2/files` + `/v2/responses` 로 돌리고, 결과는 파일 해시 기준으로 DB 에 캐시해 같은 파일을 두 번 사지 않습니다. 키는 둘로 나뉩니다. 팀 공용 `UPSTAGE_API_KEY` 는 Studio 용이고, Solar 호출과 Agents API 는 `UPSTAGE_AGENT_API_KEY` 를 씁니다.
+The layer Studio owns is unchanged. Company Card Builder and 01 through 05 still run on Studio's `/v2/files` + `/v2/responses`, and results are cached in the DB by file hash so we never pay for the same file twice. The keys split in two. The team's shared `UPSTAGE_API_KEY` is for Studio, while Solar calls and the Agents API use `UPSTAGE_AGENT_API_KEY`.
 
-**호출 횟수.** 케이스 하나에 Solar 는 자격 1회 + 계획 3회 + 제출 검사 1~3회이고, 판정 일부만 다시 돌리는 경로(`rejudge`)가 있어서 서류 하나 올릴 때는 제출 검사 1회만 듭니다. 수치와 구현 위치는 `backend/HANDOFF-solar-judgment.md` 에 있습니다.
+Call counts. One case costs Solar 1 eligibility call, 3 planning calls, and 1 to 3 submission audits, and because there is a path that re-runs only part of the judgment (`rejudge`), uploading a single document costs one submission audit. The numbers and where they are implemented are in `backend/HANDOFF-solar-judgment.md`.
 
-나중에 Instruct 노드가 이 계정에서 정상 동작하면, 같은 JSON 을 그대로 Studio 에서 돌릴 수 있습니다. 그 경우에 대비해 프롬프트의 파일 입력 계약과 JSON 출력 계약은 바꾸지 않았습니다.
+If the Instruct node starts working on this account later, the same JSON can run in Studio unchanged. We left the file input contract and the JSON output contract in the prompts alone for that case.
 
-## 4. 파이프라인
+## 4. Pipeline
 
-전체 흐름은 7단계입니다. 단계마다 프론트·백엔드·Upstage 가 맡는 일이 다르고, 04(추천)와 07(제출 준비)은 사람이 결정해야 다음으로 넘어갑니다.
+The whole flow is 7 stages. The frontend, the backend, and Upstage each take on something different at each stage, and 04 (recommendation) and 07 (submission preparation) move on only once a person decides.
 
-| 단계 | 프론트 | 백엔드 | Upstage |
+| Stage | Frontend | Backend | Upstage |
 |---|---|---|---|
-| 01 회사 등록 | 서류 9종 → 회사 프로필. 읽지 못한 값은 직접 입력할 수 있게 남겨 둠 | `POST /api/companies`. 실적·파일 메타데이터를 모아 프로필을 만들고, 한 번 만들면 캐시 | Company Card Builder. Parse → 9갈래 Classify → Extract. 서류당 1 job, 회사당 한 번 |
-| 02 공고 탐색 | 「127건 중 3건」처럼 전체 모수와 선별 결과를 보여 주고, 제외된 건마다 사유를 붙임 | `GET …/screening`. 목록 메타데이터만으로 싸게 거름. 근거가 분명할 때만 제외하고 아니면 후보로 둠 | — |
-| 03 분석 | 4초마다 폴링. 어느 단계에서 실패했는지 그대로 표시 | 나라장터 첨부를 자동 수집 → 분석 → 병합. 결과는 SHA-256 으로 캐시하고 끊긴 job 은 이어받음 | Studio 에이전트 01~05, 케이스당 6 job. HWP 를 변환 없이 Parse → Classify → Extract, 핵심 필드와 RFP 요구사항 추출 |
-| 04 추천 (사람 결정) | 추천 카드 → 응찰 준비. 사람이 결정해야 다음 단계가 열리고, 확인 필요 항목은 전부 보여 줌 | 회사 프로필과 참가자격을 대조해 추천/제외를 냄. 제외에는 쪽 단위 근거가 있어야 하고, 읽지 못한 칸은 확인 필요로 남김 | Solar Pro 3 · Eligibility Screener. 자격·제출 관련 절만 잘라서 입력 |
-| 05 요구사항 | 체크리스트. 요구사항 ID·단서·근거 쪽, XLSX 내려받기 | 요구사항 145건 → 체크리스트. 라벨은 백엔드가 정하고 프론트는 추론하지 않음 | — |
-| 06 계획 | WBS·임계경로·M/M. 마감은 항상 보이게 | WPS/CP → WBS → 임계경로 + 검산. 큰 패키지는 나누고, 있는 결과는 다시 씀 | Solar Pro 3 · 계획 3종 (WPS/CP Decomposer, WBS Planner, Critical Path & Cost) |
-| 07 제출 준비 (사람 결정) | 파일 제출·제출 준비도. 필요한 서류와 제안서 원고를 올리면 금지 표현과 사람이 봐야 할 항목을 표시 | 업로드 → 제출 검사. 금지 표현은 전문을 검색하고, 바뀐 것만 다시 검사 | Solar Pro 3 · Submission Auditor (규칙 정리 → 원고 스캔 → 패키지 검사) |
+| 01 Company registration | 9 document types → company profile. Values we could not read are left open for manual entry | `POST /api/companies`. Gathers track-record and file metadata into a profile, and caches it once built | Company Card Builder. Parse → Classify into 9 branches → Extract. 1 job per document, once per company |
+| 02 Notice discovery | Shows the full denominator and the shortlist, as in 「127건 중 3건」 (3 of 127), with a reason attached to every excluded notice | `GET …/screening`. Filters cheaply on list metadata alone. Excludes only when the evidence is clear, otherwise keeps the notice as a candidate | — |
+| 03 Analysis | Polls every 4 seconds. Shows exactly which stage failed | Collects attachments from 나라장터 (the national procurement portal) automatically → analyze → merge. Caches results by SHA-256 and picks up jobs that were cut off | Studio agents 01 through 05, 6 jobs per case. Parse → Classify → Extract on HWP with no conversion, pulling out the core fields and the RFP requirements |
+| 04 Recommendation (human decision) | Recommendation card → prepare to bid. The next stage opens only after a person decides, and every item needing verification is shown | Matches the company profile against the eligibility rules to produce a recommendation or an exclusion. An exclusion has to carry page-level evidence, and fields we could not read stay as needs verification | Solar Pro 3 · Eligibility Screener. Only the eligibility and submission clauses are cut out and passed in |
+| 05 Requirements | Checklist. Requirement ID, caveat, evidence page, XLSX download | 145 requirements → checklist. The backend decides the labels and the frontend infers nothing | — |
+| 06 Planning | WBS, critical path, M/M. The deadline is always visible | WPS/CP → WBS → critical path plus verification. Large packages are split, and existing results are reused | Solar Pro 3 · three planning agents (WPS/CP Decomposer, WBS Planner, Critical Path & Cost) |
+| 07 Submission preparation (human decision) | File submission and submission readiness. Upload the required documents and the proposal manuscript and it marks the forbidden phrases and the items a person has to look at | Upload → submission audit. Forbidden phrases are searched across the full text, and only what changed is re-audited | Solar Pro 3 · Submission Auditor (collate rules → scan the manuscript → audit the package) |
 
-흐름만 간단히 적으면 이렇습니다.
+The flow in short:
 
 ```
-회사 서류 9종 ─ Company Card Builder ─▶ COMPANY_CARD ──┐
-                                                       ├─▶ Eligibility Screener ─▶ 04 추천
-제안요청서·입찰공고서 ─ 01~05 ─▶ ANNOUNCEMENT_CORE_V1 ──┤
-                                                       ├─▶ WPS/CP → WBS → Critical Path & Cost ─▶ 06 계획
-우리 제안서 원고 ───────────────────────────────────────┴─▶ Submission Auditor ─▶ 07 제출 준비
+Company documents (9 types) ─ Company Card Builder ─▶ COMPANY_CARD ──┐
+                                                                     ├─▶ Eligibility Screener ─▶ 04 Recommendation
+RFP and bid notice ─ 01~05 ─▶ ANNOUNCEMENT_CORE_V1 ──────────────────┤
+                                                                     ├─▶ WPS/CP → WBS → Critical Path & Cost ─▶ 06 Planning
+Our proposal manuscript ─────────────────────────────────────────────┴─▶ Submission Auditor ─▶ 07 Submission preparation
 ```
 
-### Studio 와 Solar API 의 역할 분담
+### How Studio and the Solar API split the work
 
-Upstage 쪽은 두 층으로 나뉩니다.
+The Upstage side splits into two layers.
 
-**문서를 읽는 층은 Studio 가 맡습니다.** Company Card Builder 와 01~05 는 Parse → Classify → Extract 구조이고, 3절에 적은 대로 HWP·PDF 원본을 그대로 넣어도 잘 돌아갑니다. 이 층의 출력(`COMPANY_CARD`, `ANNOUNCEMENT_CORE_V1`)이 뒤 단계의 입력이 됩니다.
+Studio owns the layer that reads documents. Company Card Builder and 01 through 05 are all Parse → Classify → Extract, and as written in section 3 they run fine on the original HWP and PDF with no conversion. This layer's output (`COMPANY_CARD`, `ANNOUNCEMENT_CORE_V1`) becomes the input to the stages behind it.
 
-**판정하는 층은 백엔드가 Solar Pro 3 API 를 직접 불러서 합니다.** 원래는 Eligibility Screener, WPS CP Decomposer, WBS Planner, Critical Path and Cost, Submission Auditor 의 Instruct 노드가 이 일을 하도록 설계했는데, 3-1 에 적었듯 우리 계정에서는 Instruct 노드가 실행되지 않고 예시 응답만 돌려줍니다. 설정 쪽에서는 고칠 수 없는 문제라서, 같은 프롬프트를 백엔드가 `agent/*.json` 의 `instructConfiguration.nodes[].prompt` 에서 읽어 Solar Pro 3 chat API 에 보내는 방식으로 바꿨습니다. 판정 로직은 프롬프트에 이미 다 들어 있으니 Studio 를 거치지 않을 뿐 결과의 모양은 같습니다. 구체적인 수단은 3-3 에 있습니다.
+The judging layer is the backend calling the Solar Pro 3 API directly. We originally designed the Instruct nodes of Eligibility Screener, WPS CP Decomposer, WBS Planner, Critical Path and Cost, and Submission Auditor to do this work, but as written in 3-1, on our account the Instruct node does not run and returns only the sample response. It is not something the configuration side can fix, so we switched to having the backend read the same prompt out of `instructConfiguration.nodes[].prompt` in `agent/*.json` and send it to the Solar Pro 3 chat API. The judgment logic is already all in the prompt, so the shape of the result is the same; it just does not go through Studio. The concrete means are in 3-3.
 
-이렇게 바꾸면서 같이 해결된 것이 있습니다.
+The change solved a few other things along the way.
 
-- 3-2 의 Parse 문제가 사라집니다. 앞 단계 JSON 을 파일로 올리지 않고 문자열 그대로 프롬프트에 넣으니 구조가 깨지지 않습니다.
-- 두 문서를 맞대는 판정(회사 카드 ↔ 공고, WBS ↔ 공고)을 한 파일로 이어 붙일 필요가 없습니다. 백엔드가 두 JSON 을 각각 프롬프트에 넣습니다.
-- 판정마다 필요한 필드만 잘라 보냅니다. 자격 판정에는 자격 조항과 제출물, WBS 에는 요구사항 ID·분류·이름·쪽만 보내는 식입니다. 공고 전체(약 90KB)를 그대로 보내면 응답이 너무 느려서 이렇게 나눴습니다.
+- The Parse problem from 3-2 disappears. The previous stage's JSON goes into the prompt as a plain string instead of being uploaded as a file, so the structure stays intact.
+- Judgments that put two documents side by side (company card ↔ notice, WBS ↔ notice) no longer need concatenating into one file. The backend puts each JSON into the prompt separately.
+- Each judgment gets only the fields it needs cut out and sent: the eligibility clauses and the deliverables for eligibility, only requirement ID, category, name, and page for the WBS. Sending the whole notice (about 90KB) made the response far too slow, which is why we split it up.
 
-프롬프트 안의 `[파일 입력 계약]` 절(앞 영역 = 회사/WBS, 뒤 영역 = 공고)은 그대로 남겨 뒀습니다. Studio 의 Instruct 노드가 나중에 정상 동작하면 백엔드를 거치지 않고도 같은 설정으로 돌릴 수 있게 하려는 것입니다.
+We left the `[파일 입력 계약]` section in the prompts as it was (first region = company/WBS, second region = notice). The point is that if Studio's Instruct node starts working later, the same configuration can run without going through the backend.
 
-백엔드 쪽 구현과 호출 횟수는 `backend/HANDOFF-solar-judgment.md` 에 있습니다.
+The backend implementation and the call counts are in `backend/HANDOFF-solar-judgment.md`.
 
-### 데모 입력 (`plan/Solar_for_Bid/06_데모입력/`)
+### Demo inputs (`plan/Solar_for_Bid/06_데모입력/`)
 
-| 무엇 | 파일 |
+| What | File |
 |---|---|
-| 회사 서류 | `*_다온피엠씨_가상.pdf` 8종 (가상 회사) |
-| 우리 제안서 | `제안서_다온피엠씨_가상.pdf`. 가상 문서이고 금지 표현 3곳을 일부러 넣어 뒀습니다. 요구사항 23건만 다루므로 33건 기준으로 10건(`SFR-008`·`PER-001`·`DAR-004`·`SER-004`·`TQR-001~002`·`PSR-001~004`)이 미대응으로 남습니다 |
+| Company documents | 8 files matching `*_다온피엠씨_가상.pdf` (a fictional company) |
+| Our proposal | `제안서_다온피엠씨_가상.pdf`. A fictional document, with 3 forbidden phrases planted in it on purpose. It covers only 23 requirements, so against the 33 total, 10 of them (`SFR-008`·`PER-001`·`DAR-004`·`SER-004`·`TQR-001~002`·`PSR-001~004`) stay unaddressed |
 
-공고 문서 두 개는 레포에 두지 않습니다. `.gitignore` 에서 `*.hwp` 를 막아 뒀습니다 (조달 원본은 기밀이라 올리지 않기로 했습니다). 로컬에 두고 경로로 올립니다.
+The two notice documents are not kept in the repo. `.gitignore` blocks `*.hwp` (procurement originals are confidential, so we decided not to commit them). Keep them locally and upload them by path.
 
-| 무엇 | 로컬 파일 |
+| What | Local file |
 |---|---|
-| 제안요청서 | `제안요청서.hwp` — KISTI 「AX 진단-컨설팅 통합 서비스 개발」, 77쪽, 요구사항 33건 |
-| 입찰공고서 | `입찰공고서(재공고).hwp` — 마감·부수·전자입찰 여부는 여기에만 있습니다. 제안요청서는 「입찰관련 안내 : 입찰공고문 참조」로 넘깁니다 |
+| RFP | `제안요청서.hwp` — KISTI 「AX 진단-컨설팅 통합 서비스 개발」 (AX diagnosis and consulting integrated service development), 77 pages, 33 requirements |
+| Bid notice | `입찰공고서(재공고).hwp` — the deadline, the copy count, and the electronic-bidding flag exist only here. The RFP hands them off with 「입찰관련 안내 : 입찰공고문 참조」 (for bidding information, refer to the bid notice) |
 
-데모 공고 정보: 관리번호 `R26BK01673157-000`, 추정가격 63,636,364원, 전자입찰(나라장터), 접수 2026.08.20 09:00 ~ 08.24 10:30, 기술평가 08.27 14:00, 공동수급 5개사 이하·지분 10% 이상, 하도급 불가, 직접생산확인증명 세부품명번호 `8111159801`.
+Demo notice details: reference number `R26BK01673157-000`, estimated price 63,636,364 KRW, electronic bidding (나라장터), submission window 2026.08.20 09:00 ~ 08.24 10:30, technical evaluation 08.27 14:00, consortium of at most 5 companies with a stake of 10% or more, no subcontracting, direct production confirmation with detail item number `8111159801`.
 
-## 5. 에이전트 11개
+## 5. The 11 agents
 
-### 공고 해부 (classify-extract, 5개)
+### Notice parsing (classify-extract, 5)
 
-같은 원본을 다섯이 각자 읽고 결과를 합쳐 `ANNOUNCEMENT_CORE_V1` 을 만듭니다. 분류는 `BUILD_IMPLEMENTATION_RFP` / `PMO_PIA_SERVICE_SPEC` / `OTHER_REVIEW_REQUIRED` 셋이고 갈래마다 추출 스키마가 다릅니다.
+Five agents each read the same original and their results are merged into `ANNOUNCEMENT_CORE_V1`. There are three classes, `BUILD_IMPLEMENTATION_RFP` / `PMO_PIA_SERVICE_SPEC` / `OTHER_REVIEW_REQUIRED`, and each branch has its own extraction schema.
 
-| Studio 이름 | 화면 | 이번에 바뀐 것 |
+| Studio name | Screen | What changed this time |
 |---|---|---|
 | 01-Overview | — | — |
 | 02-Scope-Context | — | — |
-| 03-Requirements | ⑦ 요구사항 체크리스트 | `note_clause`(※ 단서)와 `source_page`(정수)를 별도 열로 분리 |
-| 04-Eligibility-Submission | ⑥ 파일제출 · ⑨ 제출준비 | `copies`·`validity_basis`·`submission_method` 분리, `submission_constraints` 추가 |
-| 05-Conditions-Evaluation | 배점 | — |
+| 03-Requirements | ⑦ Requirements checklist | Split `note_clause` (※ caveat) and `source_page` (integer) into separate columns |
+| 04-Eligibility-Submission | ⑥ File submission · ⑨ Submission preparation | Split out `copies`, `validity_basis`, and `submission_method`, added `submission_constraints` |
+| 05-Conditions-Evaluation | Scoring | — |
 
-### 회사 (classify-extract, 1개)
+### Company (classify-extract, 1)
 
-| Studio 이름 | 화면 | 비고 |
+| Studio name | Screen | Notes |
 |---|---|---|
-| Company Card Builder | ① 회사 등록 · ② 회사 카드 | 신규. 갈래 9개 + 미확정 1개 |
+| Company Card Builder | ① Company registration · ② Company card | New. 9 branches plus 1 undetermined |
 
-`backend/.env.example` 의 `STUDIO_AGENT_BIZ_REG` 같은 서류별 에이전트 8개를 하나로 합친 것입니다. 서류 종류마다 에이전트를 따로 부르지 않아도 되고(실행 10회 제한에서 이게 큽니다), 직접생산확인증명서 갈래는 이 에이전트에만 있습니다. KISTI 공고의 참가자격이 그 서류를 요구합니다.
+It folds the 8 per-document agents in `backend/.env.example`, such as `STUDIO_AGENT_BIZ_REG`, into one. You no longer call a separate agent for every document type, which counts for a lot under the 10-run limit, and the direct production confirmation certificate branch exists only in this agent. The eligibility rules in the KISTI notice demand that document.
 
-### 판정·산출 (instruct, 5개)
+### Judgment and output (instruct, 5)
 
-| Studio 이름 | 화면 | 비고 |
+| Studio name | Screen | Notes |
 |---|---|---|
-| Eligibility Screener | ③④ 공고 탐색 | `Company Bid Fit Assessment` 를 대체 |
-| WPS CP Decomposer | — | 그대로 |
-| WBS Planner | ⑧ WBS 좌측 표 | 신규 |
-| Critical Path and Cost | ⑧ 임계경로 · M/M 원가 | 신규 |
-| Submission Auditor | ⑨ 제출준비 | `Submission Package Compliance` 를 대체 |
+| Eligibility Screener | ③④ Notice discovery | Replaces `Company Bid Fit Assessment` |
+| WPS CP Decomposer | — | Unchanged |
+| WBS Planner | ⑧ WBS table on the left | New |
+| Critical Path and Cost | ⑧ Critical path · M/M cost | New |
+| Submission Auditor | ⑨ Submission preparation | Replaces `Submission Package Compliance` |
 
-대체한 이유:
+Why we replaced them:
 
-- Company Bid Fit Assessment 는 `GO` / `NO-GO` 한 단어만 냅니다. 화면 ③④는 「충족 5」와 항목별 체크, 근거 파일, 「제외 124건」의 사유와 쪽번호를 그리는데 한 단어로는 안 됩니다. Eligibility Screener 는 조항마다 `충족 / 미충족 / [확인필요]` 와 쪽번호를 냅니다.
-- Submission Package Compliance 에는 부수, 유효기간, 리드타임, 보완요청 문장이 없고 금지 표현 검사도 없습니다. Submission Auditor 가 `OUR_PROPOSAL` 갈래를 더해 채웠습니다.
+- Company Bid Fit Assessment emits one word, `GO` or `NO-GO`. Screens ③ and ④ draw 「충족 5」 (5 met), a check per item, the evidence file, and the reason and page number behind 「제외 124건」 (124 excluded), and one word cannot carry that. Eligibility Screener emits `충족 / 미충족 / [확인필요]` and a page number for every clause.
+- Submission Package Compliance has no copy count, no validity period, no lead time, no rework-request sentence, and no forbidden-phrase check. Submission Auditor added the `OUR_PROPOSAL` branch and filled those in.
 
-8/23 에 백엔드의 워크플로 에이전트 층이 정리되면서 판정은 백엔드가 Solar Chat API 로 직접 합니다. 자세한 건 `backend/HANDOFF-solar-judgment.md` 를 보세요.
+On 8/23, with the backend's workflow agent layer sorted out, judgment is done by the backend calling the Solar Chat API directly. See `backend/HANDOFF-solar-judgment.md` for the detail.
 
-### 대체돼서 안 쓰는 것
+### Replaced, no longer used
 
-`Company Bid Fit Assessment.json`, `Submission Package Compliance.json`. 배선을 옮길 때까지 참고용으로 남겨 둡니다.
+`Company Bid Fit Assessment.json`, `Submission Package Compliance.json`. Kept for reference until the wiring is moved over.
 
-## 6. 백엔드 탭 계약과의 대조
+## 6. Cross-checked against the backend tab contract
 
-백엔드가 `kitPages.js`·`kitCells.js` 로 탭 9개를 정의해 뒀습니다. 에이전트 출력이 그 열에 어떻게 들어가는지 맞춰 봤습니다. 9개 중 7개는 1:1 이고, 둘은 백엔드만 아는 값이 필요합니다.
+The backend defines 9 tabs in `kitPages.js` and `kitCells.js`. We lined up how the agent output lands in those columns. 7 of the 9 are 1:1, and two need a value only the backend knows.
 
-| 탭 | 백엔드가 요구하는 것 | 에이전트 출력 | 비고 |
+| Tab | What the backend needs | Agent output | Notes |
 |---|---|---|---|
-| compliance | 요구사항ID·분류·명칭·단서·근거 페이지 | 03 → `requirement_id`·`requirement_category`·`requirement_name`·`note_clause`·`source_page` | 그대로 |
-| wbs | ID·작업패키지·산출물·선행·기간·M/M·근거요구·P | `WBS_V1.work_packages[]` 전 필드 | 배열 둘만 문자열로 조인 |
-| criticalpath | 작업 · 남은 일 + tone | `critical_path[].item`·`due_label`·`severity` | severity 를 백엔드 tone 어휘로 맞춤 |
-| cost | value·unit·caption·note·evidence | `cost_estimate.total_mm`·`by_grade[]`·`amount_note`·`references[]` | 그대로 |
-| constraints | banner text + evidence | 04 → `constraint_*` 스칼라 조립 | 평탄화가 여기서 쓰임 |
-| checklist | 서류·부수·유효기간·상태·보완요청/리드타임·P | `SUBMISSION_AUDIT_V1.documents[]` | 보완요청+리드타임만 한 칸으로 합침 |
-| rework | title·chip·detail·action | `rework_requests[]` | 그대로 |
-| phrases | body·emphasis·evidence | `forbidden_expressions` | 그대로 |
-| submitfiles | title·filename·state·label | `04.submission_requirements[].name` + 업로드 파일명 | 파일명은 백엔드가 채움 |
+| compliance | Requirement ID, category, name, caveat, evidence page | 03 → `requirement_id`·`requirement_category`·`requirement_name`·`note_clause`·`source_page` | As is |
+| wbs | ID, work package, deliverable, predecessor, duration, M/M, source requirement, P | Every field of `WBS_V1.work_packages[]` | Two arrays joined into strings |
+| criticalpath | Task · days remaining, plus tone | `critical_path[].item`·`due_label`·`severity` | severity mapped onto the backend's tone vocabulary |
+| cost | value·unit·caption·note·evidence | `cost_estimate.total_mm`·`by_grade[]`·`amount_note`·`references[]` | As is |
+| constraints | banner text plus evidence | 04 → assembled from the `constraint_*` scalars | This is where the flattening pays off |
+| checklist | Document, copies, validity period, status, rework request / lead time, P | `SUBMISSION_AUDIT_V1.documents[]` | Only rework request and lead time are merged into one cell |
+| rework | title·chip·detail·action | `rework_requests[]` | As is |
+| phrases | body·emphasis·evidence | `forbidden_expressions` | As is |
+| submitfiles | title·filename·state·label | `04.submission_requirements[].name` plus the uploaded filename | The backend fills in the filename |
 
-`verdict` 도 마찬가지입니다. `headline`·`unverified` 는 `ELIGIBILITY_SCREENING_V1` 에서 그대로 오지만 `reasons[].docId` 와 `confidence` 는 에이전트가 모릅니다. `docId` 는 업로드한 쪽이 알고, `confidence` 는 Studio 응답의 `content[].additional_values` 에 실려 옵니다.
+`verdict` is the same story. `headline` and `unverified` come straight from `ELIGIBILITY_SCREENING_V1`, but the agent does not know `reasons[].docId` or `confidence`. `docId` is known by whoever did the upload, and `confidence` rides in on `content[].additional_values` in the Studio response.
 
-어휘는 백엔드 fixture 와 맞춰 뒀습니다. 상태는 `준비됨 / 보완 필요 / 미확인`, tone 은 `danger / warn / default`, 기간 미상은 `미 명시`. 같은 낱말이라 변환 없이 들어갑니다.
+The vocabulary is matched to the backend fixtures. Status is `준비됨 / 보완 필요 / 미확인` (ready / needs work / unverified), tone is `danger / warn / default`, and an unknown duration is `미 명시`. The words are identical, so they go in with no conversion.
 
-## 7. 프롬프트 공통 규칙
+## 7. Rules common to every prompt
 
-열한 노드 모두에 넣어 둔 것들입니다.
+These are written into all eleven nodes.
 
-- 판정 어휘 고정. 항목은 `충족 / 미충족 / [확인필요]` 셋, 건 판정은 `제외 / 추천` 둘. `[확인필요]` 는 제외 사유가 아닙니다. 못 읽어서 기회를 지우는 쪽이 더 나쁩니다.
-- 근거 강제. 모든 판정에 회사 서류 이름과 공고 쪽번호를 붙입니다. 쪽을 모르면 `0` 으로 두고 추측하지 않습니다.
-- 지어내지 않기. 없는 실적, 자격, 기간, 유효기간을 만들지 않습니다. WBS 기간은 문서에 없으면 `미 명시` 로 둡니다.
-- 법령 해석 금지. 조문 이름과 번호만 그대로 옮깁니다.
-- 투찰가 금지. M/M 은 `is_recommendation: true` 가 붙은 추천값이고 금액으로 환산하지 않습니다.
-- 문장을 고쳐 주지 않기. 금지 표현은 걸린 자리만 짚습니다. 고치는 건 사람이 합니다.
-- 검산 블록. WBS Planner 는 요구사항 미연결을, Eligibility Screener 는 충족/미충족/미확인 개수를 실제로 세서 냅니다.
+- Fixed judgment vocabulary. An item is one of `충족 / 미충족 / [확인필요]`; a notice is one of `제외 / 추천` (excluded / recommended). `[확인필요]` is not a reason to exclude. Erasing an opportunity because we could not read it is worse.
+- Evidence is mandatory. Every judgment carries the company document name and the page number in the notice. If the page is unknown we leave `0` and do not guess.
+- No inventing. We do not manufacture track records, qualifications, durations, or validity periods that do not exist. If the document does not state a WBS duration, it stays `미 명시`.
+- No interpreting statutes. We copy the article name and number as they stand, nothing more.
+- No bid prices. M/M is a recommendation carrying `is_recommendation: true`, and it is never converted into an amount.
+- No rewriting sentences. For forbidden phrases we point at the spot that was caught. Fixing it is a person's job.
+- A verification block. WBS Planner actually counts unlinked requirements, and Eligibility Screener actually counts how many are met, unmet, and unverified.
 
-## 8. 앞으로
+## 8. What comes next
 
-지금 구조가 다음 단계를 싸게 만들어 줍니다.
+The current structure makes the next step cheap.
 
-서류 갈래를 늘리는 비용이 에이전트 하나입니다. Company Card Builder 에 갈래를 더하고 `build_agents.py` 를 다시 돌리면, 백엔드의 분류 규칙과 화면은 그대로 둔 채 새 서류를 읽을 수 있습니다. 직접생산확인증명서가 지금 그 자리에 갈래만 정의된 채로 있습니다.
+Adding a document branch costs one agent. Add a branch to Company Card Builder, run `build_agents.py` again, and a new document type can be read without touching the backend's classification rules or the screens. The direct production confirmation certificate sits in exactly that spot right now, with only its branch defined.
 
-공고 종류도 마찬가지입니다. 지금은 용역 RFP 와 입찰공고서를 보고 있는데, Classify 갈래를 늘리고 그 갈래의 추출 스키마를 붙이면 물품이나 공사 공고로 넓어집니다. `SERVICE_OPERATION_RFP` 를 추가할 때 실제로 그렇게 했습니다.
+Notice types work the same way. Today we look at service RFPs and bid notices; add a Classify branch and attach an extraction schema for it and the coverage widens to goods or construction notices. That is exactly what we did when we added `SERVICE_OPERATION_RFP`.
 
-판정 층은 프롬프트가 파일이라 확장이 더 쌉니다. 낙찰 사후 추적이나 발주기관 카드 같은 판정이 생기면, JSON 을 하나 더 두고 백엔드의 프롬프트 맵에 등록하면 됩니다. 코드는 바뀌지 않습니다.
+The judgment layer is cheaper still to extend, because the prompts are files. If a new judgment comes along, post-award tracking or an agency card, you add one more JSON and register it in the backend's prompt map. The code does not change.
 
-Instruct 노드가 이 계정에서 열리면 판정 층을 Studio 안으로 되돌릴 수 있습니다. 그때를 위해 프롬프트의 파일 입력 계약과 JSON 출력 계약을 그대로 두었습니다. 백엔드로 옮긴 것은 실행 위치일 뿐, 판정 논리는 이 폴더의 JSON 에 그대로 남아 있습니다.
+If the Instruct node opens up on this account, the judgment layer can move back inside Studio. We left the file input contract and the JSON output contract in the prompts intact for that day. What moved to the backend is only where it runs; the judgment logic still sits in the JSON in this folder.

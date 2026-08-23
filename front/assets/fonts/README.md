@@ -1,16 +1,18 @@
 # Pretendard
 
-디자인 원본(Figma `정션2026`)이 **Pretendard**를 쓴다. 폰트 파일은 라이선스상 재배포는 가능하지만
-레포에 넣을지는 팀이 정할 일이라 **비워 두었다.**
+The design source (Figma `정션2026`) uses Pretendard. The license permits redistribution, but
+whether to commit the font files is the team's call, so this folder is left empty.
 
-지금 상태에서도 앱은 돈다 — `fontFamily: 'Pretendard'`가 없으면 Flutter가 시스템 한글 폰트로
-떨어지고, 크기·자간·굵기는 `lib/theme/tokens.dart`가 그대로 잡고 있어 레이아웃은 어긋나지 않는다.
+The app runs fine as is. Without `fontFamily: 'Pretendard'` resolving, Flutter falls back to the
+system Korean font, and since `lib/theme/tokens.dart` still fixes size, letter spacing, and weight,
+the layout does not shift.
 
-## 넣으려면
+## To add them
 
-1. https://github.com/orioncactus/pretendard 릴리스에서 OTF를 받는다 (OFL 1.1)
-2. 이 폴더에 `Pretendard-Medium.otf` · `Pretendard-SemiBold.otf` · `Pretendard-Bold.otf`를 둔다
-3. `pubspec.yaml`의 `fonts:` 블록 주석을 푼다
-4. `flutter pub get`
+1. Download the OTFs from the https://github.com/orioncactus/pretendard releases (OFL 1.1)
+2. Put `Pretendard-Medium.otf`, `Pretendard-SemiBold.otf`, and `Pretendard-Bold.otf` in this folder
+3. Uncomment the `fonts:` block in `pubspec.yaml`
+4. Run `flutter pub get`
 
-🔴 `Inter`는 로고 글자(`Solar for Bid`)에만 쓴다 — 없으면 시스템 산세리프로 떨어진다.
+`Inter` is used only for the logo text (`Solar for Bid`). Without it, that falls back to the system
+sans-serif.
