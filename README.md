@@ -1,48 +1,48 @@
 # Solar for Bid
 
-공공 입찰 공고를 대신 읽고, 낼 수 있는 건을 골라, 제안 착수에 필요한 것을 만들어 냅니다.
+Reads public procurement notices for you, picks the ones you can actually bid on, and produces what you need to start writing the proposal.
 
-회사 서류를 한 묶음 올리면 참가자격이 맞는 공고가 추려집니다. 응찰하기로 정한 건은 요구사항 체크리스트와 WBS, 임계경로, 투입 M/M 추정, 제출 서류 점검표까지 이어집니다. 마지막 화면이 답하는 질문은 하나입니다. 무엇을 언제까지 어디에 내야 하는가.
+Upload your company documents once and the notices that match your eligibility get shortlisted. For the ones you decide to pursue, you get a requirements checklist, a WBS, a critical path, an effort estimate in man-months, and a submission checklist. The last screen answers a single question: what has to be submitted, by when, and where.
 
-JunctionX Korea 2026 · Upstage 트랙 · 팀 soft icecream (기획 정운, 개발 이용현·길정민, 디자인 주예진)
+JunctionX Korea 2026 · Upstage track · Team soft icecream (planning Jeong-un, engineering Yonghyun Lee and Jeongmin Kil, design Yejin Joo)
 
-## 왜 만들었나
+## Why we built it
 
-중소 SI·PMO 회사가 입찰 한 건을 준비하는 일은 100쪽짜리 제안요청서를 처음부터 끝까지 읽는 데서 시작합니다. 참가자격을 채우는지, 제출물이 몇 종이고 언제까지 몇 부인지, 요구사항이 몇 건인지, 사람을 얼마나 붙여야 하는지가 문서 곳곳에 흩어져 있습니다. 나라장터에는 용역 공고만 2주에 5천 건 넘게 올라오니, 낼 수 있는 건을 추리는 일부터 하루가 갑니다.
+Preparing a single public bid at a small SI or PMO firm starts with reading a hundred-page RFP end to end. Whether you meet the eligibility rules, how many copies of which documents are due and when, how many requirements there are, how many people you need to staff, all of it is scattered across the document. Korea's national procurement portal posts more than five thousand service notices in a two-week window, so just narrowing down what you can bid on eats a day.
 
-읽는 일 자체는 기계가 잘합니다. 어려운 쪽은 기계가 틀렸을 때입니다. 입찰은 서류 한 장이 비면 그 자리에서 떨어지는 판이라 "아마 맞을 것"은 쓸모가 없습니다.
+Machines are good at the reading part. The hard part is what happens when the machine is wrong. In bidding, one missing document disqualifies you on the spot, so "probably right" is worth nothing.
 
-그래서 값을 뽑는 일만큼 근거를 남기는 데 공을 들였습니다. 화면의 모든 숫자에는 어느 서류 몇 쪽에서 나왔는지가 따라붙습니다. 읽어 내지 못한 칸은 0으로 메우지 않고 비워 둔 채 미확인이라고 적습니다. 판정이 서지 않으면 후보에서 지우는 대신 사람에게 넘깁니다.
+That is why we spent as much effort on keeping evidence as on extracting values. Every number on screen carries the document and page it came from. Fields we could not read are left empty and labeled unverified rather than filled with zero. When a judgment cannot be made, the notice goes to a human instead of being dropped from the list.
 
-## 화면 다섯 장
+## Five screens
 
-| | 화면 | 하는 일 |
+| | Screen | What it does |
 |---|---|---|
-| 1 | 회사 등록 | 사업자등록증, 실적증명서 같은 서류를 끌어다 놓으면 종류를 갈라 값을 뽑고, 오른쪽 회사 카드가 채워집니다 |
-| 2 | 회사 카드 | 공공 PMO 실적, 기술인력, 신용등급, 최대 단일 계약을 근거 파일과 함께 보여 줍니다 |
-| 3 | 공고 탐색 | 「N건 중 M건」이 헤드라인입니다. 걸러 낸 건은 사유를 적어 함께 보여 줍니다. 응찰 여부는 사람이 찍습니다 |
-| 4 | 응찰 준비중인 공고 | 사람이 고른 건만 남습니다. 가장 급한 마감을 영업일로 셉니다 |
-| 5 | Bid Kit | 파일 제출, 요구사항 체크리스트, WBS와 임계경로, 제출 준비. 탭 구성과 버튼 문구까지 서버가 내려 줍니다 |
+| 1 | Company registration | Drop in documents like a business registration certificate or a track-record statement. Each one is classified, values are extracted, and the company card on the right fills in |
+| 2 | Company card | Public PMO track record, technical staff, credit rating, largest single contract, each shown with the source file |
+| 3 | Notice discovery | The headline is "M of N". Every excluded notice carries the reason it was excluded. Whether to bid is a human decision |
+| 4 | Notices in preparation | Only what a person picked. The header counts business days to the nearest deadline |
+| 5 | Bid Kit | File submission, requirements checklist, WBS and critical path, submission readiness. The server decides the tab layout and even the button labels |
 
-공고 하나를 해부하고 판정하는 데 몇 분이 걸립니다. 커밋해 둔 실행 기록으로는 캐시 없이 처음부터 돌 때 10분 22초, Studio 결과가 이미 있을 때 4분 11초였습니다. 그동안 화면은 4초마다 다시 물어 지금 어느 단계인지 알려 줍니다. 도는 원 하나만 띄워 놓고 기다리게 하지 않았습니다.
+Parsing and judging one notice takes a few minutes. In the runs we committed, a cold run took 10 minutes 22 seconds and a run with cached Studio results took 4 minutes 11 seconds. While it runs, the screen re-asks every four seconds and names the current stage. We did not want to leave people staring at a spinner.
 
-## 5분 만에 돌려보기
+## Running it in five minutes
 
-필요한 것은 Node 20.11 이상, Flutter(Dart SDK 3.11.5 이상), Python 3입니다. 개발은 Node 22.23과 Flutter 3.47.1에서 했습니다.
+You need Node 20.11 or newer, Flutter (Dart SDK 3.11.5 or newer), and Python 3. We developed on Node 22.23 and Flutter 3.47.1.
 
 ```bash
-# 백엔드
-cp backend/.env.example backend/.env      # 키가 비어 있어도 그대로 뜹니다
-cd backend && npm install && npm run dev  # http://localhost:3000, 부팅할 때 마이그레이션까지
+# Backend
+cp backend/.env.example backend/.env      # it boots fine with empty keys
+cd backend && npm install && npm run dev  # http://localhost:3000, migrations run on boot
 
-# 프론트 (새 터미널)
+# Frontend (new terminal)
 cd front && flutter pub get
 flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000
 ```
 
-API 문서는 `http://localhost:3000/docs`에 Swagger UI로 떠 있습니다.
+API docs are served as Swagger UI at `http://localhost:3000/docs`.
 
-웹 산출물로 띄우려면 이렇게 합니다.
+To serve a built web bundle instead:
 
 ```bash
 cd front
@@ -51,31 +51,31 @@ flutter build web --release --no-web-resources-cdn \
 python3 -m http.server 8123 --directory build/web
 ```
 
-`API_BASE_URL`은 컴파일 타임 상수라 한 번 빌드하면 주소를 바꿀 수 없습니다. `--no-web-resources-cdn`을 빼면 CanvasKit을 gstatic에서 받아오므로, 네트워크가 없는 자리에서는 흰 화면이 됩니다.
+`API_BASE_URL` is a compile-time constant, so the address is baked in once you build. Drop `--no-web-resources-cdn` and the page pulls CanvasKit from gstatic, which means a blank screen anywhere without network.
 
-레포 루트 `.claude/launch.json`에 세 항목을 정의해 뒀습니다.
+Three entries are defined in `.claude/launch.json` at the repo root.
 
-| 이름 | 명령 | 포트 |
+| Name | Command | Port |
 |---|---|---|
 | `backend` | `node backend/src/server.js` | 3000 |
 | `front-web` | `python3 -m http.server 8123 --directory front/build/web` | 8123 |
 | `mock-upstage` | `node backend/scripts/mock-upstage.js` | 3999 |
 
-### 키가 없어도 끝까지 돕니다
+### It runs end to end without any API key
 
-API 키를 하나도 넣지 않아도 서버는 뜨고 화면은 끝까지 돌아갑니다. 대신 지금 보고 있는 것이 실호출이 아니라는 사실을 응답이 스스로 밝힙니다(`meta.cached`, `meta.listSource`, `meta.source`). 데모에서 실시간이라고 말하기 전에 이 필드를 보면 됩니다.
+The server boots and every screen works even with no keys at all. What comes back tells you it is not a live call, through `meta.cached`, `meta.listSource`, and `meta.source`. Check those fields before claiming a demo is live.
 
-서류 업로드는 `backend/fixtures/extract/`의 표본으로, 공고 해부와 회사 카드는 `backend/fixtures/studio/`에 담아 둔 Studio 실물 출력으로, 공고 목록은 `backend/fixtures/screening.demo.json`으로 떨어집니다.
+Document upload falls back to the samples in `backend/fixtures/extract/`, notice parsing and the company card fall back to the real Studio output stored in `backend/fixtures/studio/`, and the notice list falls back to `backend/fixtures/screening.demo.json`.
 
-여기에 더해 `backend/data/solar-for-bid.sqlite`에 실제 파이프라인을 완주한 케이스 두 건을 커밋해 두었습니다. 클론 직후에도 Bid Kit 아홉 탭이 채워진 채로 열립니다.
+On top of that, `backend/data/solar-for-bid.sqlite` ships with two cases that went through the real pipeline. A fresh clone opens with all nine Bid Kit tabs already filled.
 
-- `R25BK00645031-000` 체육진흥투표권사업 온라인발매 결제서비스(PG) 대행사 선정
-- `R26BK01673157-000` AX 진단-컨설팅 통합 서비스 개발 (한국과학기술정보연구원)
+- `R25BK00645031-000` Payment gateway agency for the sports promotion voting online sales business
+- `R26BK01673157-000` AX diagnosis and consulting integrated service development (KISTI)
 
-Studio 무료 실행은 에이전트마다 10회뿐이라 리허설을 몇 번 돌리면 금세 바닥납니다. 그래서 Studio Jobs API와 Solar Chat을 흉내 내는 서버를 하나 두었습니다. 아래 네 줄을 `backend/.env`에 넣고 띄우면 코드는 전부 실제 경로로 도는데 응답만 픽스처로 옵니다.
+Studio gives ten free runs per agent, which a few rehearsals burn through. So we wrote a server that imitates the Studio Jobs API and Solar Chat. Put the four lines below in `backend/.env` and start it, and the code takes every real path while the responses come from fixtures.
 
 ```bash
-node backend/scripts/mock-upstage.js   # 포트 3999
+node backend/scripts/mock-upstage.js   # port 3999
 ```
 
 ```
@@ -85,106 +85,104 @@ SOLAR_CHAT_URL=http://localhost:3999/v1/chat/completions
 STUDIO_POLL_INTERVAL_MS=500
 ```
 
-### 키를 넣을 때
+### When you do add keys
 
-읽는 파일은 `backend/.env` 하나입니다. 레포 루트에 `.env`를 두면 아무도 읽지 않습니다.
+`backend/.env` is the only file that gets read. A `.env` at the repo root is read by nobody.
 
-`backend/.env.example`에는 Studio 에이전트 ID 14개가 이미 채워져 있습니다. 손으로 넣을 것은 셋뿐입니다.
+`backend/.env.example` already has the fourteen Studio agent IDs filled in. Only three values are yours to add.
 
-| 키 | 비어 있으면 |
+| Key | If empty |
 |---|---|
-| `UPSTAGE_API_KEY` | 서류 업로드가 픽스처 응답으로 떨어집니다 |
-| `UPSTAGE_AGENT_API_KEY` | 공고 해부와 회사 카드가 픽스처로 떨어지고, 판정은 503입니다 |
-| `DATA_GO_KR_SERVICE_KEY` | 공고 목록이 캐시본입니다. 첨부 수집은 이 키 없이도 됩니다 |
+| `UPSTAGE_API_KEY` | Document upload returns fixture responses |
+| `UPSTAGE_AGENT_API_KEY` | Notice parsing and the company card fall back to fixtures, and judgment returns 503 |
+| `DATA_GO_KR_SERVICE_KEY` | The notice list is a cached copy. Attachment collection works without this key |
 
-키가 둘로 갈린 것은 계정이 다르기 때문입니다. 팀 공용 `UPSTAGE_API_KEY`는 서류 업로드에 쓰고, 공고 해부 5종과 회사 카드, Solar 판정은 에이전트를 만든 개인 Studio 계정 키인 `UPSTAGE_AGENT_API_KEY`를 씁니다. 서로 대신하지 못합니다.
+There are two keys because there are two accounts. The shared `UPSTAGE_API_KEY` is for document upload, while the five notice-parsing agents, the company card, and Solar judgment use `UPSTAGE_AGENT_API_KEY`, the personal Studio account key that owns those agents. Neither substitutes for the other.
 
-## 설계에서 중요했던 것
+## What mattered in the design
 
 ```
 Flutter (front)
-   │  REST · JSON 봉투
+   │  REST, JSON envelopes
 Node/Express (backend) ── SQLite
    │
-   ├─ Upstage Studio Agents   문서를 읽는다 (Parse → Classify → Extract)
-   └─ Upstage Solar Chat API  판정한다 (자격 · 계획 · 제출 검사)
+   ├─ Upstage Studio Agents   read documents (Parse → Classify → Extract)
+   └─ Upstage Solar Chat API  judge (eligibility, planning, submission review)
 ```
 
-### 화면은 판단하지 않습니다
+### The screen does not decide anything
 
-Bid Kit은 서버가 내려 준 봉투를 그대로 그립니다. 탭 구성(`meta.kitPages`), 표의 열과 행, 상태 칩의 색(`tone`), 버튼 문구까지 서버가 정합니다. 화면 쪽에 "준비됨이면 초록" 같은 규칙을 두지 않았기 때문에 탭이 늘거나 문구가 바뀌어도 화면 코드는 그대로입니다. 오류 문장도 서버가 완성해 내려보내고 프론트는 그것을 렌더할 뿐입니다. 응답의 바깥 구조는 `plan/Solar_for_Bid/04_계약/`의 봉투 두 벌로 얼려 두었습니다.
+Bid Kit draws exactly what the server sends. Tab layout (`meta.kitPages`), table columns and rows, the tone of a status chip, button labels, the server decides all of it. Because there is no rule like "green if ready" living in the UI, adding a tab or changing a phrase does not touch screen code. Error messages are composed on the server too, and the frontend just renders them. The outer shape of every response is frozen by the two envelope schemas in `plan/Solar_for_Bid/04_계약/`.
 
-### Upstage를 두 층으로 나눠 씁니다
+### Upstage is used in two layers
 
-문서를 읽는 층은 Studio 에이전트가 맡습니다. 전부 Parse → Classify → Extract 구조이고, HWP를 변환 없이 그대로 받는 점이 컸습니다. 77쪽 2MB 파일이 Parse에서 바로 열렸습니다.
+Studio agents handle the reading layer. All of them are Parse → Classify → Extract, and taking HWP files with no conversion mattered a lot. A 77-page, 2MB file opened in Parse directly.
 
-공고는 다섯 에이전트가 같은 원본을 각자 읽고 결과를 합칩니다. 회사 서류는 화면 ①에서 갈래별 에이전트 여덟 종이 한 장씩 읽고, 이 여덟을 하나로 합친 Company Card Builder는 `POST /api/company-card/build`에 따로 열어 두었습니다.
+Five agents each read the same notice and their results are merged. Company documents are read one at a time by eight per-type agents on screen 1, and Company Card Builder, which folds those eight into one, is exposed separately at `POST /api/company-card/build`.
 
-판정하는 층은 백엔드가 Solar Chat API를 직접 부릅니다. 처음에는 Studio의 Instruct 노드가 이 일을 하도록 설계했는데, 이 계정에서는 Instruct가 프롬프트와 무관하게 Upstage 기본 예시 응답만 돌려줬습니다. 에이전트를 셋 바꿔 보고, 입력을 절반으로 줄여 보고, 설정을 새 버전으로 저장해 보고, HTML 대신 실물 PDF도 넣어 봤지만 네 번의 job이 전부 같은 64자를 냈습니다. 설정에서 손댈 수 있는 문제가 아니라고 판단하고, 프롬프트는 그대로 둔 채 실행 위치만 옮겼습니다. 백엔드가 `agent/*.json`의 Instruct 노드 프롬프트를 읽어 `solar-pro3`에 보냅니다.
+The judgment layer is the backend calling the Solar Chat API directly. We originally designed Studio's Instruct nodes to do this, but on this account Instruct returned Upstage's default sample response no matter what the prompt said. We swapped agents three times, halved the input, saved the configuration as a new version, and fed it a real PDF instead of HTML. Four jobs all came back with the same 64 characters. We concluded it was not something configuration could fix, left the prompts alone, and moved only where they run. The backend reads the Instruct node prompt out of `agent/*.json` and sends it to `solar-pro3`.
 
-옮기면서 다른 문제 하나가 같이 풀렸습니다. 앞 단계 JSON을 Studio에 파일로 올리면 Document Parse가 그것을 문서로 보고 레이아웃을 분석하는 바람에 따옴표와 중괄호가 사라집니다. Chat API에는 JSON을 문자열 그대로 넣으니 구조가 깨지지 않고, 두 문서를 맞대는 판정을 한 파일로 이어 붙일 필요도 없어졌습니다. 이 과정은 `agent/README.md` 3-1부터 3-3절에 남겨 두었습니다.
+Moving it solved a second problem for free. When you upload an intermediate JSON to Studio as a file, Document Parse treats it as a document and runs layout analysis, which strips the quotes and braces. The Chat API takes JSON as a plain string, so nothing gets mangled, and judgments that compare two documents no longer need them concatenated into one file. The whole trail is in `agent/README.md`, sections 3-1 through 3-3.
 
-### 모델의 답을 그대로 쓰지 않습니다
+### We do not take the model's answer as final
 
-판정 결과는 백엔드가 한 번 더 셉니다. 충족과 미충족, 미확인 개수를 다시 세고, 공고에 없는 쪽번호는 0으로 되돌립니다. WBS는 요구사항을 열여섯 건 이상 묶은 패키지를 공고의 분류 기준으로 쪼개고, 기간이 비면 「미 명시」로 남깁니다. 임계경로가 빈 채로 오면 공고의 마감과 등록 서류로 채웁니다.
+The backend recounts every judgment. It recounts how many rules were met, unmet, and unverified, and resets page numbers that do not exist in the notice back to zero. For the WBS it splits any package holding sixteen or more requirements along the notice's own categories, and leaves the duration as "not specified" when the document does not state one. If the critical path comes back empty, it fills it from the notice's deadline and registration documents.
 
-금지 표현 검사가 이 장치의 필요를 잘 보여 줍니다. 모델은 견본 제안서에서 "가능합니다", "고려할 수 있습니다" 같은 표현을 0곳이라고 답했는데, 백엔드가 원고를 쪽 단위로 다시 훑어 세 곳을 찾아냈습니다. 지금은 두 결과를 합쳐서 보여 줍니다.
+The forbidden-phrase check shows why this matters. The model reported zero occurrences of hedging phrases in a sample proposal; the backend re-scanned the manuscript page by page and found three. Both results are merged before anything reaches the screen.
 
-## 파이프라인
+## Pipeline
 
-| 단계 | 프론트 | 백엔드 | Upstage |
+| Stage | Frontend | Backend | Upstage |
 |---|---|---|---|
-| 01 회사 등록 | 서류를 끌어다 놓으면 칸이 채워집니다 | `POST /api/docs/upload`로 한 장씩 읽고 `POST /api/companies/card`로 저장 | 서류 갈래별 에이전트, 파일당 1 job |
-| 02 공고 탐색 | 전체 모수와 선별 결과, 제외 사유 | 목록 메타데이터만으로 1차 선별 | 호출 없음 |
-| 03 분석 | 4초 폴링, 실패한 단계를 그대로 표시 | 첨부 수집 → 해부 → 병합, 파일 해시로 캐시 | 공고 해부 5종, 케이스당 최대 6 job |
-| 04 추천 | 추천 카드에서 응찰 준비 (사람이 결정) | 회사 카드와 참가자격 대조 | Solar · Eligibility Screener |
-| 05 요구사항 | 체크리스트, 체크는 서버에 남습니다 | 요구사항을 표로 펴고 체크 상태를 저장 | 호출 없음 |
-| 06 계획 | WBS, 임계경로, M/M, XLSX 내려받기 | WPS/CP → WBS → 임계경로에 검산까지 | Solar · 계획 3종 |
-| 07 제출 준비 | 파일 제출과 금지 표현 (사람이 결정) | 업로드 → 제출 검사, 바뀐 것만 다시 | Solar · Submission Auditor |
+| 01 Company registration | Drop documents and the slots fill in | Read one at a time via `POST /api/docs/upload`, save with `POST /api/companies/card` | Per-type document agents, one job per file |
+| 02 Notice discovery | Full denominator, shortlist, exclusion reasons | First pass on list metadata alone | No calls |
+| 03 Analysis | Polls every 4s, shows which stage failed | Collect attachments, parse, merge, cache by file hash | Five notice-parsing agents, up to 6 jobs per case |
+| 04 Recommendation | Mark a notice for bidding (human decision) | Match the company card against eligibility rules | Solar, Eligibility Screener |
+| 05 Requirements | Checklist, checks persist on the server | Flatten requirements into a table, store check state | No calls |
+| 06 Planning | WBS, critical path, man-months, XLSX export | WPS/CP → WBS → critical path, with verification | Solar, three planning agents |
+| 07 Submission | File submission and forbidden phrases (human decision) | Upload, re-run submission review on what changed | Solar, Submission Auditor |
 
-케이스 하나에 Studio job 여섯 개와 Solar 여섯 번이 듭니다. 서류를 한 장 더 올릴 때는 제출 검사만 다시 돌아 Solar 한 번으로 끝납니다.
+One case costs six Studio jobs and six Solar calls. Adding one more document only re-runs the submission review, which is a single Solar call.
 
-크레딧을 아끼려고 캐시를 세 겹 두었습니다. 7일 안에 끝난 케이스는 다시 돌리지 않고 저장된 봉투를 그대로 주고, Studio 결과는 파일 해시와 에이전트 ID로 묶어 재사용하며, 폴링 예산을 넘겨 끊긴 job은 ID를 남겨 두었다가 다음 실행이 이어받습니다.
+Three layers of caching keep the credit cost down. A case finished within seven days is served from storage instead of being re-run, Studio results are reused by file hash and agent ID, and a job that outlives the polling budget leaves its ID behind so the next run picks it up rather than paying again.
 
-단계별 상세는 `agent/README.md` 4절에, 판정 층 구현은 `backend/HANDOFF-solar-judgment.md`에 있습니다.
+Stage-by-stage detail is in `agent/README.md` section 4, and the judgment layer implementation is in `backend/HANDOFF-solar-judgment.md`.
 
-## 지킨 원칙
+## Rules we held to
 
-문서 AI를 쓰는 제품에서 가장 위험한 것은 그럴듯하게 틀린 값입니다. 코드와 프롬프트 양쪽에 같은 규칙을 박아 두었습니다.
+In a product built on document AI, the dangerous failure is a plausible wrong value. The same rules are written into both the code and the prompts.
 
-근거 없이 말하지 않습니다. 모든 판정에 근거 서류 이름과 공고 쪽번호가 붙고, 쪽을 모르면 추측 대신 0을 적습니다. 모르는 값을 0으로 채우지 않고 미확인으로 남긴 뒤 직접 입력할 자리를 만듭니다. 확인이 필요하다는 사실은 제외 사유가 아닙니다. 못 읽어서 기회를 지우는 쪽이 잘못 추천하는 쪽보다 나쁩니다. 응찰과 제출은 사람이 찍어야 다음 단계가 열립니다. 금지 표현은 걸린 자리만 짚고 문장을 고쳐 주지 않습니다. 고치는 것은 사람 몫입니다.
+Nothing is asserted without evidence. Every judgment carries a source document and a page number, and when the page is unknown we write zero rather than guess. Unknown values are never filled with zero; they stay unverified with a place to enter them by hand. Needing verification is not grounds for exclusion, because erasing an opportunity we could not read is worse than surfacing one we should not have. Bidding and submission only advance when a person says so. For forbidden phrases we point at the spot and do not rewrite the sentence; that is the writer's call.
 
-## 저장소
+## Repository
 
-| 폴더 | 무엇이 있나 |
+| Folder | What is in it |
 |---|---|
-| `front/` | Flutter 앱. 화면 다섯 장과 위젯, 테마, API 클라이언트 |
-| `backend/` | Node/Express API 서버. 파이프라인, 판정, SQLite, Swagger |
-| `agent/` | Upstage Studio 에이전트 설정 원본과 생성기 |
-| `plan/` | 기획 문서. 기획안, 응답 계약, 실행계획, 데모 입력 |
-| `design/` | 디자이너 목업 |
+| `front/` | Flutter app. Five screens plus widgets, theme, API client |
+| `backend/` | Node/Express API server. Pipeline, judgment, SQLite, Swagger |
+| `agent/` | Source configuration for the Upstage Studio agents, and the generator |
+| `plan/` | Planning documents. Product plan, response contracts, execution plan, demo inputs |
+| `design/` | Designer mockups |
 
-`front/`, `backend/`, `agent/`에는 각자 README가 있습니다. 이 문서는 지도이고, 세부는 그쪽이 정본입니다.
+`front/`, `backend/`, and `agent/` each have their own README. This document is the map; those are authoritative on detail.
 
-| 문서 | 무엇 |
+| Document | What it covers |
 |---|---|
-| `front/README.md` | 화면, 반응형, 드래그앤드롭, 디자인 토큰 |
-| `backend/README.md` | 라우트, 업로드 파이프라인, 데이터 모델, 외부 연동에서 물린 것 |
-| `backend/HANDOFF-solar-judgment.md` | 판정 층 인수서. 판정 다섯 개의 입력과 출력, 가드, 실호출 기록 |
-| `agent/README.md` | Studio 임포트, 실행 결과, 부딪힌 문제와 푼 방법, 파이프라인 |
-| `plan/Solar_for_Bid/01_RFP_기획안.md` | 기획 정본 (2026-08-22 동결) |
-| `plan/Solar_for_Bid/04_계약/` | 프론트와 백엔드 접점의 응답 스키마 두 벌 |
+| `front/README.md` | Screens, responsive layout, drag and drop, design tokens |
+| `backend/README.md` | Routes, upload pipeline, data model, what bit us in external integrations |
+| `backend/HANDOFF-solar-judgment.md` | Judgment layer handover. Inputs, outputs, guards, and real-call records for all five judgments |
+| `agent/README.md` | Studio import, run results, what blocked us and how we solved it, the pipeline |
+| `plan/Solar_for_Bid/01_RFP_기획안.md` | Product plan, frozen 2026-08-22 |
+| `plan/Solar_for_Bid/04_계약/` | Response schemas for the frontend and backend contract |
 
-## 테스트
+## Tests
 
 ```bash
-cd backend && npm test     # node:test · 158건
-cd front && flutter test   # 104건 통과 + 5건 skip
+cd backend && npm test     # node:test, 158 tests
+cd front && flutter test   # 104 passing, 5 skipped
 ```
 
-백엔드 테스트는 프로세스마다 임시 SQLite를 만들어 개발 DB를 건드리지 않습니다. 프론트에서 함께 도는 것 중에는 화면 폭 스물다섯 개를 훑으며 오버플로가 하나도 없는지 확인하는 테스트가 있습니다.
-
-skip되는 5건은 실제 백엔드에 붙는 테스트입니다. 기본 주소가 3010이라 그냥 돌리면 건너뛰고, 주소를 맞춰 줘야 붙습니다.
+Backend tests create a temporary SQLite file per process, so the development database is never touched. The five skipped frontend tests hit a real backend. Their default address is port 3010, so they skip unless you point them somewhere:
 
 ```bash
 cd front && flutter test test/live_api_test.dart \
